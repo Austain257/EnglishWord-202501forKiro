@@ -39,13 +39,23 @@ public class StudyRecordController {
         System.out.println("获取今日学习记录");
         List<RecordResult> studyRecordList = studyRecordService.getTodayList(userId, type);
         if (studyRecordList == null || studyRecordList.isEmpty()) {
-            return Result.success("该用户还未添加学习清单~");
+            return Result.error("该用户还未添加学习清单~");
         }
         return Result.success(studyRecordList);
     }
 
     /**
-     * 更新学习记录
+     * 设置学习清单已复习
+     */
+    @PostMapping("/setReview/{userId}")
+    public Result setReview(@PathVariable int userId ,@RequestBody List< Integer > ids){
+        System.out.println("设置学习清单已复习");
+        int result = studyRecordService.setReview(userId,ids);
+        return result > 0 ? Result.success() : Result.error("设置失败");
+    }
+
+    /**
+     * 更新学习记录,但不标记已掌握
      * @param request 前端传递的参数——请求体
      * @return 更新成功返回成功，失败返回失败
      */

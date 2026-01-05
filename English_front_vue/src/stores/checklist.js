@@ -132,17 +132,13 @@ export const useChecklistStore = defineStore('checklist', () => {
   
   const markSelectedAsCompleted = async () => {
     try {
-      const promises = selectedItems.value.map(id => {
+      // 使用选中的清单ID进行批量标记
+      const ids = selectedItems.value.filter(id => {
         const item = checklists.value.find(c => c.id === id)
-        if (item) {
-          return updateChecklist({
-            ...item,
-            alreadyReviewed: 1
-          })
-        }
+        return item && !item.alreadyReviewed
       })
       
-      await Promise.all(promises.filter(Boolean))
+      await setReview(ids)
       clearSelection()
       
       return { success: true }
@@ -151,7 +147,54 @@ export const useChecklistStore = defineStore('checklist', () => {
       throw error
     }
   }
-  
+
+  // 批量设置清单为已复习
+  const setReview = async (ids) => {
+    try {
+      const authStore = useAuthStore()
+      
+      const response = await checklistService.setReview(authStore.user.id, ids)
+      
+      // 更新本地状态
+      ids.forEach(id => {
+        const index = checklists.value.findIndex(item => item.id === id)
+        if (index !== -1) {
+          checklists.value[index].alreadyReviewed = 1
+        }
+      })
+      
+      return response
+    } catch (error) {
+      console.error('设置已复习失败:', error)
+      throw error
+    }
+  }
+
+  // 标记选中的清单为已复习
+  const markAllAsCompleted = async () => {
+    try {
+      // 使用选中的清单ID，如果没有选中则为空数组
+      const ids = selectedItems.value.filter(id => {
+        const item = checklists.value.find(c => c.id === id)
+        return item && !item.alreadyReviewed
+      })
+      
+      await setReview(ids)
+      
+      // 清空选中项
+      clearSelection()
+      
+      if (ids.length === 0) {
+        return { success: true, message: '已发送请求（无选中项目）' }
+      }
+      
+      return { success: true, message: `成功标记 ${ids.length} 项为已复习` }
+    } catch (error) {
+      console.error('批量标记失败:', error)
+      throw error
+    }
+  }
+
   return {
     // 状态
     checklists,
@@ -172,6 +215,8 @@ export const useChecklistStore = defineStore('checklist', () => {
     selectAll,
     clearSelection,
     setActiveTab,
-    markSelectedAsCompleted
+    markSelectedAsCompleted,
+    setReview,
+    markAllAsCompleted
   }
 })

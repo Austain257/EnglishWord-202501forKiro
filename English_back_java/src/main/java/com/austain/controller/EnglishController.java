@@ -108,6 +108,8 @@ public class EnglishController {
     @GetMapping("/stats/{userId}")
     public Result getUserStats(@PathVariable int userId, @RequestParam(required = false) Integer bookId) {
         System.out.println("获取用户学习统计数据已触发");
+        System.out.println("bookId: " + bookId);
+        System.out.println();
         try {
             Map<String, Object> stats = new HashMap<>();
             

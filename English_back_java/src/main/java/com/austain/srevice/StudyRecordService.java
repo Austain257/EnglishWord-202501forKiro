@@ -32,4 +32,6 @@ public interface StudyRecordService {
      * @return 更新成功返回1，失败返回0
      */
     int updateRecord(RecordRequest request);
+
+    int setReview(int userId, List< Integer> ids);
 }

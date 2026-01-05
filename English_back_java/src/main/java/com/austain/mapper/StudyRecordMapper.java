@@ -63,6 +63,13 @@ public interface StudyRecordMapper {
      * 重置已标记的记录 -- 定时器使用
      * 重置所有人的已标记的记录
      */
-    @Update("update learning_checklist set selected = 0")
+    @Update("update learning_checklist set selected = 0,already_reviewed = 0")
     void resetSelect();
+
+    // 批量更新已复习的记录
+    int setReview(List<Integer> ids);
+
+    // 重置已复习的记录
+    @Update("update learning_checklist set already_reviewed = 0 where user_id = #{userId}")
+    void resetReviewed(int userId);
 }

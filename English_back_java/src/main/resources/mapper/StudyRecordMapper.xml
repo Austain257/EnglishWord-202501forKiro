@@ -22,6 +22,15 @@
          </set>
          where user_id = #{userId} and id = #{id}
     </update>
+    <update id="setReview">
+        update learning_checklist
+        set already_reviewed = 1
+        where id in
+        <foreach item="item" index="index" collection="ids" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+
 
     <!-- 批量删除学习记录 -->
     <delete id="deleteRecords">

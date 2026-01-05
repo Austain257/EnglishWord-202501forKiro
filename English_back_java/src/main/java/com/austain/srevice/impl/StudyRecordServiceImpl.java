@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class StudyRecordServiceImpl implements StudyRecordService {
@@ -42,7 +43,7 @@ public class StudyRecordServiceImpl implements StudyRecordService {
     public List<RecordResult> getTodayList(int userId, int type) {
 
         // TODO 由前端统一计算距今天数
-        List<RecordResult> recordResultList = new ArrayList<>();  // 返回结果,定义全局，不用重复定义
+        List<RecordResult> recordResultList;  // 返回结果,定义全局，不用重复定义
         List<Integer> ids = new ArrayList<>();  // 定义数组用来存放要标记的记录id，一次性更新
 
         // 第一次从数据库查询后做标记，今天之内就不做更改，只要数据库有标记即返回不为空，只从数据库查，不再走下方代码计算
@@ -116,5 +117,15 @@ public class StudyRecordServiceImpl implements StudyRecordService {
     @Override
     public int updateRecord(RecordRequest request) {
         return studyRecordMapper.updateRecord(request);
+    }
+
+    @Override
+    public int setReview(int userId, List<Integer> ids) {
+        studyRecordMapper.resetReviewed(userId);  // 根据用户id重置所有已复习，先全部清空
+        if (ids == null || ids.isEmpty()){
+            return 1;
+        }
+        return studyRecordMapper.setReview(ids);  // 批量更新已复习
+
     }
 }

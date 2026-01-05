@@ -23,5 +23,10 @@ export const checklistService = {
     return api.post('/api/studyRecord/delete', ids, {
       params: { userId }
     })
+  },
+
+  // 设置学习清单为已复习（支持批量）
+  async setReview(userId, ids) {
+    return api.post(`/api/studyRecord/setReview/${userId}`, ids)
   }
 }
