@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.austain.mapper.EnglishMapper">
+<!--    <insert id="addAgainWord">-->
+<!--        INSERT INTO word_error_review(user_id, book_id,word,chinese,pronounce,times)-->
+<!--            VALUES (#{userId}, #{bookId}, #{word}, #{chinese}, #{pronounce}, #{times})-->
+<!--    </insert>-->
+
+
+<!--    <update id="setNotGrasp">-->
+<!--        UPDATE english_word_01-->
+<!--        SET times = times + 1, is_grasp = 2-->
+<!--        WHERE id = #{id}-->
+<!--    </update>-->
+
+
+    <select id="getEnglishListByBookCode" resultType="com.austain.domain.po.Englishs">
+        SELECT * FROM english_word_01
+        WHERE user_id in (#{userId},0,1,2,3,4,5) AND book_id = #{bookId} AND is_grasp != 1 order by id
+    </select>
+</mapper>

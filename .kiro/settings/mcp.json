@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "mysql": {
+      "args": [],
+      "command": "d:\\develop\\code-file\\pyCharm\\github\\mysql_mcp_server\\.venv\\Scripts\\mysql_mcp_server.exe",
+      "disabled": false,
+      "env": {
+        "MYSQL_DATABASE": "english_for_kiro",
+        "MYSQL_HOST": "localhost",
+        "MYSQL_PORT": "3306",
+        "MYSQL_USER": "Austain",
+        "MYSQL_PASSWORD": "123456"
+      },
+      "autoApprove": [
+        "execute_sql"
+      ]
+    }
+  }
+}

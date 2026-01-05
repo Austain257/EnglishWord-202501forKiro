@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.austain.mapper.JottingMapper">
+    <insert id="addJotting" keyProperty="id">
+        insert jottings(user_id, word, sentence, chinese, type) value (#{userId}, #{word}, #{sentence}, #{chinese}, #{type})
+    </insert>
+
+    <update id="updateJotting">
+        update jottings
+        <set>
+            <if test="word != null">
+                word = #{word},
+            </if>
+            <if test="sentence != null">
+                sentence = #{sentence},
+            </if>
+            <if test="chinese != null">
+                chinese = #{chinese},
+            </if>
+            <if test="type != null">
+                type = #{type},
+            </if>
+        </set>
+        where user_id = #{userId} and id = #{id}
+    </update>
+
+    <!-- 批量删除笔记 -->
+    <delete id="batchDeleteJotting">
+        DELETE FROM jottings WHERE id IN
+        <foreach item="item" index="index" collection="ids" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+</mapper>

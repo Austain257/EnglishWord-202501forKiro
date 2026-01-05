@@ -1,0 +1,47 @@
+# ---- 通用 ----
+.DS_Store
+Thumbs.db
+*.log
+logs/
+*.tmp
+*.swp
+*.swo
+*.bak
+*~
+
+# ---- IDE / 工具 ----
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+
+# ---- Java 后端 (Maven/Spring Boot) ----
+English_back_java/target/
+English_back_java/.mvn/wrapper/maven-wrapper.jar
+English_back_java/.mvn/wrapper/maven-wrapper.properties.backup
+English_back_java/mvnw
+English_back_java/mvnw.cmd
+English_back_java/*.log
+English_back_java/**/logs/
+English_back_java/**/tmp/
+
+# ---- Node / 前端 (Vue) ----
+English_front_vue/node_modules/
+English_front_vue/dist/
+English_front_vue/.cache/
+English_front_vue/.temp/
+English_front_vue/.env.local
+English_front_vue/.env.*.local
+English_front_vue/npm-debug.log*
+English_front_vue/yarn-debug.log*
+English_front_vue/yarn-error.log*
+
+# ---- 运行时或导出文件 ----
+local--*.sql
+*.sqlite
+*.db
+
+# ---- 参考/临时资料 ----
+参考内容/
