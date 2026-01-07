@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useBookStore } from '@/stores/book'
 
 const routes = [
   {
@@ -34,9 +35,15 @@ const routes = [
   },
   {
     path: '/word/review',
+    name: 'WordReviewSelection',
+    component: () => import('@/views/WordReviewSelection.vue'),
+    meta: { requiresAuth: true, requiresBook: true, title: '单词复习选择' }
+  },
+  {
+    path: '/word/review/first',
     name: 'WordReview',
     component: () => import('@/views/WordReview.vue'),
-    meta: { requiresAuth: true, requiresBook: true, title: '单词复习' }
+    meta: { requiresAuth: true, requiresBook: true, title: '第一轮复习' }
   },
   {
     path: '/word/dictation',
@@ -125,6 +132,7 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+  const bookStore = useBookStore()
 
   document.title = to.meta.title ? `${to.meta.title} - 英语学习平台` : '英语学习平台'
 
@@ -133,9 +141,30 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  if (to.meta.requiresBook && !authStore.currentBookId) {
-    next('/books')
-    return
+  if (to.meta.requiresBook) {
+    if (!authStore.currentBookId) {
+      next('/books')
+      return
+    }
+
+    if (!bookStore.currentBook) {
+      try {
+        if (bookStore.books.length === 0) {
+          await bookStore.fetchBooks()
+        } else {
+          bookStore.initializeBook()
+        }
+      } catch (error) {
+        console.error('初始化课本失败:', error)
+        next('/books')
+        return
+      }
+    }
+
+    if (!bookStore.currentBook) {
+      next('/books')
+      return
+    }
   }
 
   if ((to.name === 'Login' || to.name === 'Register') && authStore.isAuthenticated) {

@@ -7,37 +7,36 @@
     </div>
 
     <!-- 顶部导航 -->
-    <header class="relative z-40 bg-white/60 backdrop-blur-md border-b border-white/20">
-      <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-          <button 
-            @click="router.back()"
-            class="p-2 hover:bg-white/50 rounded-full transition-colors text-slate-600 active:scale-95"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
-          <span class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-700">
-            词汇挑战
-          </span>
-        </div>
-        
-        <!-- 计时器 -->
-        <div v-if="gameActive" class="px-4 py-1.5 bg-slate-100/80 rounded-full border border-slate-200 text-sm font-variant-numeric font-bold text-slate-700 flex items-center gap-2">
-           <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-           {{ timeLeft }}s
-        </div>
-
-        <!-- 顶部状态 (小屏幕隐藏) -->
-        <div class="hidden md:flex items-center gap-4 text-sm font-medium text-slate-600">
-           <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/50 border border-white/50 shadow-sm">
-             <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-             得分 {{ score }}
-           </div>
+    <nav class="relative z-40 px-4 sm:px-6 lg:px-10 h-16 sm:h-20 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <button 
+          @click="router.back()"
+          class="p-2 -ml-2 text-slate-500 hover:text-slate-900 hover:bg-white/60 rounded-xl transition-all duration-200"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div class="flex flex-col">
+          <h1 class="text-lg font-semibold text-slate-900 tracking-tight">词汇挑战</h1>
+          <p class="flex items-center gap-1 text-xs text-slate-500">
+            <span class="inline-block w-1.5 h-1.5 rounded-full" :class="gameActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'"></span>
+            速记模式 · 集中训练
+          </p>
         </div>
       </div>
-    </header>
+
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/70 rounded-xl border border-white/70 text-xs font-semibold text-slate-500">
+          <span>耗时</span>
+          <span class="text-blue-600 font-bold">{{ gameActive ? timeLeft : '--' }}s</span>
+        </div>
+        <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-semibold">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          得分 {{ score }}
+        </div>
+      </div>
+    </nav>
 
     <main class="flex-1 relative w-full max-w-5xl mx-auto p-4 md:p-6 flex flex-col justify-center min-h-[600px]">
       

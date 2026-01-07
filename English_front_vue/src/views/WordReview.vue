@@ -186,7 +186,7 @@
                     </h2>
                     <div class="flex items-center gap-3">
                       <span class="text-xl text-slate-500 font-serif italic">
-                        /{{ currentWord.phonetic || currentWord.pronounce || '...' }}/
+                        {{ currentWord.phonetic || currentWord.pronounce || '...' }}
                       </span>
                       <button 
                         @click="playPronunciation"
@@ -337,7 +337,7 @@ const hasPrev = computed(() => wordStore.hasPrev)
 const currentBook = computed(() => bookStore.currentBook)
 
 // 方法
-const goBack = () => router.push('/')
+const goBack = () => router.push('/word/review')
 
 const loadWords = async () => {
   try {

@@ -7,55 +7,44 @@
       <div class="absolute bottom-[-10%] left-[20%] w-[50%] h-[50%] bg-pink-200/40 rounded-full blur-[120px] animate-blob animation-delay-4000"></div>
     </div>
 
-    <!-- 顶部导航 (加大尺寸，两端对齐) -->
-    <header class="relative z-40 bg-white/70 backdrop-blur-xl border-b border-white/40 shadow-sm h-20 md:h-24">
-      <div class="w-full h-full px-4 sm:px-8 md:px-12 flex justify-between items-center">
-        <!-- 左侧：返回与标题 -->
-        <div class="flex items-center gap-6">
-          <button 
-            @click="router.back()"
-            class="group p-3 hover:bg-white rounded-full transition-all duration-300 shadow-sm hover:shadow-md border border-transparent hover:border-slate-100 text-slate-600 active:scale-95"
-          >
-            <svg class="w-6 h-6 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
-          <span class="text-2xl font-black text-slate-800 tracking-tight">
-            单词泡泡龙
-          </span>
-        </div>
-        
-        <!-- 中间：模式切换 (胶囊样式优化) -->
-        <div v-if="!isGameOver" class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden md:block">
-           <div class="flex items-center bg-slate-100/80 p-1.5 rounded-full border border-white shadow-inner">
-            <button 
-              v-for="mode in modes" 
-              :key="mode.value"
-              @click="switchMode(mode.value)"
-              class="px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2"
-              :class="gameMode === mode.value ? 'bg-white text-indigo-600 shadow-md transform scale-105' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'"
-            >
-              {{ mode.label }}
-            </button>
-          </div>
-        </div>
-
-        <!-- 右侧：状态展示 -->
-        <div class="flex items-center gap-6">
-           <div class="flex flex-col items-end">
-             <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Score</span>
-             <span class="text-2xl font-black text-indigo-600 font-mono">{{ score }}</span>
-           </div>
-           
-           <!-- 移动端模式切换 (仅小屏幕显示) -->
-           <div class="md:hidden flex items-center bg-slate-100 p-1 rounded-lg">
-             <button @click="switchMode(gameMode === 'word-to-chinese' ? 'chinese-to-word' : 'word-to-chinese')" class="px-3 py-1 text-xs font-bold text-slate-600">
-               切换模式
-             </button>
-           </div>
+    <!-- 顶部导航 -->
+    <nav class="relative z-40 px-4 sm:px-6 lg:px-10 h-16 sm:h-20 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <button 
+          @click="router.back()"
+          class="p-2 -ml-2 text-slate-500 hover:text-slate-900 hover:bg-white/60 rounded-xl transition-all duration-200"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div class="flex flex-col">
+          <h1 class="text-lg font-semibold text-slate-900 tracking-tight">单词泡泡龙</h1>
+          <p class="flex items-center gap-1 text-xs text-slate-500">
+            <span class="inline-block w-1.5 h-1.5 rounded-full" :class="gameActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'"></span>
+            泡泡闯关 · 模式切换
+          </p>
         </div>
       </div>
-    </header>
+
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/70 rounded-xl border border-white/70 text-xs font-semibold text-slate-500">
+          <button 
+            v-for="mode in modes" 
+            :key="mode.value"
+            @click="switchMode(mode.value)"
+            class="px-3 py-1 rounded-lg transition-all"
+            :class="gameMode === mode.value ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+          >
+            {{ mode.label }}
+          </button>
+        </div>
+        <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-semibold">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /></svg>
+          得分 {{ score }}
+        </div>
+      </div>
+    </nav>
 
     <main class="flex-1 relative w-full h-full overflow-hidden flex flex-col p-3 sm:p-4 md:p-8">
       <!-- 游戏主容器 -->

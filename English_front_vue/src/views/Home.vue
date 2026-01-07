@@ -65,21 +65,25 @@
       <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         <!-- 欢迎卡片 -->
-        <div class="lg:col-span-8 relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-600 to-blue-700 text-white shadow-xl shadow-indigo-500/20 p-8 sm:p-10 flex flex-col justify-between min-h-[280px]">
+        <div class="lg:col-span-8 relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-600 via-blue-600 to-blue-700 text-white shadow-xl shadow-indigo-500/20 p-8 sm:p-10 flex flex-col gap-8 min-h-[240px]">
           <!-- 装饰背景 -->
           <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
           <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-purple-500/20 rounded-full blur-2xl"></div>
           
-          <div class="relative z-10">
-            <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 tracking-tight leading-tight">
+          <div class="relative z-10 space-y-3">
+            <p class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/15 text-xs uppercase tracking-[0.3em] text-white/80 w-max">
+              今日激励
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+            </p>
+            <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight">
               {{ getWelcomeMessage() }}
             </h2>
-            <p class="text-indigo-100 text-lg sm:text-xl max-w-xl font-medium opacity-90">
+            <p class="text-indigo-100 text-base sm:text-lg max-w-2xl font-medium opacity-90">
               保持热爱，奔赴山海。今天的目标完成了吗？
             </p>
           </div>
 
-          <div class="relative z-10 mt-8 flex flex-wrap gap-4">
+          <div class="relative z-10 flex flex-wrap gap-3 sm:gap-4">
              <button 
               @click="currentBook ? goToWordLearning() : goToBooks()"
               class="px-8 py-3.5 bg-white text-indigo-600 rounded-xl font-bold text-base sm:text-lg shadow-lg hover:shadow-xl hover:bg-indigo-50 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center gap-2"
@@ -92,7 +96,7 @@
             </button>
             <button 
               @click="goToChecklist"
-              class="px-8 py-3.5 bg-indigo-800/40 backdrop-blur-md border border-white/20 text-white rounded-xl font-semibold text-base sm:text-lg hover:bg-indigo-800/60 transition-all duration-300 flex items-center gap-2"
+              class="px-8 py-3 bg-indigo-800/40 backdrop-blur-md border border-white/20 text-white rounded-xl font-semibold text-base sm:text-lg hover:bg-indigo-800/60 transition-all duration-300 flex items-center gap-2"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -101,7 +105,7 @@
             </button>
             <button 
               @click="currentBook ? goToGame() : goToBooks()"
-              class="px-8 py-3.5 bg-pink-500/80 backdrop-blur-md border border-white/20 text-white rounded-xl font-semibold text-base sm:text-lg hover:bg-pink-600/90 transition-all duration-300 flex items-center gap-2"
+              class="px-8 py-3 bg-pink-500/80 backdrop-blur-md border border-white/20 text-white rounded-xl font-semibold text-base sm:text-lg hover:bg-pink-600/90 transition-all duration-300 flex items-center gap-2"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -111,7 +115,7 @@
             </button>
             <button 
               @click="currentBook ? goToWordOption() : goToBooks()"
-              class="px-8 py-3.5 bg-cyan-500/80 backdrop-blur-md border border-white/20 text-white rounded-xl font-semibold text-base sm:text-lg hover:bg-cyan-600/90 transition-all duration-300 flex items-center gap-2"
+              class="px-8 py-3 bg-cyan-500/80 backdrop-blur-md border border-white/20 text-white rounded-xl font-semibold text-base sm:text-lg hover:bg-cyan-600/90 transition-all duration-300 flex items-center gap-2"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -121,16 +125,20 @@
           </div>
         </div>
 
-        <!-- 课本状态卡片 (重新设计 - 简约风格) -->
-        <div class="lg:col-span-4 bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between h-full hover:shadow-md transition-shadow duration-300">
+        <!-- 课本状态卡片 (重新设计 - 紧凑信息) -->
+        <div class="lg:col-span-4 bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col gap-6 h-full hover:shadow-lg transition-shadow duration-300">
           
           <!-- 头部：标题与切换 -->
           <div class="flex justify-between items-start">
-            <div class="flex-1 mr-4 cursor-pointer" @click="showBookSelector = true">
-              <div class="text-xs font-bold text-slate-400 tracking-wider uppercase mb-1">Current Book</div>
-              <h3 class="text-xl font-bold text-slate-800 line-clamp-2 leading-tight" :title="currentBook ? (currentBook.bookName || currentBook.name) : ''">
+            <div class="flex-1 mr-4 cursor-pointer space-y-1" @click="showBookSelector = true">
+              <div class="text-xs font-bold text-slate-400 tracking-wider uppercase">Current Book</div>
+              <h3 class="text-lg sm:text-xl font-bold text-slate-800 line-clamp-2 leading-snug" :title="currentBook ? (currentBook.bookName || currentBook.name) : ''">
                 {{ currentBook ? (currentBook.bookName || currentBook.name) : '未选择课本' }}
               </h3>
+              <p v-if="currentBook && currentBook.level" class="text-xs text-slate-500 flex items-center gap-2">
+                <span class="inline-flex items-center px-2 py-1 rounded-full bg-slate-100 text-slate-600">{{ currentBook.level }}</span>
+                <span>{{ currentBook.unit || '未设置单元' }}</span>
+              </p>
             </div>
             <button 
               @click.stop="showBookSelector = true"
@@ -144,31 +152,41 @@
           </div>
 
           <!-- 内容区域 -->
-          <div class="mt-6" v-if="currentBook && currentBook.id">
+          <div class="space-y-5" v-if="currentBook && currentBook.id">
             <!-- 进度数值 -->
-            <div class="flex items-baseline gap-1 mb-2">
-              <span class="text-4xl font-bold text-slate-900">{{ progressPercent }}</span>
+            <div class="flex items-end gap-2">
+              <span class="text-4xl font-bold text-slate-900 leading-none">{{ progressPercent }}</span>
               <span class="text-sm font-medium text-slate-400">%</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-semibold">学习进度</span>
             </div>
             
             <!-- 进度条 -->
-            <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+            <div class="space-y-2">
+              <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
               <div 
                 class="h-full bg-blue-600 rounded-full transition-all duration-1000 ease-out" 
                 :style="{ width: `${progressPercent}%` }"
               ></div>
+              </div>
+              <div class="flex justify-between text-xs text-slate-400 font-medium">
+                <span>已完成 {{ masteredCount }} 项</span>
+                <span>剩余 {{ remainingCount }}</span>
+              </div>
             </div>
 
-            <!-- 统计数据 -->
-            <div class="flex items-center gap-6 mt-4 text-xs font-medium text-slate-500">
-              <div class="flex items-center gap-1.5">
-                <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                <span>{{ stats.totalWords || 0 }} 词汇</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <div class="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
-                <span>{{ stats.totalSentences || 0 }} 句子</span>
-              </div>
+            <div class="flex gap-3">
+              <button 
+                @click="showBookSelector = true"
+                class="flex-1 py-3 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-600 transition-colors"
+              >
+                切换课本
+              </button>
+              <button 
+                @click="currentBook ? goToWordLearning() : goToBooks()"
+                class="flex-1 py-3 rounded-2xl bg-blue-600 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 transition-colors"
+              >
+                继续学习
+              </button>
             </div>
           </div>
 
@@ -646,6 +664,11 @@ const progress = computed(() => {
   return (masteredItems / totalItems) * 100
 })
 const progressPercent = computed(() => Math.round(progress.value))
+const masteredCount = computed(() => (stats.value.masteredWords || 0) + (stats.value.masteredSentences || 0))
+const remainingCount = computed(() => {
+  const total = (stats.value.totalWords || 0) + (stats.value.totalSentences || 0)
+  return Math.max(total - masteredCount.value, 0)
+})
 
 // 获取单词掌握率
 const getWordMasteryRate = () => {
