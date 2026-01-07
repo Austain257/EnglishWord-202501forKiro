@@ -1,35 +1,47 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- 顶部导航 -->
-    <nav class="bg-white shadow-sm">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-          <div class="flex items-center">
-            <Button @click="goBack" variant="ghost" size="sm" class="mr-4">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <nav class="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/65">
+      <div class="w-full px-4 sm:px-8 lg:px-16">
+        <div class="flex flex-wrap items-center justify-between gap-4 py-4">
+          <div class="flex items-center gap-4 min-w-0 flex-1">
+
+            <Button @click="goBack" variant="ghost" size="sm" class="shrink-0">
+              <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
               </svg>
               返回
             </Button>
-            <h1 class="text-xl font-semibold text-gray-900">错句本</h1>
+            <div class="min-w-0">
+              <p class="text-[11px] uppercase tracking-[0.45em] text-gray-400">Sentence Lab</p>
+              <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 leading-tight">错句本</h1>
+              <p class="text-sm text-gray-500 truncate">聚焦句子弱项，循序渐进一步一个</p>
+            </div>
           </div>
-          <div class="flex items-center space-x-4">
-            <div class="flex items-center space-x-2">
-              <span class="text-sm text-gray-600">模式:</span>
+          <div class="flex flex-wrap items-center gap-3 justify-end flex-1">
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/75 text-xs text-gray-600 font-medium">
+              <span>进度</span>
+              <span class="text-gray-900 font-semibold">{{ currentIndex + 1 }} / {{ errorSentences.length || 0 }}</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/80 rounded-xl px-3 py-1.5 shadow-sm shadow-gray-200/50 border border-white/40">
+              <span class="text-sm text-gray-500">模式</span>
               <select 
                 v-model="studyMode" 
-                class="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="text-sm font-medium bg-transparent focus:outline-none focus:ring-0 text-gray-800"
                 @change="resetAnswerState"
               >
                 <option value="review">复习模式</option>
                 <option value="dictation">听写模式</option>
               </select>
             </div>
-            <div v-if="studyMode === 'dictation'" class="flex items-center space-x-2">
-              <span class="text-sm text-gray-600">听写:</span>
+            <div 
+              v-if="studyMode === 'dictation'" 
+              class="flex items-center gap-2 bg-white/80 rounded-xl px-3 py-1.5 shadow-sm shadow-gray-200/50 border border-white/40"
+            >
+              <span class="text-sm text-gray-500">听写</span>
               <select 
                 v-model="dictationMode" 
-                class="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="text-sm font-medium bg-transparent focus:outline-none focus:ring-0 text-gray-800"
                 @change="resetAnswerState"
               >
                 <option value="en2zh">英译汉</option>
@@ -74,12 +86,12 @@
             </Button>
             
             <Button 
-              v-if="!showChinese"
               @click="toggleChinese"
               variant="outline"
               size="sm"
+              :class="showChinese ? 'bg-gray-50 text-gray-700' : ''"
             >
-              显示中文
+              {{ showChinese ? '隐藏中文' : '显示中文' }}
             </Button>
             
             <Button 

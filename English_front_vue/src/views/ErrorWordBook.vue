@@ -1,20 +1,30 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- 顶部导航 -->
-    <nav class="bg-white shadow-sm">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-          <div class="flex items-center">
-            <Button @click="goBack" variant="ghost" size="sm" class="mr-4">
+    <nav class="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/65">
+      <div class="w-full px-4 sm:px-8 lg:px-16">
+        <div class="flex flex-wrap items-center justify-between gap-4 py-4">
+          <div class="flex items-center gap-4 min-w-0 flex-1">
+
+            <Button @click="goBack" variant="ghost" size="sm" class="shrink-0">
               <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
               </svg>
               返回
             </Button>
-            <h1 class="text-xl font-semibold text-gray-900">错词本</h1>
+            <div class="min-w-0">
+              <p class="text-[11px] uppercase tracking-[0.45em] text-gray-400">Word Lab</p>
+              <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 leading-tight">错词本</h1>
+              <p class="text-sm text-gray-500 truncate">共 {{ totalErrorWords }} 个待攻克单词</p>
+            </div>
           </div>
-          <div class="flex items-center space-x-4">
-            <Button @click="toggleMode" variant="outline" size="sm">
+          <div class="flex items-center gap-3 flex-shrink-0 justify-end flex-1">
+
+            <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 text-xs font-medium text-gray-600">
+              <span>进度</span>
+              <span class="text-gray-900 font-semibold">{{ currentIndex + 1 }} / {{ totalErrorWords }}</span>
+            </div>
+            <Button @click="toggleMode" variant="outline" size="sm" class="border-gray-300 text-gray-700 hover:bg-gray-100">
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path v-if="currentMode === 'review'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                 <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -262,15 +272,16 @@
         </div>
 
         <!-- 无数据状态 -->
-        <div v-else class="text-center py-12">
-          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-else-if="!loading && errorWords.length === 0" class="text-center py-12">
+          <div class="w-20 h-20 bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+            <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
             </svg>
           </div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">太棒了！</h3>
-          <p class="text-gray-500 mb-4">您的错词本是空的，继续保持！</p>
-          <Button @click="goBack" variant="primary">
+          <h3 class="text-2xl font-bold text-gray-900 mb-3">太棒了！</h3>
+          <p class="text-gray-600 mb-2">您的错词本是空的</p>
+          <p class="text-sm text-gray-400 mb-8">继续保持，加油学习！</p>
+          <Button @click="goBack" variant="primary" class="px-8">
             返回首页
           </Button>
         </div>
@@ -363,7 +374,21 @@ const loadErrorWords = async () => {
     
     const response = await wordService.getErrorWordList(params)
     console.log('错词接口响应:', response)
-    errorWords.value = response.data || []
+    console.log('错词数据:', response?.data)
+    
+    // 处理响应数据，兼容不同的响应格式
+    if (Array.isArray(response)) {
+      errorWords.value = response
+    } else if (response?.data && Array.isArray(response.data)) {
+      errorWords.value = response.data
+    } else if (response?.data?.list && Array.isArray(response.data.list)) {
+      errorWords.value = response.data.list
+    } else {
+      errorWords.value = []
+    }
+    
+    console.log('解析后的错词列表:', errorWords.value)
+    console.log('错词数量:', errorWords.value.length)
     currentIndex.value = 0
     
   } catch (err) {

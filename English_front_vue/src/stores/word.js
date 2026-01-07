@@ -105,21 +105,22 @@ export const useWordStore = defineStore('word', () => {
     }
   }
   
-  const markCurrentAsError = async () => {
+  const markCurrentAsNotGrasped = () => {
     if (!currentWord.value) return
     
+    // 只更新本地状态
+    if (currentWord.value) {
+      currentWord.value.isGrasp = 2
+      currentWord.value.errorTimes = (currentWord.value.errorTimes || 0) + 1
+    }
+  }
+
+  const markAsNotGrasped = async (wordId) => {
     try {
-      await wordService.markAsError(currentWord.value.id)
-      
-      // 更新本地状态
-      if (currentWord.value) {
-        currentWord.value.isGrasp = 2
-        currentWord.value.errorTimes = (currentWord.value.errorTimes || 0) + 1
-      }
-      
+      await wordService.markAsNotGrasped(wordId)
       return { success: true }
     } catch (error) {
-      console.error('标记错词失败:', error)
+      console.error('标记为不会失败:', error)
       throw error
     }
   }
@@ -157,7 +158,8 @@ export const useWordStore = defineStore('word', () => {
     goToWord,
     toggleChinese,
     markCurrentAsGrasped,
-    markCurrentAsError,
+    markCurrentAsNotGrasped,
+    markAsNotGrasped,
     setLearningRange,
     resetState
   }

@@ -10,7 +10,7 @@ const routes = [
   },
   {
     path: '/register',
-    name: 'Register', 
+    name: 'Register',
     component: () => import('@/views/Register.vue'),
     meta: { requiresAuth: false, title: '注册' }
   },
@@ -81,6 +81,18 @@ const routes = [
     meta: { requiresAuth: true, title: '积累本' }
   },
   {
+    path: '/word/game',
+    name: 'WordGame',
+    component: () => import('@/views/WordGame.vue'),
+    meta: { requiresAuth: true, requiresBook: true, title: '单词泡泡龙' }
+  },
+  {
+    path: '/word/option',
+    name: 'WordOption',
+    component: () => import('@/views/WordOption.vue'),
+    meta: { requiresAuth: true, requiresBook: true, title: '单词速记挑战' }
+  },
+  {
     path: '/system-test',
     name: 'SystemTest',
     component: () => import('@/views/SystemTest.vue'),
@@ -106,37 +118,31 @@ const router = createRouter({
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition
-    } else {
-      return { top: 0 }
     }
+    return { top: 0 }
   }
 })
 
-// 全局导航守卫
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  
-  // 设置页面标题
+
   document.title = to.meta.title ? `${to.meta.title} - 英语学习平台` : '英语学习平台'
-  
-  // 检查认证
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
     return
   }
-  
-  // 检查是否需要选择课本
+
   if (to.meta.requiresBook && !authStore.currentBookId) {
     next('/books')
     return
   }
-  
-  // 如果已登录用户访问登录页，重定向到首页
+
   if ((to.name === 'Login' || to.name === 'Register') && authStore.isAuthenticated) {
     next('/')
     return
   }
-  
+
   next()
 })
 

@@ -157,6 +157,13 @@ public class EnglishController {
         }
         return Result.success(sentenceList);
     }
+    
+    @PostMapping("/sentenceNotGrasp/{id}")
+    public Result sentenceNotGrasp(@PathVariable int id){
+        System.out.println("错句登记操作已触发");
+        boolean result = englishService.setNotGrasp(id);
+        return result ? Result.success() : Result.error("添加失败");
+    }
 
     @GetMapping("/errorSentence/{userId}")
     public Result getErrorSentence(@PathVariable int userId){

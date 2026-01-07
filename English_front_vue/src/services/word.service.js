@@ -24,8 +24,8 @@ export const wordService = {
     return api.post(`/api/english/isGrasp/${wordId}`)
   },
   
-  // 标记单词为错词
-  async markAsError(wordId) {
+  // 标记单词为未掌握
+  async markAsNotGrasped(wordId) {
     return api.post(`/api/english/notGrasp/${wordId}`)
   }
 }

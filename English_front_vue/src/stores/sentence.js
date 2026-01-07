@@ -36,13 +36,30 @@ export const useSentenceStore = defineStore('sentence', () => {
       }
       
       const response = await sentenceService.getSentenceList(params)
-      sentences.value = response.data || []
-      currentIndex.value = 0
+      const allSentences = response.data || []
       
-      // 更新学习范围（保留前端显示用）
-      if (range) {
-        learningRange.value = range
+      // 处理范围过滤
+      const currentRange = range || learningRange.value
+      
+      // 如果指定了范围，进行切片（注意：start是从1开始的，需要转换为0-based index）
+      if (currentRange && currentRange.start && currentRange.end) {
+        // 确保范围有效
+        const start = Math.max(0, currentRange.start - 1)
+        const end = Math.min(allSentences.length, currentRange.end)
+        
+        if (start < allSentences.length) {
+          sentences.value = allSentences.slice(start, end)
+        } else {
+          sentences.value = []
+        }
+        
+        // 更新 stored range
+        learningRange.value = { ...currentRange }
+      } else {
+        sentences.value = allSentences
       }
+      
+      currentIndex.value = 0
       
       return response
     } catch (error) {
