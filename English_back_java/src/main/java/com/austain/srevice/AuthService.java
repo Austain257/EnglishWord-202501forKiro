@@ -16,6 +16,9 @@ public class AuthService {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private TokenService tokenService;
+
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     /**
@@ -40,6 +43,9 @@ public class AuthService {
 
         // 生成token（简单实现，实际应使用JWT）
         String token = UUID.randomUUID().toString();
+
+        // 存储token到TokenService
+        tokenService.storeToken(token, user.getId());
 
         // 更新最后登录时间
         userMapper.updateLastLoginTime(user.getId());

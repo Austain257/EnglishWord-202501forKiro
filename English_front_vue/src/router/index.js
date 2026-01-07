@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useBookStore } from '@/stores/book'
+import { useStudyTrackerStore } from '@/stores/studyTracker'
 
 const routes = [
   {
@@ -31,7 +32,7 @@ const routes = [
     path: '/word/learning',
     name: 'WordLearning',
     component: () => import('@/views/WordLearning.vue'),
-    meta: { requiresAuth: true, requiresBook: true, title: '单词学习' }
+    meta: { requiresAuth: true, requiresBook: true, title: '单词学习', studyScene: 'word_learning' }
   },
   {
     path: '/word/review',
@@ -43,37 +44,37 @@ const routes = [
     path: '/word/review/first',
     name: 'WordReview',
     component: () => import('@/views/WordReview.vue'),
-    meta: { requiresAuth: true, requiresBook: true, title: '第一轮复习' }
+    meta: { requiresAuth: true, requiresBook: true, title: '第一轮复习', studyScene: 'word_review_first' }
   },
   {
     path: '/word/dictation',
     name: 'WordDictation',
     component: () => import('@/views/WordDictation.vue'),
-    meta: { requiresAuth: true, requiresBook: true, title: '单词听写' }
+    meta: { requiresAuth: true, requiresBook: true, title: '单词听写', studyScene: 'word_dictation' }
   },
   {
     path: '/word/error-book',
     name: 'ErrorWordBook',
     component: () => import('@/views/ErrorWordBook.vue'),
-    meta: { requiresAuth: true, requiresBook: true, title: '错词本' }
+    meta: { requiresAuth: true, requiresBook: true, title: '错词本', studyScene: 'word_error_book' }
   },
   {
     path: '/sentence/learning',
     name: 'SentenceLearning',
     component: () => import('@/views/SentenceLearning.vue'),
-    meta: { requiresAuth: true, title: '句子学习' }
+    meta: { requiresAuth: true, title: '句子学习', studyScene: 'sentence_learning' }
   },
   {
     path: '/sentence/dictation',
     name: 'SentenceDictation',
     component: () => import('@/views/SentenceDictation.vue'),
-    meta: { requiresAuth: true, title: '句子听写' }
+    meta: { requiresAuth: true, title: '句子听写', studyScene: 'sentence_dictation' }
   },
   {
     path: '/sentence/error-book',
     name: 'ErrorSentenceBook',
     component: () => import('@/views/ErrorSentenceBook.vue'),
-    meta: { requiresAuth: true, title: '错句本' }
+    meta: { requiresAuth: true, title: '错句本', studyScene: 'sentence_error_book' }
   },
   {
     path: '/checklist',
@@ -85,19 +86,19 @@ const routes = [
     path: '/jottings',
     name: 'Jottings',
     component: () => import('@/views/Jottings.vue'),
-    meta: { requiresAuth: true, title: '积累本' }
+    meta: { requiresAuth: true, requiresBook: true, title: '积累本', studyScene: 'jottings' }
   },
   {
     path: '/word/game',
     name: 'WordGame',
     component: () => import('@/views/WordGame.vue'),
-    meta: { requiresAuth: true, requiresBook: true, title: '单词泡泡龙' }
+    meta: { requiresAuth: true, requiresBook: true, title: '单词泡泡龙', studyScene: 'word_game' }
   },
   {
     path: '/word/option',
     name: 'WordOption',
     component: () => import('@/views/WordOption.vue'),
-    meta: { requiresAuth: true, requiresBook: true, title: '单词速记挑战' }
+    meta: { requiresAuth: true, requiresBook: true, title: '单词速记挑战', studyScene: 'word_option' }
   },
   {
     path: '/system-test',
@@ -173,6 +174,21 @@ router.beforeEach(async (to, from, next) => {
   }
 
   next()
+})
+
+// 路由后钩子：处理学习会话管理
+router.afterEach((to, from) => {
+  const studyTracker = useStudyTrackerStore()
+  
+  // 如果从学习场景离开且目标页面不是学习场景，或者学习场景发生变化，则结束当前会话
+  if (from.meta?.studyScene && from.meta.studyScene !== to.meta?.studyScene) {
+    studyTracker.finish('leaveRoute')
+  }
+  
+  // 如果进入学习场景，则开始新会话
+  if (to.meta?.studyScene) {
+    studyTracker.start(to.meta.studyScene)
+  }
 })
 
 export default router

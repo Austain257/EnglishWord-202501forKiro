@@ -125,7 +125,7 @@
               <!-- 音标与发音 -->
               <div class="flex items-center gap-3 mb-10">
                 <span class="text-xl text-slate-500 font-serif italic">
-                  /{{ currentWord.phonetic || currentWord.pronounce || '...' }}/
+                  {{ currentWord.phonetic || currentWord.pronounce || '...' }}
                 </span>
                 <button 
                   @click="playPronunciation"
@@ -163,31 +163,32 @@
       </div>
 
       <!-- 底部控制栏 -->
-      <div v-if="currentWord" class="mt-auto pt-6 flex items-center justify-center gap-4 sm:gap-6">
-        <button 
-          @click="prevWord"
-          :disabled="!hasPrev"
-          class="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300 active:scale-95"
-          title="上一个 (←)"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-          <span class="hidden sm:inline">上一个</span>
-        </button>
+      <div v-if="currentWord" class="mt-auto pt-6 safe-bottom-area">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-6">
+          <button 
+            @click="prevWord"
+            :disabled="!hasPrev"
+            class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 sm:py-3 rounded-2xl text-base font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300 active:scale-95"
+            title="上一个 (←)"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>上一个</span>
+          </button>
 
-        <button 
-          @click="nextWord"
-          :disabled="!hasNext"
-          class="flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 active:translate-y-0"
-          title="下一个 (→)"
-        >
-          <span class="hidden sm:inline">下一个</span>
-          <span class="sm:hidden">Next</span>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+          <button 
+            @click="nextWord"
+            :disabled="!hasNext"
+            class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 sm:py-3.5 rounded-2xl text-base font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 active:translate-y-0"
+            title="下一个 (→)"
+          >
+            <span>下一个</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
       </div>
     </main>
 
@@ -444,5 +445,9 @@ watch(currentWord, () => {
 /* 透视效果，用于未来可能的翻转动画 */
 .perspective-1000 {
   perspective: 1000px;
+}
+
+.safe-bottom-area {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
 }
 </style>

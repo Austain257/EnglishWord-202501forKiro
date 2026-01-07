@@ -83,7 +83,7 @@
             </p>
           </div>
 
-          <div class="relative z-10 flex flex-wrap gap-3 sm:gap-4">
+          <div class="relative z-10 flex flex-wrap gap-3 sm:gap-4 w-full">
              <button 
               @click="currentBook ? goToWordLearning() : goToBooks()"
               class="px-8 py-3.5 bg-white text-indigo-600 rounded-xl font-bold text-base sm:text-lg shadow-lg hover:shadow-xl hover:bg-indigo-50 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center gap-2"
@@ -103,25 +103,48 @@
               </svg>
               查看计划
             </button>
-            <button 
-              @click="currentBook ? goToGame() : goToBooks()"
-              class="px-8 py-3 bg-pink-500/80 backdrop-blur-md border border-white/20 text-white rounded-xl font-semibold text-base sm:text-lg hover:bg-pink-600/90 transition-all duration-300 flex items-center gap-2"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              单词游戏
-            </button>
-            <button 
-              @click="currentBook ? goToWordOption() : goToBooks()"
-              class="px-8 py-3 bg-cyan-500/80 backdrop-blur-md border border-white/20 text-white rounded-xl font-semibold text-base sm:text-lg hover:bg-cyan-600/90 transition-all duration-300 flex items-center gap-2"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              速记挑战
-            </button>
+          </div>
+
+          <!-- 学习时长卡片 -->
+          <div class="relative z-10 w-full grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div class="flex flex-col justify-between rounded-2xl border border-white/20 bg-white/15 backdrop-blur-lg p-4 sm:p-5 shadow-lg shadow-indigo-900/20 hover:shadow-xl transition-all duration-300">
+              <div class="flex items-center justify-between text-white/80 text-xs uppercase tracking-[0.3em]">
+                今日学习
+                <button 
+                  class="text-white/70 hover:text-white transition-colors"
+                  @click="refreshStudyDuration"
+                  :title="studyStatStore.loading ? '更新中' : '刷新学习时长'"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" :class="{ 'animate-spin': studyStatStore.loading }">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
+              <div class="mt-6">
+                <p class="text-4xl font-bold text-white drop-shadow-sm">{{ studyStatStore.todayDisplay }}</p>
+                <p class="mt-2 text-sm text-white/80 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                  持续保持节奏
+                </p>
+              </div>
+            </div>
+            <div class="flex flex-col justify-between rounded-2xl border border-white/20 bg-gradient-to-br from-white/30 via-white/10 to-transparent backdrop-blur-lg p-4 sm:p-5 shadow-lg shadow-indigo-900/10 hover:shadow-xl transition-all duration-300">
+              <div class="text-xs uppercase tracking-[0.3em] text-slate-900/70 flex items-center gap-2">
+                累计学习
+                <span class="px-2 py-0.5 rounded-full bg-white/60 text-[10px] font-semibold text-slate-700">终身</span>
+              </div>
+              <div class="mt-6">
+                <p class="text-4xl font-bold text-slate-900">{{ studyStatStore.totalDisplay }}</p>
+                <p class="mt-2 text-sm text-slate-600 flex items-center gap-2">
+                  <span class="inline-flex items-center text-[10px] font-semibold text-indigo-600 bg-white/70 px-2 py-0.5 rounded-full">
+                    {{ stats.studyDays || 0 }} 天坚持
+                  </span>
+                  <span v-if="studyStatStore.lastUpdateTime" class="text-slate-500 text-xs">
+                    更新：{{ formatUpdateTime(studyStatStore.lastUpdateTime) }}
+                  </span>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -187,6 +210,55 @@
               >
                 继续学习
               </button>
+            </div>
+
+            <!-- 快速任务建议 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div class="rounded-2xl border border-slate-100 bg-gradient-to-br from-emerald-50 to-white p-4 flex flex-col gap-2 shadow-sm">
+                <div class="flex items-center justify-between text-xs font-semibold text-emerald-600 uppercase tracking-widest">
+                  待复习单词
+                  <span class="px-2 py-0.5 rounded-full bg-white text-emerald-600">{{ stats.errorWords || 0 }} 个</span>
+                </div>
+                <p class="text-2xl font-bold text-slate-900">{{ getWordMasteryRate() }}%</p>
+                <p class="text-sm text-slate-500">优先巩固错词，保持记忆曲线。</p>
+                <button
+                  @click="currentBook ? goToWordReview() : goToBooks()"
+                  class="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 hover:text-emerald-900"
+                >
+                  去复习
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+              <div class="rounded-2xl border border-slate-100 bg-gradient-to-br from-violet-50 to-white p-4 flex flex-col gap-2 shadow-sm">
+                <div class="flex items-center justify-between text-xs font-semibold text-violet-600 uppercase tracking-widest">
+                  句子强化
+                  <span class="px-2 py-0.5 rounded-full bg-white text-violet-600">{{ stats.errorSentences || 0 }} 句</span>
+                </div>
+                <p class="text-2xl font-bold text-slate-900">{{ getSentenceMasteryRate() }}%</p>
+                <p class="text-sm text-slate-500">通过听写/错句本拉齐薄弱项。</p>
+                <div class="mt-2 flex flex-wrap gap-3 text-xs font-semibold">
+                  <button
+                    @click="goToSentenceDictation"
+                    class="inline-flex items-center gap-1 text-violet-700 hover:text-violet-900"
+                  >
+                    去听写
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  <button
+                    @click="goToErrorSentenceBook"
+                    class="inline-flex items-center gap-1 text-violet-700 hover:text-violet-900"
+                  >
+                    查错句
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -594,11 +666,13 @@ import { useAuthStore } from '@/stores/auth'
 import { useBookStore } from '@/stores/book'
 import { useRouter } from 'vue-router'
 import { useMotivation } from '@/composables/useMotivation'
+import { useStudyStatStore } from '@/stores/studyStat'
 
 const { logout } = useAuth()
 const authStore = useAuthStore()
 const bookStore = useBookStore()
 const router = useRouter()
+const studyStatStore = useStudyStatStore()
 
 // 激励文案相关
 const {
@@ -704,6 +778,23 @@ const getWelcomeMessage = () => {
 const getUserInitial = () => {
   const name = user.value?.nickname || user.value?.username || 'U'
   return name.charAt(0).toUpperCase()
+}
+
+const refreshStudyDuration = async () => {
+  await studyStatStore.refreshStats()
+}
+
+const formatUpdateTime = (time) => {
+  if (!time) return ''
+  const now = new Date()
+  const updateTime = new Date(time)
+  const diffMs = now - updateTime
+  const diffMinutes = Math.floor(diffMs / (1000 * 60))
+  if (diffMinutes < 1) return '刚刚'
+  if (diffMinutes < 60) return `${diffMinutes}分钟前`
+  const diffHours = Math.floor(diffMinutes / 60)
+  if (diffHours < 24) return `${diffHours}小时前`
+  return updateTime.toLocaleDateString()
 }
 
 // 加载学习统计数据
@@ -848,6 +939,8 @@ onMounted(async () => {
     console.error('初始化课本信息失败:', error)
   }
   
+  await studyStatStore.init()
+
   // 加载激励文案
   await fetchQuotes()
   if (quotes.value.length > 1) {

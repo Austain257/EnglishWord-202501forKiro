@@ -1,52 +1,66 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- 顶部导航 -->
-    <nav class="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/65">
-      <div class="w-full px-4 sm:px-8 lg:px-16">
-        <div class="flex flex-wrap items-center justify-between gap-4 py-4">
+    <nav class="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/65 border-b border-slate-100">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="h-16 sm:h-20 flex items-center justify-between">
           <div class="flex items-center gap-4 min-w-0 flex-1">
-
-            <Button @click="goBack" variant="ghost" size="sm" class="shrink-0">
-              <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <Button @click="goBack" variant="ghost" size="sm" class="shrink-0 flex items-center gap-1 text-slate-600 hover:text-slate-900 hover:bg-white/70">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
               </svg>
               返回
             </Button>
             <div class="min-w-0">
-              <p class="text-[11px] uppercase tracking-[0.45em] text-gray-400">Sentence Lab</p>
-              <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 leading-tight">错句本</h1>
-              <p class="text-sm text-gray-500 truncate">聚焦句子弱项，循序渐进一步一个</p>
+              <p class="text-[11px] uppercase tracking-[0.45em] text-slate-400">Sentence Lab</p>
+              <div class="flex items-center gap-3">
+                <h1 class="text-xl sm:text-2xl font-semibold text-slate-900 leading-tight">错句本</h1>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-violet-50 text-violet-600">共 {{ errorSentences.length || 0 }} 句</span>
+              </div>
+              <p class="text-sm text-slate-500 truncate">聚焦句子弱项，循序渐进稳步提升</p>
             </div>
           </div>
-          <div class="flex flex-wrap items-center gap-3 justify-end flex-1">
-            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/75 text-xs text-gray-600 font-medium">
+          <div class="flex items-center gap-3 flex-1 justify-end">
+            <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/70 border border-slate-200/70 rounded-lg text-xs font-medium text-slate-600">
               <span>进度</span>
-              <span class="text-gray-900 font-semibold">{{ currentIndex + 1 }} / {{ errorSentences.length || 0 }}</span>
+              <span class="text-violet-600 font-bold">{{ currentIndex + 1 }}</span>
+              <span class="text-slate-300">/</span>
+              <span>{{ errorSentences.length || 0 }}</span>
             </div>
-            <div class="flex items-center gap-2 bg-white/80 rounded-xl px-3 py-1.5 shadow-sm shadow-gray-200/50 border border-white/40">
-              <span class="text-sm text-gray-500">模式</span>
-              <select 
-                v-model="studyMode" 
-                class="text-sm font-medium bg-transparent focus:outline-none focus:ring-0 text-gray-800"
-                @change="resetAnswerState"
+            <div class="flex items-center bg-white rounded-xl border border-slate-200/60 overflow-hidden shadow-sm">
+              <button 
+                @click="setStudyMode('review')" 
+                class="px-4 py-2 text-sm font-semibold transition-colors flex items-center gap-2"
+                :class="studyMode === 'review' ? 'bg-violet-50 text-violet-600' : 'text-slate-500 hover:text-slate-900'"
               >
-                <option value="review">复习模式</option>
-                <option value="dictation">听写模式</option>
-              </select>
+                复习模式
+              </button>
+              <button 
+                @click="setStudyMode('dictation')" 
+                class="px-4 py-2 text-sm font-semibold transition-colors flex items-center gap-2 border-l border-slate-100"
+                :class="studyMode === 'dictation' ? 'bg-violet-50 text-violet-600' : 'text-slate-500 hover:text-slate-900'"
+              >
+                听写模式
+              </button>
             </div>
             <div 
               v-if="studyMode === 'dictation'" 
-              class="flex items-center gap-2 bg-white/80 rounded-xl px-3 py-1.5 shadow-sm shadow-gray-200/50 border border-white/40"
+              class="flex items-center bg-white rounded-xl border border-slate-200/60 overflow-hidden shadow-sm"
             >
-              <span class="text-sm text-gray-500">听写</span>
-              <select 
-                v-model="dictationMode" 
-                class="text-sm font-medium bg-transparent focus:outline-none focus:ring-0 text-gray-800"
-                @change="resetAnswerState"
+              <button 
+                @click="setDictationMode('en2zh')" 
+                class="px-4 py-2 text-xs font-semibold tracking-wide transition-colors"
+                :class="dictationMode === 'en2zh' ? 'bg-white text-violet-600 shadow-inner' : 'text-slate-500 hover:text-slate-900'"
               >
-                <option value="en2zh">英译汉</option>
-                <option value="zh2en">汉译英</option>
-              </select>
+                英译汉
+              </button>
+              <button 
+                @click="setDictationMode('zh2en')" 
+                class="px-4 py-2 text-xs font-semibold tracking-wide transition-colors border-l border-slate-100"
+                :class="dictationMode === 'zh2en' ? 'bg-white text-violet-600 shadow-inner' : 'text-slate-500 hover:text-slate-900'"
+              >
+                汉译英
+              </button>
             </div>
           </div>
         </div>

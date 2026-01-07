@@ -1,36 +1,46 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- 顶部导航 -->
-    <nav class="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/65">
-      <div class="w-full px-4 sm:px-8 lg:px-16">
-        <div class="flex flex-wrap items-center justify-between gap-4 py-4">
-          <div class="flex items-center gap-4 min-w-0 flex-1">
+    <nav class="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/65">
+      <div class="w-full px-4 sm:px-6 lg:px-8">
+        <div class="h-16 sm:h-20 flex items-center justify-between">
 
-            <Button @click="goBack" variant="ghost" size="sm" class="shrink-0">
-              <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex items-center gap-4 min-w-0 flex-1">
+            <Button @click="goBack" variant="ghost" size="sm" class="shrink-0 flex items-center gap-1 text-slate-600 hover:text-slate-900 hover:bg-white/70">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
               </svg>
               返回
             </Button>
             <div class="min-w-0">
-              <p class="text-[11px] uppercase tracking-[0.45em] text-gray-400">Word Lab</p>
-              <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 leading-tight">错词本</h1>
-              <p class="text-sm text-gray-500 truncate">共 {{ totalErrorWords }} 个待攻克单词</p>
+              <p class="text-[11px] uppercase tracking-[0.45em] text-slate-400">Word Lab</p>
+              <div class="flex items-center gap-3">
+                <h1 class="text-xl sm:text-2xl font-semibold text-slate-900 leading-tight">错词本</h1>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-600">共 {{ totalErrorWords }} 个</span>
+              </div>
+              <p class="text-sm text-slate-500 truncate">专注巩固易错单词，保持记忆温度</p>
             </div>
           </div>
-          <div class="flex items-center gap-3 flex-shrink-0 justify-end flex-1">
-
-            <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 text-xs font-medium text-gray-600">
+          <div class="flex items-center gap-3 flex-1 justify-end">
+            <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/70 border border-slate-200/70 rounded-lg text-xs font-medium text-slate-600">
               <span>进度</span>
-              <span class="text-gray-900 font-semibold">{{ currentIndex + 1 }} / {{ totalErrorWords }}</span>
+              <span class="text-sky-600 font-bold">{{ currentIndex + 1 }}</span>
+              <span class="text-slate-300">/</span>
+              <span>{{ totalErrorWords }}</span>
             </div>
-            <Button @click="toggleMode" variant="outline" size="sm" class="border-gray-300 text-gray-700 hover:bg-gray-100">
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path v-if="currentMode === 'review'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              {{ currentMode === 'review' ? '复习模式' : '听写模式' }}
-            </Button>
+            <div class="flex items-center bg-white rounded-xl border border-slate-200/60 overflow-hidden shadow-sm">
+              <button 
+                @click="toggleMode" 
+                class="px-4 py-2 text-sm font-semibold transition-colors flex items-center gap-2"
+                :class="currentMode === 'review' ? 'bg-sky-50 text-sky-600' : 'text-slate-500 hover:text-slate-900'"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path v-if="currentMode === 'review'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                </svg>
+                {{ currentMode === 'review' ? '复习模式' : '听写模式' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
