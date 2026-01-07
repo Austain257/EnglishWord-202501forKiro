@@ -27,4 +27,8 @@ public interface EnglishService {
     boolean setNotGrasp(int id);
 
     List<Sentence> getErrorSentence(int userId);
+
+    boolean sentenceNotGrasp(int id);
+
+    boolean sentenceIsGrasp(int id);
 }

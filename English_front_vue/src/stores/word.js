@@ -115,6 +115,19 @@ export const useWordStore = defineStore('word', () => {
     }
   }
 
+  const markCurrentAsError = async () => {
+    if (!currentWord.value) return
+    try {
+      await wordService.markAsNotGrasped(currentWord.value.id)
+      currentWord.value.isGrasp = 2
+      currentWord.value.errorTimes = (currentWord.value.errorTimes || 0) + 1
+      return { success: true }
+    } catch (error) {
+      console.error('标记为未掌握失败:', error)
+      throw error
+    }
+  }
+
   const markAsNotGrasped = async (wordId) => {
     try {
       await wordService.markAsNotGrasped(wordId)
@@ -159,6 +172,7 @@ export const useWordStore = defineStore('word', () => {
     toggleChinese,
     markCurrentAsGrasped,
     markCurrentAsNotGrasped,
+    markCurrentAsError,
     markAsNotGrasped,
     setLearningRange,
     resetState

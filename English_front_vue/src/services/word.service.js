@@ -27,5 +27,10 @@ export const wordService = {
   // 标记单词为未掌握
   async markAsNotGrasped(wordId) {
     return api.post(`/api/english/notGrasp/${wordId}`)
+  },
+
+  // 兼容错词本页面“标记未掌握”调用
+  async markAsError(wordId) {
+    return this.markAsNotGrasped(wordId)
   }
 }

@@ -157,14 +157,10 @@ public class EnglishController {
         }
         return Result.success(sentenceList);
     }
-    
-    @PostMapping("/sentenceNotGrasp/{id}")
-    public Result sentenceNotGrasp(@PathVariable int id){
-        System.out.println("错句登记操作已触发");
-        boolean result = englishService.setNotGrasp(id);
-        return result ? Result.success() : Result.error("添加失败");
-    }
 
+    /**
+     * 获取错误句子列表
+     */
     @GetMapping("/errorSentence/{userId}")
     public Result getErrorSentence(@PathVariable int userId){
         System.out.println("获取错误句子已触发");
@@ -173,5 +169,26 @@ public class EnglishController {
             return Result.success("你很棒，没有错误句子");
         }
         return Result.success(errorSentence);
+    }
+
+
+    /**
+     * 添加错误句子/标记未掌握/标记错句 -- 在原数据标记
+     */
+    @PostMapping("/sentenceNotGrasp/{id}")
+    public Result sentenceNotGrasp(@PathVariable int id){
+        System.out.println("错句登记操作已触发");
+        boolean result = englishService.sentenceNotGrasp(id);
+        return result ? Result.success() : Result.error("添加失败");
+    }
+
+    /**
+     * 句子已掌握
+     */
+    @PostMapping("/sentenceIsGrasp/{id}")
+    public Result sentenceIsGrasp(@PathVariable int id){     // TODO 还未添加触发器 2026.01.07 09：43
+        System.out.println("触发标记句子已掌握");
+        boolean result = englishService.sentenceIsGrasp(id);
+        return result ? Result.success() : Result.error("删除失败");
     }
 }

@@ -46,4 +46,10 @@ public interface EnglishMapper {
     // 获取用户所有未掌握的句子
     @Select("select * from english_sentence01 where user_id = #{userId} and is_grasp = 2")
     List<Sentence> getErrorSentence(int userId);
+
+    @Update("UPDATE english_sentence01 SET is_grasp = 2, error_times = error_times + 1 where id = #{id}")
+    int sentenceNotGrasp(int id);
+
+    @Update("UPDATE english_sentence01 SET is_grasp = 1 where id = #{id}")
+    int sentenceIsGrasp(int id);
 }

@@ -10,16 +10,17 @@ export const sentenceService = {
   
   // 标记句子为已掌握
   async markAsGrasped(sentenceId) {
-    return api.post(`/api/english/isGrasp/${sentenceId}`)
+    return api.post(`/api/english/sentenceIsGrasp/${sentenceId}`)
   },
   
   // 标记句子为错句
   async markAsError(sentenceId) {
-    return api.post(`/api/english/notGrasp/${sentenceId}`)
+    return api.post(`/api/english/sentenceNotGrasp/${sentenceId}`)
   },
   
   // 获取错句列表
   async getErrorSentences(userId) {
+
     return api.get(`/api/english/errorSentence/${userId}`)
   }
 }

@@ -50,12 +50,12 @@ public class EnglishServiceImpl implements EnglishService {
         return wordList;
     }
 
-        @Override
-        public List<Englishs> getErrorWordList(WordRequest request) {
+    @Override
+    public List<Englishs> getErrorWordList(WordRequest request) {
 
-            // TODO 直接返回错词列表，后续需要实现算法，推荐错词，更好的学习
-            return englishMapper.getErrorWordList(request);
-        }
+        // TODO 直接返回错词列表，后续需要实现算法，推荐错词，更好的学习
+        return englishMapper.getErrorWordList(request);
+    }
 
     @Override
     public boolean isGrasp(int id) {
@@ -83,5 +83,17 @@ public class EnglishServiceImpl implements EnglishService {
     @Override
     public List<Sentence> getErrorSentence(int userId) {
         return englishMapper.getErrorSentence(userId);
+    }
+
+    @Override
+    public boolean sentenceNotGrasp(int id) {
+        int result = englishMapper.sentenceNotGrasp(id);
+        return result > 0;
+    }
+
+    @Override
+    public boolean sentenceIsGrasp(int id) {
+        int result = englishMapper.sentenceIsGrasp(id);
+        return result > 0;
     }
 }
