@@ -1,530 +1,499 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- 顶部导航 -->
-    <nav class="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/65">
-      <div class="w-full px-4 sm:px-6 lg:px-8">
-        <div class="h-16 sm:h-20 flex items-center justify-between">
+  <div class="min-h-screen bg-[#F8FAFC] flex flex-col relative overflow-hidden font-sans text-slate-800">
+    <!-- 背景装饰，融合学习&听写页面 -->
+    <div class="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-rose-50/80 via-blue-50/60 to-transparent pointer-events-none"></div>
+    <div class="absolute -top-20 -right-16 w-96 h-96 bg-sky-100/40 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute top-48 -left-24 w-80 h-80 bg-rose-100/40 rounded-full blur-3xl pointer-events-none"></div>
 
-          <div class="flex items-center gap-4 min-w-0 flex-1">
-            <Button @click="goBack" variant="ghost" size="sm" class="shrink-0 flex items-center gap-1 text-slate-600 hover:text-slate-900 hover:bg-white/70">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-              </svg>
-              返回
-            </Button>
-            <div class="min-w-0">
-              <p class="text-[11px] uppercase tracking-[0.45em] text-slate-400">Word Lab</p>
-              <div class="flex items-center gap-3">
-                <h1 class="text-xl sm:text-2xl font-semibold text-slate-900 leading-tight">错词本</h1>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-600">共 {{ totalErrorWords }} 个</span>
-              </div>
-              <p class="text-sm text-slate-500 truncate">专注巩固易错单词，保持记忆温度</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 flex-1 justify-end">
-            <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/70 border border-slate-200/70 rounded-lg text-xs font-medium text-slate-600">
-              <span>进度</span>
-              <span class="text-sky-600 font-bold">{{ currentIndex + 1 }}</span>
-              <span class="text-slate-300">/</span>
-              <span>{{ totalErrorWords }}</span>
-            </div>
-            <div class="flex items-center bg-white rounded-xl border border-slate-200/60 overflow-hidden shadow-sm">
-              <button 
-                @click="toggleMode" 
-                class="px-4 py-2 text-sm font-semibold transition-colors flex items-center gap-2"
-                :class="currentMode === 'review' ? 'bg-sky-50 text-sky-600' : 'text-slate-500 hover:text-slate-900'"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path v-if="currentMode === 'review'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                </svg>
-                {{ currentMode === 'review' ? '复习模式' : '听写模式' }}
-              </button>
-            </div>
+    <!-- 顶部导航 -->
+    <nav class="relative z-10 px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <button
+          @click="goBack"
+          class="p-2 -ml-2 text-slate-500 hover:text-slate-900 hover:bg-white/60 rounded-xl transition-all duration-200"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div class="flex flex-col">
+          <h1 class="text-lg font-bold text-slate-900 tracking-tight">错词本</h1>
+          <div class="flex items-center gap-2 text-xs text-slate-500">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+            <span>{{ currentBook?.name || '我的错词本' }}</span>
           </div>
         </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/60 text-xs font-medium text-slate-600">
+          <span>进度</span>
+          <span class="font-bold text-rose-600">{{ totalWords === 0 ? 0 : currentIndex + 1 }}</span>
+          <span class="text-slate-400">/</span>
+          <span>{{ totalWords }}</span>
+        </div>
+
+        <div class="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 p-1 flex items-center text-xs font-semibold">
+          <button
+            @click="setMode('learning')"
+            :class="['px-3 sm:px-4 py-1.5 rounded-xl transition-all', mode === 'learning' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-900']"
+          >
+            错词学习
+          </button>
+          <button
+            @click="setMode('dictation')"
+            :class="['px-3 sm:px-4 py-1.5 rounded-xl transition-all', mode === 'dictation' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-500 hover:text-slate-900']"
+          >
+            错词听写
+          </button>
+        </div>
+
+        <button
+          @click="reload"
+          class="hidden sm:flex items-center gap-2 px-3 py-2 bg-white shadow-sm border border-slate-200/60 rounded-xl text-xs font-medium text-slate-600 hover:text-rose-600 hover:border-rose-200 transition-all active:scale-95"
+        >
+          重新加载
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M5 19A9 9 0 0119 5" />
+          </svg>
+        </button>
       </div>
     </nav>
 
-    <div class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
-      <div class="px-4 py-6 sm:px-0">
-        <!-- 统计信息 -->
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="text-center">
-              <div class="text-2xl font-bold text-red-600">{{ totalErrorWords }}</div>
-              <div class="text-sm text-gray-600">错词总数</div>
-            </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-blue-600">{{ currentIndex + 1 }}</div>
-              <div class="text-sm text-gray-600">当前位置</div>
-            </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-orange-600">{{ getErrorTimes() }}</div>
-              <div class="text-sm text-gray-600">错误次数</div>
-            </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-green-600">{{ masteredToday }}</div>
-              <div class="text-sm text-gray-600">今日掌握</div>
-            </div>
-          </div>
+    <!-- 主体 -->
+    <main class="flex-1 relative z-10 flex flex-col max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-8">
+      <!-- 进度条 (移动端) -->
+      <div class="sm:hidden mb-6 px-1">
+        <div class="flex justify-between text-xs font-medium text-slate-500 mb-2">
+          <span>已掌握进度</span>
+          <span>{{ progress }}%</span>
         </div>
-
-        <!-- 进度条 -->
-        <div class="mb-6">
-          <ProgressBar 
-            :current="currentIndex + 1" 
-            :total="totalErrorWords" 
-          />
-        </div>
-
-        <!-- 加载状态 -->
-        <div v-if="loading" class="flex justify-center py-12">
-          <Loading size="lg" text="加载错词中..." />
-        </div>
-
-        <!-- 复习模式 -->
-        <div v-else-if="currentMode === 'review' && currentWord" class="space-y-6">
-          <WordCard 
-            :word="currentWord" 
-            :show-chinese="showChinese" 
-          />
-          
-          <!-- 控制按钮 -->
-          <div class="flex justify-center space-x-3 flex-wrap gap-2">
-            <Button 
-              @click="prevWord" 
-              :disabled="!hasPrev"
-              variant="secondary"
-            >
-              上一个
-            </Button>
-            
-            <Button 
-              @click="toggleChinese" 
-              variant="outline"
-              :class="showChinese ? 'bg-blue-50 text-blue-600' : ''"
-            >
-              {{ showChinese ? '隐藏中文' : '显示中文' }}
-            </Button>
-            
-            <Button 
-              @click="markAsGrasped" 
-              variant="success"
-              :disabled="markingGrasped"
-            >
-              {{ markingGrasped ? '标记中...' : '已掌握' }}
-            </Button>
-            
-            <Button 
-              @click="markAsNotGrasped" 
-              variant="danger"
-              :disabled="markingNotGrasped"
-            >
-              {{ markingNotGrasped ? '标记中...' : '未掌握' }}
-            </Button>
-            
-            <Button 
-              @click="nextWord" 
-              :disabled="!hasNext"
-              variant="primary"
-            >
-              下一个
-            </Button>
-          </div>
-        </div>
-
-        <!-- 听写模式 -->
-        <div v-else-if="currentMode === 'dictation' && currentWord" class="space-y-6">
-          <div class="bg-white rounded-lg shadow p-6 max-w-2xl mx-auto">
-            <!-- 顶部信息栏 -->
-            <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
-              <div class="text-sm text-gray-500">
-                第 {{ currentIndex + 1 }} / {{ totalErrorWords }} 个
-              </div>
-              <div class="flex items-center space-x-4 text-sm text-gray-500">
-                <span>错误 {{ currentWord.errorTimes || 0 }} 次</span>
-                <span>频次 {{ currentWord.times || 0 }}</span>
-              </div>
-            </div>
-
-            <!-- 中文释义 -->
-            <div class="text-center mb-6">
-              <div class="text-xl text-gray-800 font-medium mb-4">
-                {{ currentWord.chinese }}
-              </div>
-              
-              <!-- 发音按钮 -->
-              <button 
-                @click="playPronunciation" 
-                class="inline-flex items-center px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
-              >
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M6.343 6.343L4.93 4.93A1 1 0 003.515 6.343l1.414 1.414L6.343 6.343zM12 2v20"></path>
-                </svg>
-                播放发音
-              </button>
-            </div>
-
-            <!-- 输入区域 -->
-            <div class="mb-6">
-              <input
-                v-model="dictationInput"
-                @keyup.enter="checkDictation"
-                type="text"
-                placeholder="请输入英文单词..."
-                class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
-                :class="showDictationResult ? (dictationCorrect ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50') : ''"
-                :disabled="showDictationResult"
-                autofocus
-              />
-              <div v-if="!showDictationResult" class="text-center mt-2 text-sm text-gray-400">
-                输入完成后按 Enter 键检查答案
-              </div>
-            </div>
-
-            <!-- 结果显示 -->
-            <div v-if="showDictationResult" class="mb-6">
-              <div v-if="dictationCorrect" class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                <div class="text-green-600 font-medium mb-1">✓ 回答正确！</div>
-                <div class="text-sm text-green-600">继续保持</div>
-              </div>
-              
-              <div v-else class="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div class="text-center text-red-600 font-medium mb-3">✗ 答案错误</div>
-                <div class="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <div class="text-gray-600 mb-1">您的答案</div>
-                    <div class="font-medium text-red-600">{{ dictationInput }}</div>
-                  </div>
-                  <div>
-                    <div class="text-gray-600 mb-1">正确答案</div>
-                    <div class="font-medium text-green-600">{{ currentWord.word }}</div>
-                  </div>
-                </div>
-                <div class="text-center mt-3 text-sm text-gray-600">
-                  音标：{{ currentWord.pronounce }}
-                </div>
-              </div>
-            </div>
-
-            <!-- 操作按钮 -->
-            <div class="flex justify-center space-x-3">
-              <Button 
-                v-if="!showDictationResult"
-                @click="checkDictation" 
-                variant="primary"
-                :disabled="!dictationInput.trim()"
-              >
-                检查答案
-              </Button>
-              
-              <template v-if="showDictationResult">
-                <Button 
-                  v-if="dictationCorrect"
-                  @click="markAsGrasped" 
-                  variant="success"
-                  :disabled="markingGrasped"
-                >
-                  {{ markingGrasped ? '标记中...' : '已掌握' }}
-                </Button>
-                
-                <Button 
-                  v-if="!dictationCorrect"
-                  @click="markAsNotGrasped" 
-                  variant="danger"
-                  :disabled="markingNotGrasped"
-                >
-                  {{ markingNotGrasped ? '标记中...' : '需要复习' }}
-                </Button>
-                
-                <Button 
-                  @click="nextDictationWord" 
-                  :disabled="!hasNext"
-                  variant="primary"
-                >
-                  {{ hasNext ? '下一个' : '完成' }}
-                </Button>
-              </template>
-            </div>
-
-            <!-- 底部导航 -->
-            <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
-              <Button 
-                @click="prevWord" 
-                :disabled="!hasPrev"
-                variant="ghost"
-                size="sm"
-              >
-                ← 上一个
-              </Button>
-              
-              <!-- 简单进度条 -->
-              <div class="flex-1 mx-4">
-                <div class="w-full h-1 bg-gray-200 rounded-full">
-                  <div 
-                    class="h-1 bg-blue-500 rounded-full transition-all duration-300"
-                    :style="{ width: `${((currentIndex + 1) / totalErrorWords) * 100}%` }"
-                  ></div>
-                </div>
-              </div>
-              
-              <Button 
-                @click="nextWord" 
-                :disabled="!hasNext"
-                variant="ghost"
-                size="sm"
-              >
-                下一个 →
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 无数据状态 -->
-        <div v-else-if="!loading && errorWords.length === 0" class="text-center py-12">
-          <div class="w-20 h-20 bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
-            <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-          </div>
-          <h3 class="text-2xl font-bold text-gray-900 mb-3">太棒了！</h3>
-          <p class="text-gray-600 mb-2">您的错词本是空的</p>
-          <p class="text-sm text-gray-400 mb-8">继续保持，加油学习！</p>
-          <Button @click="goBack" variant="primary" class="px-8">
-            返回首页
-          </Button>
+        <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-rose-500 to-sky-500 rounded-full transition-all duration-300 ease-out" :style="{ width: `${progress}%` }"></div>
         </div>
       </div>
-    </div>
+
+      <!-- 状态区域 -->
+      <div v-if="loading" class="flex-1 flex flex-col items-center justify-center min-h-[360px]">
+        <div class="w-12 h-12 border-4 border-rose-100 border-t-rose-500 rounded-full animate-spin mb-4"></div>
+        <p class="text-slate-400 text-sm font-medium animate-pulse">正在拉取错词列表...</p>
+      </div>
+
+      <div v-else-if="!currentWord" class="flex-1 flex flex-col items-center justify-center min-h-[360px] text-center">
+        <div class="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-6 text-slate-300">
+          <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m9-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-slate-900 mb-2">当前词书暂无错词</h3>
+        <p class="text-slate-500 mb-8 max-w-xs mx-auto">继续保持！若已做更改请重新加载或前往学习/听写页面刷新数据。</p>
+        <button
+          @click="reload"
+          class="px-8 py-3 bg-gradient-to-r from-rose-500 to-sky-500 hover:opacity-90 text-white rounded-xl font-semibold shadow-lg shadow-rose-300/50 transition-all hover:-translate-y-0.5"
+        >
+          重新加载
+        </button>
+      </div>
+
+      <!-- 错词学习模式 -->
+      <div v-else-if="mode === 'learning'" class="flex-1 flex flex-col justify-center py-6">
+        <div class="relative group perspective-1000 w-full max-w-2xl mx-auto">
+          <div class="relative bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden transition-all duration-500">
+            <div class="absolute top-6 right-6">
+              <span
+                class="px-3 py-1 rounded-full text-xs font-bold tracking-wide border"
+                :class="currentWord.isGrasp === 1 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'"
+              >
+                {{ currentWord.isGrasp === 1 ? '已掌握' : '待攻克' }}
+              </span>
+            </div>
+
+            <div class="p-8 sm:p-12 flex flex-col items-center text-center">
+              <h2 class="text-5xl sm:text-6xl font-bold text-slate-900 mb-4 tracking-tight">
+                {{ currentWord.word }}
+              </h2>
+
+              <div class="flex items-center gap-3 mb-10">
+                <span class="text-xl text-slate-500 font-serif italic">
+                  {{ currentWord.phonetic || currentWord.pronounce || '...' }}
+                </span>
+                <button
+                  @click="playPronunciation"
+                  class="p-2 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-100 hover:scale-110 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  </svg>
+                </button>
+              </div>
+
+              <div class="w-full max-w-lg mx-auto mt-4">
+                <div class="text-xl sm:text-2xl text-slate-600 font-medium leading-relaxed px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100/50">
+                  {{ currentWord.chinese || '暂无释义' }}
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 mt-8 w-full max-w-sm">
+                <div class="flex flex-col items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                  <span class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">累计错误</span>
+                  <span class="text-lg font-bold text-rose-500">{{ currentWord.errorTimes || 0 }} 次</span>
+                </div>
+                <div class="flex flex-col items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                  <span class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">最后出现</span>
+                  <span class="text-lg font-bold text-slate-700">{{ currentWord.times || 0 }} 次</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 控制按钮 -->
+        <div class="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-6">
+          <button
+            @click="prevWord"
+            :disabled="!hasPrev"
+            class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 active:scale-95"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            上一个
+          </button>
+
+          <button
+            @click="handleNotGrasped"
+            class="w-full sm:flex-1 px-6 py-4 rounded-2xl font-bold text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-100 transition-all active:scale-95"
+          >
+            还不会
+          </button>
+
+          <button
+            @click="handleGrasped"
+            class="w-full sm:flex-1 px-6 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-rose-500 to-sky-500 shadow-lg shadow-rose-300/40 hover:opacity-90 transition-all active:scale-95"
+          >
+            标记已掌握
+          </button>
+
+          <button
+            @click="nextWord"
+            :disabled="!hasNext"
+            class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+          >
+            下一个
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 错词听写模式 -->
+      <div v-else class="flex-1 flex flex-col justify-center py-6">
+        <div class="relative w-full max-w-2xl mx-auto">
+          <div class="relative bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden transition-all duration-500">
+            <div class="p-8 sm:p-12 flex flex-col items-center text-center">
+              <div class="mb-8 w-full min-h-[80px] flex items-center justify-center">
+                <div class="flex flex-col items-center">
+                  <button
+                    @click="playPronunciation"
+                    :disabled="isPlaying"
+                    class="w-20 h-20 rounded-full bg-sky-500 text-white shadow-lg shadow-sky-500/40 flex items-center justify-center transition-all hover:scale-105 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <svg v-if="!isPlaying" class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                    </svg>
+                    <svg v-else class="w-10 h-10 sound-wave" viewBox="0 0 24 24">
+                      <line class="sound-wave-line" x1="4" y1="8" x2="4" y2="16"></line>
+                      <line class="sound-wave-line" x1="8" y1="4" x2="8" y2="20"></line>
+                      <line class="sound-wave-line" x1="12" y1="10" x2="12" y2="14"></line>
+                      <line class="sound-wave-line" x1="16" y1="6" x2="16" y2="18"></line>
+                      <line class="sound-wave-line" x1="20" y1="11" x2="20" y2="13"></line>
+                    </svg>
+                  </button>
+                  <p class="mt-4 text-sm text-slate-400 font-medium">点击播放发音</p>
+                </div>
+              </div>
+
+              <div class="w-full max-w-sm mx-auto relative">
+                <input
+                  ref="inputRef"
+                  v-model="userInput"
+                  type="text"
+                  placeholder="输入你听到的单词..."
+                  class="w-full text-center text-2xl font-bold text-slate-800 px-6 py-4 bg-slate-50 border-2 rounded-2xl transition-all focus:outline-none focus:bg-white"
+                  :class="{
+                    'border-slate-100 focus:border-sky-500': !showAnswer,
+                    'border-emerald-500 bg-emerald-50 text-emerald-700 animate-shake-correct': showAnswer && isCorrect,
+                    'border-rose-500 bg-rose-50 text-rose-800 animate-shake-wrong': showAnswer && !isCorrect
+                  }"
+                  @keyup.enter="checkAnswer"
+                  :disabled="showAnswer"
+                />
+              </div>
+
+              <div class="mt-6 min-h-[60px] flex flex-col items-center justify-center">
+                <div v-if="showAnswer" class="flex flex-col items-center animate-fade-in">
+                  <p class="text-2xl font-bold" :class="isCorrect ? 'text-emerald-600' : 'text-rose-600'">
+                    {{ currentWord.word }}
+                  </p>
+                  <p class="mt-1 text-slate-500">{{ currentWord.chinese }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-slate-50/60 border-t border-slate-100 p-6">
+              <div v-if="!showAnswer" class="flex gap-4">
+                <button
+                  @click="handleDictationWrong"
+                  class="w-1/3 py-4 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95"
+                >
+                  我不会
+                </button>
+                <button
+                  @click="checkAnswer"
+                  :disabled="!userInput.trim()"
+                  class="flex-1 py-4 rounded-xl font-bold text-white bg-sky-500 shadow-lg shadow-sky-500/30 hover:bg-sky-600 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  检查答案
+                </button>
+              </div>
+              <div v-else class="flex gap-4">
+                <button
+                  @click="handleGrasped"
+                  class="w-1/3 py-4 rounded-xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-all active:scale-95"
+                >
+                  标记掌握
+                </button>
+                <button
+                  @click="nextWord"
+                  class="flex-1 py-4 rounded-xl font-bold text-white bg-slate-800 hover:bg-slate-900 transition-all active:scale-95"
+                >
+                  {{ hasNext ? '下一个' : '完成重练' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { useWordStore } from '@/stores/word'
 import { useAuthStore } from '@/stores/auth'
 import { useBookStore } from '@/stores/book'
-import { useToast } from '@/composables/useToast'
 import { wordService } from '@/services/word.service'
-import Button from '@/components/common/Button.vue'
-import Loading from '@/components/common/Loading.vue'
-import WordCard from '@/components/learning/WordCard.vue'
-import ProgressBar from '@/components/learning/ProgressBar.vue'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
-const wordStore = useWordStore()
 const authStore = useAuthStore()
 const bookStore = useBookStore()
-const { success, error } = useToast()
+const { success, error, info } = useToast()
 
-// 状态
 const loading = ref(false)
-const currentMode = ref('review') // 'review' 或 'dictation'
-const errorWords = ref([])
+const words = ref([])
 const currentIndex = ref(0)
-const showChinese = ref(false)
-const masteredToday = ref(0)
+const mode = ref('learning') // learning | dictation
+const userInput = ref('')
+const showAnswer = ref(false)
+const isCorrect = ref(false)
+const isPlaying = ref(false)
+const inputRef = ref(null)
 
-// 标记状态
-const markingGrasped = ref(false)
-const markingNotGrasped = ref(false)
-
-// 听写模式状态
-const dictationInput = ref('')
-const showDictationResult = ref(false)
-const dictationCorrect = ref(false)
-
-// 计算属性
-const currentWord = computed(() => errorWords.value[currentIndex.value] || null)
-const totalErrorWords = computed(() => errorWords.value.length)
-const hasNext = computed(() => currentIndex.value < errorWords.value.length - 1)
+const currentWord = computed(() => words.value[currentIndex.value] || null)
+const totalWords = computed(() => words.value.length)
+const hasNext = computed(() => currentIndex.value < totalWords.value - 1)
 const hasPrev = computed(() => currentIndex.value > 0)
+const progress = computed(() => {
+  if (totalWords.value === 0) return 0
+  return Math.round(((currentIndex.value + 1) / totalWords.value) * 100)
+})
+const currentBook = computed(() => bookStore.currentBook)
 
-// 方法
-const goBack = () => {
-  router.push('/')
-}
-
-const getErrorTimes = () => {
-  return currentWord.value?.errorTimes || 0
+const ensureContext = () => {
+  if (!authStore.user?.id) throw new Error('用户未登录')
+  if (!bookStore.currentBookId) throw new Error('请先选择词书')
 }
 
 const loadErrorWords = async () => {
   try {
+    ensureContext()
     loading.value = true
-    
-    if (!authStore.user?.id) {
-      throw new Error('用户未登录')
-    }
-    
-    // 如果没有当前课本，尝试初始化
-    if (!bookStore.currentBookId) {
-      console.log('没有当前课本，尝试初始化...')
-      try {
-        await bookStore.fetchBooks()
-        bookStore.initializeBook()
-      } catch (initError) {
-        console.error('初始化课本失败:', initError)
-      }
-    }
-    
-    if (!bookStore.currentBookId) {
-      throw new Error('请先选择课本')
-    }
-    
-    console.log('开始加载错词，用户ID:', authStore.user.id, '课本ID:', bookStore.currentBookId)
-    
-    // 获取错词列表（isGrasp=2的单词）
-    const params = {
+    const res = await wordService.getErrorWordList({
       userId: authStore.user.id,
       bookId: bookStore.currentBookId
-    }
-    
-    const response = await wordService.getErrorWordList(params)
-    console.log('错词接口响应:', response)
-    console.log('错词数据:', response?.data)
-    
-    // 处理响应数据，兼容不同的响应格式
-    if (Array.isArray(response)) {
-      errorWords.value = response
-    } else if (response?.data && Array.isArray(response.data)) {
-      errorWords.value = response.data
-    } else if (response?.data?.list && Array.isArray(response.data.list)) {
-      errorWords.value = response.data.list
-    } else {
-      errorWords.value = []
-    }
-    
-    console.log('解析后的错词列表:', errorWords.value)
-    console.log('错词数量:', errorWords.value.length)
+    })
+    words.value = Array.isArray(res.data) ? res.data : []
     currentIndex.value = 0
-    
+    resetDictationState()
   } catch (err) {
-    console.error('加载错词失败:', err)
-    error('加载错词失败：' + err.message)
+    console.error(err)
+    error(err.message || '获取错词列表失败')
+    words.value = []
   } finally {
     loading.value = false
   }
 }
 
-const toggleMode = () => {
-  currentMode.value = currentMode.value === 'review' ? 'dictation' : 'review'
-  // 重置听写状态
+const goBack = () => router.push('/')
+
+const reload = () => loadErrorWords()
+
+const setMode = (target) => {
+  mode.value = target
   resetDictationState()
-}
-
-const resetDictationState = () => {
-  dictationInput.value = ''
-  showDictationResult.value = false
-  dictationCorrect.value = false
-}
-
-const playPronunciation = () => {
-  if (currentWord.value?.word) {
-    // 使用浏览器的语音合成API
-    const utterance = new SpeechSynthesisUtterance(currentWord.value.word)
-    utterance.lang = 'en-US'
-    utterance.rate = 0.8
-    speechSynthesis.speak(utterance)
-  }
-}
-
-const checkDictation = () => {
-  if (!dictationInput.value.trim() || !currentWord.value) return
-  
-  const userInput = dictationInput.value.trim().toLowerCase()
-  const correctAnswer = currentWord.value.word.toLowerCase()
-  
-  dictationCorrect.value = userInput === correctAnswer
-  showDictationResult.value = true
-  
-  if (!dictationCorrect.value) {
-    // 自动标记为未掌握
-    setTimeout(() => {
-      markAsNotGrasped()
-    }, 1000)
-  }
-}
-
-const nextDictationWord = () => {
-  if (hasNext.value) {
-    currentIndex.value++
-    resetDictationState()
+  if (target === 'dictation') {
+    nextTick(() => inputRef.value?.focus())
   }
 }
 
 const nextWord = () => {
   if (hasNext.value) {
-    currentIndex.value++
-    showChinese.value = false
+    currentIndex.value += 1
+  } else if (totalWords.value > 0) {
+    info('本组错词已完成，重新开始循环')
+    currentIndex.value = 0
   }
+  resetDictationState()
 }
 
 const prevWord = () => {
   if (hasPrev.value) {
-    currentIndex.value--
-    showChinese.value = false
+    currentIndex.value -= 1
+    resetDictationState()
   }
 }
 
-const toggleChinese = () => {
-  showChinese.value = !showChinese.value
+const handleRemovalAfterGrasp = () => {
+  words.value.splice(currentIndex.value, 1)
+  if (currentIndex.value >= words.value.length) {
+    currentIndex.value = Math.max(words.value.length - 1, 0)
+  }
+  resetDictationState()
 }
 
-const markAsGrasped = async () => {
+const handleGrasped = async () => {
   if (!currentWord.value) return
-  
   try {
-    markingGrasped.value = true
     await wordService.markAsGrasped(currentWord.value.id)
-    
-    // 从错词列表中移除
-    errorWords.value.splice(currentIndex.value, 1)
-    masteredToday.value++
-    
-    // 调整当前索引
-    if (currentIndex.value >= errorWords.value.length && errorWords.value.length > 0) {
-      currentIndex.value = errorWords.value.length - 1
-    }
-    
-    success('已标记为掌握')
-    
+    success('已标记掌握，移出错词本')
+    handleRemovalAfterGrasp()
   } catch (err) {
-    error('标记失败：' + err.message)
-  } finally {
-    markingGrasped.value = false
+    console.error(err)
+    error('标记失败：' + (err.message || ''))
   }
 }
 
-const markAsNotGrasped = async () => {
+const handleNotGrasped = async () => {
   if (!currentWord.value) return
-  
   try {
-    markingNotGrasped.value = true
-    await wordService.markAsError(currentWord.value.id)
-    
-    // 更新错误次数
-    if (currentWord.value) {
-      currentWord.value.errorTimes = (currentWord.value.errorTimes || 0) + 1
-    }
-    
-    success('已标记为未掌握')
-    
-    // 自动跳转到下一个单词
-    if (hasNext.value) {
-      nextWord()
-    }
-    
+    await wordService.markAsNotGrasped(currentWord.value.id)
+    currentWord.value.errorTimes = (currentWord.value.errorTimes || 0) + 1
+    info('已记录为未掌握，继续复习')
   } catch (err) {
-    error('标记失败：' + err.message)
-  } finally {
-    markingNotGrasped.value = false
+    console.error(err)
+    error('标记失败：' + (err.message || ''))
   }
 }
+
+const handleDictationWrong = async () => {
+  if (!currentWord.value) return
+  await handleNotGrasped()
+  isCorrect.value = false
+  showAnswer.value = true
+}
+
+const checkAnswer = async () => {
+  if (!currentWord.value || !userInput.value.trim()) return
+  const answer = currentWord.value.word?.trim().toLowerCase()
+  isCorrect.value = userInput.value.trim().toLowerCase() === answer
+  showAnswer.value = true
+  if (!isCorrect.value) {
+    await handleNotGrasped()
+  }
+}
+
+const playPronunciation = () => {
+  if (!currentWord.value || isPlaying.value) return
+  if (!('speechSynthesis' in window)) {
+    error('当前浏览器不支持语音播放')
+    return
+  }
+
+  const text = currentWord.value.word
+  window.speechSynthesis.cancel()
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = 'en-US'
+  isPlaying.value = true
+  utterance.onend = () => { isPlaying.value = false }
+  utterance.onerror = () => { isPlaying.value = false }
+  window.speechSynthesis.speak(utterance)
+}
+
+const resetDictationState = () => {
+  userInput.value = ''
+  showAnswer.value = false
+  isCorrect.value = false
+  nextTick(() => {
+    if (mode.value === 'dictation') {
+      inputRef.value?.focus()
+    }
+  })
+}
+
+watch(
+  () => bookStore.currentBookId,
+  (newVal, oldVal) => {
+    if (newVal && newVal !== oldVal) {
+      loadErrorWords()
+    }
+  }
+)
 
 onMounted(async () => {
   await loadErrorWords()
 })
 </script>
+
+<style scoped>
+.sound-wave-line {
+  stroke: white;
+  stroke-width: 2;
+  stroke-linecap: round;
+  animation: wave 0.8s infinite ease-in-out;
+}
+.sound-wave-line:nth-child(2) { animation-delay: 0.1s; }
+.sound-wave-line:nth-child(3) { animation-delay: 0.2s; }
+.sound-wave-line:nth-child(4) { animation-delay: 0.3s; }
+.sound-wave-line:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.6); }
+  50% { transform: scaleY(1.2); }
+}
+
+.animate-shake-correct {
+  animation: shake-correct 0.4s ease;
+}
+
+.animate-shake-wrong {
+  animation: shake-wrong 0.4s ease;
+}
+
+@keyframes shake-correct {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+
+@keyframes shake-wrong {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+</style>

@@ -203,7 +203,10 @@ public class StudySessionController {
         
         // 通过TokenService验证token并获取用户ID
         if (token != null && !token.trim().isEmpty()) {
-            return tokenService.validateTokenAndGetUserId(token);
+            Long userId = tokenService.validateTokenAndGetUserId(token);
+            if (userId != null) {
+                return userId;
+            }
         }
         
         // 临时测试方式：直接从header或参数获取用户ID

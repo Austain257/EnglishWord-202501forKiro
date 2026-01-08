@@ -1,519 +1,488 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- 顶部导航 -->
-    <nav class="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/65 border-b border-slate-100">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="h-16 sm:h-20 flex items-center justify-between">
-          <div class="flex items-center gap-4 min-w-0 flex-1">
-            <Button @click="goBack" variant="ghost" size="sm" class="shrink-0 flex items-center gap-1 text-slate-600 hover:text-slate-900 hover:bg-white/70">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-              </svg>
-              返回
-            </Button>
-            <div class="min-w-0">
-              <p class="text-[11px] uppercase tracking-[0.45em] text-slate-400">Sentence Lab</p>
-              <div class="flex items-center gap-3">
-                <h1 class="text-xl sm:text-2xl font-semibold text-slate-900 leading-tight">错句本</h1>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-violet-50 text-violet-600">共 {{ errorSentences.length || 0 }} 句</span>
-              </div>
-              <p class="text-sm text-slate-500 truncate">聚焦句子弱项，循序渐进稳步提升</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 flex-1 justify-end">
-            <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/70 border border-slate-200/70 rounded-lg text-xs font-medium text-slate-600">
-              <span>进度</span>
-              <span class="text-violet-600 font-bold">{{ currentIndex + 1 }}</span>
-              <span class="text-slate-300">/</span>
-              <span>{{ errorSentences.length || 0 }}</span>
-            </div>
-            <div class="flex items-center bg-white rounded-xl border border-slate-200/60 overflow-hidden shadow-sm">
-              <button 
-                @click="setStudyMode('review')" 
-                class="px-4 py-2 text-sm font-semibold transition-colors flex items-center gap-2"
-                :class="studyMode === 'review' ? 'bg-violet-50 text-violet-600' : 'text-slate-500 hover:text-slate-900'"
-              >
-                复习模式
-              </button>
-              <button 
-                @click="setStudyMode('dictation')" 
-                class="px-4 py-2 text-sm font-semibold transition-colors flex items-center gap-2 border-l border-slate-100"
-                :class="studyMode === 'dictation' ? 'bg-violet-50 text-violet-600' : 'text-slate-500 hover:text-slate-900'"
-              >
-                听写模式
-              </button>
-            </div>
-            <div 
-              v-if="studyMode === 'dictation'" 
-              class="flex items-center bg-white rounded-xl border border-slate-200/60 overflow-hidden shadow-sm"
-            >
-              <button 
-                @click="setDictationMode('en2zh')" 
-                class="px-4 py-2 text-xs font-semibold tracking-wide transition-colors"
-                :class="dictationMode === 'en2zh' ? 'bg-white text-violet-600 shadow-inner' : 'text-slate-500 hover:text-slate-900'"
-              >
-                英译汉
-              </button>
-              <button 
-                @click="setDictationMode('zh2en')" 
-                class="px-4 py-2 text-xs font-semibold tracking-wide transition-colors border-l border-slate-100"
-                :class="dictationMode === 'zh2en' ? 'bg-white text-violet-600 shadow-inner' : 'text-slate-500 hover:text-slate-900'"
-              >
-                汉译英
-              </button>
+  <div class="min-h-screen bg-[#F8FAFC] flex flex-col relative overflow-hidden font-sans text-slate-800">
+    <!-- 背景装饰 -->
+    <div class="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-violet-50/80 via-blue-50/60 to-transparent pointer-events-none"></div>
+    <div class="absolute -top-20 -right-20 w-96 h-96 bg-purple-100/40 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute top-48 -left-24 w-80 h-80 bg-indigo-100/40 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 flex flex-col min-h-screen">
+      <!-- 顶部导航 -->
+      <nav class="px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <button
+            @click="goBack"
+            class="p-2 -ml-2 text-slate-500 hover:text-slate-900 hover:bg-white/60 rounded-xl transition-all duration-200"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div class="flex flex-col">
+            <h1 class="text-lg font-bold text-slate-900 tracking-tight">错句本</h1>
+            <div class="flex items-center gap-2 text-xs text-slate-500">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-violet-500"></span>
+              <span>巩固薄弱句子，提升表达力</span>
             </div>
           </div>
         </div>
-      </div>
-    </nav>
 
-    <div class="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      <!-- 进度条 -->
-      <div v-if="errorSentences.length > 0" class="mb-6">
-        <ProgressBar 
-          :current="currentIndex + 1" 
-          :total="errorSentences.length" 
-          :percentage="progress"
-          label="错句复习进度"
-        />
-      </div>
+        <div class="flex items-center gap-3">
+          <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/60 text-xs font-medium text-slate-600">
+            <span>进度</span>
+            <span class="font-bold text-violet-600">{{ totalSentences === 0 ? 0 : currentIndex + 1 }}</span>
+            <span class="text-slate-400">/</span>
+            <span>{{ totalSentences }}</span>
+          </div>
 
-      <!-- 加载状态 -->
-      <div v-if="loading" class="flex justify-center items-center py-12">
-        <Loading />
-      </div>
+          <div class="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 p-1 flex items-center text-xs font-semibold">
+            <button
+              @click="setMode('learning')"
+              :class="['px-3 sm:px-4 py-1.5 rounded-xl transition-all', mode === 'learning' ? 'bg-white text-violet-600 shadow-sm' : 'text-slate-500 hover:text-slate-900']"
+            >
+              错句学习
+            </button>
+            <button
+              @click="setMode('dictation')"
+              :class="['px-3 sm:px-4 py-1.5 rounded-xl transition-all', mode === 'dictation' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-500 hover:text-slate-900']"
+            >
+              错句听写
+            </button>
+          </div>
 
-      <!-- 复习模式 -->
-      <div v-else-if="studyMode === 'review' && currentSentence" class="mb-6">
-        <SentenceCard 
-          :sentence="currentSentence" 
-          :show-chinese="showChinese"
-        >
-          <template #actions>
-            <Button 
-              @click="prevSentence" 
+          <button
+            @click="reload"
+            class="hidden sm:flex items-center gap-2 px-3 py-2 bg-white shadow-sm border border-slate-200/60 rounded-xl text-xs font-medium text-slate-600 hover:text-violet-600 hover:border-violet-200 transition-all active:scale-95"
+          >
+            重新加载
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M5 19A9 9 0 0119 5" />
+            </svg>
+          </button>
+        </div>
+      </nav>
+
+      <!-- 主体 -->
+      <main class="flex-1 relative z-10 flex flex-col max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-8">
+        <!-- 进度条 (移动端) -->
+        <div class="sm:hidden mb-6 px-1">
+          <div class="flex justify-between text-xs font-medium text-slate-500 mb-2">
+            <span>复习进度</span>
+            <span>{{ progress }}%</span>
+          </div>
+          <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-violet-500 to-sky-500 rounded-full transition-all duration-300 ease-out" :style="{ width: `${progress}%` }"></div>
+          </div>
+        </div>
+
+        <!-- 状态区域 -->
+        <div v-if="loading" class="flex-1 flex flex-col items-center justify-center min-h-[360px]">
+          <div class="w-12 h-12 border-4 border-violet-100 border-t-violet-500 rounded-full animate-spin mb-4"></div>
+          <p class="text-slate-400 text-sm font-medium animate-pulse">正在拉取错句列表...</p>
+        </div>
+
+        <div v-else-if="!currentSentence" class="flex-1 flex flex-col items-center justify-center min-h-[360px] text-center">
+          <div class="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-6 text-slate-300">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6m-3-3v6m9-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">当前暂无错句</h3>
+          <p class="text-slate-500 mb-8 max-w-xs mx-auto">继续保持！若已做更改请重新加载或前往句子学习刷新数据。</p>
+          <button
+            @click="reload"
+            class="px-8 py-3 bg-gradient-to-r from-violet-500 to-sky-500 hover:opacity-90 text-white rounded-xl font-semibold shadow-lg shadow-violet-300/50 transition-all hover:-translate-y-0.5"
+          >
+            重新加载
+          </button>
+        </div>
+
+        <!-- 错句学习模式 -->
+        <div v-else-if="mode === 'learning'" class="flex-1 flex flex-col justify-center py-6">
+          <div class="relative group perspective-1000 w-full max-w-2xl mx-auto">
+            <div class="relative bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden transition-all duration-500">
+              <div class="absolute top-6 right-6">
+                <span
+                  class="px-3 py-1 rounded-full text-xs font-bold tracking-wide border"
+                  :class="currentSentence.isGrasp === 1 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-violet-50 text-violet-600 border-violet-100'"
+                >
+                  {{ currentSentence.isGrasp === 1 ? '已掌握' : '待攻克' }}
+                </span>
+              </div>
+
+              <div class="p-8 sm:p-12 flex flex-col gap-10">
+                <div class="space-y-6">
+                  <p class="text-sm uppercase tracking-[0.4em] text-slate-400 text-center">英文句子</p>
+                  <p class="text-2xl sm:text-3xl text-center font-semibold text-slate-900 leading-relaxed">
+                    {{ currentSentence.sentence }}
+                  </p>
+                  <div class="flex justify-center">
+                    <button
+                      @click="playSentence"
+                      class="px-4 py-2 rounded-full bg-violet-50 text-violet-600 hover:bg-violet-100 transition-all flex items-center gap-2"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                      </svg>
+                      播放句子
+                    </button>
+                  </div>
+                </div>
+
+                <div class="space-y-3 text-center">
+                  <p class="text-xs uppercase tracking-[0.4em] text-slate-400">中文释义</p>
+                  <p class="text-lg sm:text-xl text-slate-600 font-medium leading-relaxed">{{ currentSentence.chinese || '暂无释义' }}</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 w-full max-w-sm mx-auto">
+                  <div class="flex flex-col items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <span class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">错误次数</span>
+                    <span class="text-lg font-bold text-rose-500">{{ currentSentence.errorTimes || 0 }} 次</span>
+                  </div>
+                  <div class="flex flex-col items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <span class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">出现次数</span>
+                    <span class="text-lg font-bold text-slate-700">{{ currentSentence.times || 0 }} 次</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 控制按钮 -->
+          <div class="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-6">
+            <button
+              @click="prevSentence"
               :disabled="!hasPrev"
-              variant="outline"
-              size="sm"
+              class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 active:scale-95"
             >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
               上一句
-            </Button>
-            
-            <Button 
-              @click="toggleChinese"
-              variant="outline"
-              size="sm"
-              :class="showChinese ? 'bg-gray-50 text-gray-700' : ''"
+            </button>
+
+            <button
+              @click="handleNotGrasped"
+              class="w-full sm:flex-1 px-6 py-4 rounded-2xl font-bold text-violet-600 bg-violet-50 border border-violet-100 hover:bg-violet-100 transition-all active:scale-95"
             >
-              {{ showChinese ? '隐藏中文' : '显示中文' }}
-            </Button>
-            
-            <Button 
-              @click="markAsGrasped"
-              variant="success"
-              size="sm"
+              仍需巩固
+            </button>
+
+            <button
+              @click="handleGrasped"
+              class="w-full sm:flex-1 px-6 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-violet-500 to-sky-500 shadow-lg shadow-violet-300/40 hover:opacity-90 transition-all active:scale-95"
             >
-              已掌握
-            </Button>
-            
-            <Button 
-              @click="markAsError"
-              variant="danger"
-              size="sm"
-            >
-              加入错句本
-            </Button>
-            
-            <Button 
+              标记已掌握
+            </button>
+
+            <button
               @click="nextSentence"
               :disabled="!hasNext"
-              variant="primary"
-              size="sm"
+              class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
             >
               下一句
-            </Button>
-          </template>
-        </SentenceCard>
-      </div>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
 
-      <!-- 听写模式 -->
-      <div v-else-if="studyMode === 'dictation' && currentSentence" class="mb-6">
-        <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
-          <!-- 题目显示区域 -->
-          <div class="text-center mb-6">
-            <div class="mb-4">
-              <p class="text-xl font-medium text-gray-900 leading-relaxed">
-                {{ dictationMode === 'en2zh' ? currentSentence.sentence : currentSentence.chinese }}
-              </p>
-            </div>
-            
-            <!-- 答案输入框 -->
-            <div class="mb-4">
-              <textarea
-                v-model="userAnswer"
-                :placeholder="dictationMode === 'en2zh' ? '请输入中文翻译...' : '请输入英文句子...'"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                rows="3"
-                :disabled="showResult"
-                @keydown.enter.prevent="checkAnswer"
-              ></textarea>
-            </div>
-
-            <!-- 结果显示区域 -->
-            <div v-if="showResult" class="mb-4">
-              <div v-if="isCorrect" class="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <div class="flex items-center justify-center mb-2">
-                  <svg class="w-6 h-6 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                  <span class="text-green-700 font-medium">回答正确！已标记为掌握</span>
-                </div>
-              </div>
-              
-              <div v-else class="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div class="flex items-center justify-center mb-2">
-                  <svg class="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                  <span class="text-red-700 font-medium">回答错误</span>
-                </div>
-                
-                <div class="text-left space-y-2">
-                  <div>
-                    <span class="text-sm font-medium text-gray-700">您的答案：</span>
-                    <p class="text-red-600">{{ userAnswer }}</p>
-                  </div>
-                  <div>
-                    <span class="text-sm font-medium text-gray-700">正确答案：</span>
-                    <p class="text-green-600">{{ correctAnswer }}</p>
+        <!-- 错句听写模式 -->
+        <div v-else class="flex-1 flex flex-col justify-center py-6">
+          <div class="relative w-full max-w-2xl mx-auto">
+            <div class="relative bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden transition-all duration-500">
+              <div class="p-8 sm:p-12 flex flex-col items-center text-center space-y-8">
+                <div class="flex flex-col gap-3">
+                  <p class="text-xs uppercase tracking-[0.4em] text-slate-400">听写模式</p>
+                  <div class="bg-slate-50 rounded-2xl p-1 border border-slate-200 flex items-center gap-1">
+                    <button
+                      v-for="modeOption in dictationModes"
+                      :key="modeOption.value"
+                      @click="setDictationMode(modeOption.value)"
+                      :class="[
+                        'flex-1 px-4 py-2 rounded-xl text-xs font-semibold transition-all',
+                        dictationMode === modeOption.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                      ]"
+                    >
+                      {{ modeOption.label }}
+                    </button>
                   </div>
                 </div>
+
+                <div class="w-full min-h-[120px]">
+                  <p class="text-xl font-medium text-slate-900 leading-relaxed">
+                    {{ dictationMode === 'en2zh' ? currentSentence.sentence : currentSentence.chinese }}
+                  </p>
+                </div>
+
+                <div class="w-full max-w-sm mx-auto relative">
+                  <textarea
+                    ref="inputRef"
+                    v-model="userInput"
+                    :placeholder="dictationMode === 'en2zh' ? '请输入中文翻译...' : '请输入英文句子...'"
+                    class="w-full text-base sm:text-lg text-slate-800 px-6 py-4 bg-slate-50 border-2 rounded-2xl transition-all focus:outline-none focus:bg-white resize-none"
+                    rows="3"
+                    :class="{
+                      'border-slate-100 focus:border-sky-500': !showAnswer,
+                      'border-emerald-500 bg-emerald-50 text-emerald-700 animate-shake-correct': showAnswer && isCorrect,
+                      'border-rose-500 bg-rose-50 text-rose-800 animate-shake-wrong': showAnswer && !isCorrect
+                    }"
+                    :disabled="showAnswer"
+                  ></textarea>
+                </div>
+
+                <div class="min-h-[80px] flex flex-col items-center justify-center text-sm text-slate-500">
+                  <div v-if="showAnswer" class="space-y-2 text-center">
+                    <p class="text-base font-semibold" :class="isCorrect ? 'text-emerald-600' : 'text-rose-600'">
+                      正确答案：{{ dictationMode === 'en2zh' ? currentSentence.chinese : currentSentence.sentence }}
+                    </p>
+                    <p class="text-xs text-slate-400">原句：{{ currentSentence.sentence }}</p>
+                    <p class="text-xs text-slate-400">中文：{{ currentSentence.chinese }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-slate-50/60 border-t border-slate-100 p-6">
+                <div v-if="!showAnswer" class="flex gap-4">
+                  <button
+                    @click="handleDictationWrong"
+                    class="w-1/3 py-4 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95"
+                  >
+                    不会
+                  </button>
+                  <button
+                    @click="checkAnswer"
+                    :disabled="!userInput.trim()"
+                    class="flex-1 py-4 rounded-xl font-bold text-white bg-sky-500 shadow-lg shadow-sky-500/30 hover:bg-sky-600 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    检查答案
+                  </button>
+                </div>
+                <div v-else class="flex gap-4">
+                  <button
+                    @click="handleGrasped"
+                    class="w-1/3 py-4 rounded-xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-all active:scale-95"
+                  >
+                    标记掌握
+                  </button>
+                  <button
+                    @click="nextSentence"
+                    class="flex-1 py-4 rounded-xl font-bold text-white bg-slate-800 hover:bg-slate-900 transition-all active:scale-95"
+                  >
+                    {{ hasNext ? '下一句' : '完成重练' }}
+                  </button>
+                </div>
               </div>
             </div>
-
-            <!-- 句子统计信息 -->
-            <div class="flex justify-center items-center space-x-6 mb-6 text-sm">
-              <div class="flex items-center space-x-1">
-                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                </svg>
-                <span class="text-red-600">错误次数: {{ currentSentence.errorTimes || 0 }}</span>
-              </div>
-              
-              <div class="flex items-center space-x-1">
-                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span class="text-gray-600">学习次数: {{ currentSentence.times || 0 }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 操作按钮 -->
-          <div class="flex justify-center space-x-3">
-            <Button 
-              v-if="!showResult"
-              @click="showAnswer"
-              variant="outline"
-              size="sm"
-            >
-              查看答案
-            </Button>
-            
-            <Button 
-              v-if="!showResult"
-              @click="checkAnswer"
-              variant="primary"
-              size="sm"
-              :disabled="!userAnswer.trim()"
-            >
-              提交答案
-            </Button>
-            
-            <Button 
-              v-if="showResult && !isCorrect"
-              @click="retryAnswer"
-              variant="outline"
-              size="sm"
-            >
-              重新尝试
-            </Button>
-            
-            <Button 
-              v-if="showResult"
-              @click="nextSentence"
-              variant="primary"
-              size="sm"
-            >
-              {{ hasNext ? '下一句' : '完成' }}
-            </Button>
           </div>
         </div>
-      </div>
-
-      <!-- 无错句提示 -->
-      <div v-else-if="!loading && errorSentences.length === 0" class="text-center py-12">
-        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">太棒了！</h3>
-        <p class="text-gray-600 mb-4">您目前没有错句，继续保持！</p>
-        <Button @click="goBack" variant="primary">
-          返回学习
-        </Button>
-      </div>
-
-      <!-- 学习统计 -->
-      <div v-if="errorSentences.length > 0" class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">错句统计</h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="text-center">
-            <div class="text-2xl font-bold text-red-600">{{ errorSentences.length }}</div>
-            <div class="text-sm text-gray-600">错句总数</div>
-          </div>
-          <div class="text-center">
-            <div class="text-2xl font-bold text-blue-600">{{ currentIndex + 1 }}</div>
-            <div class="text-sm text-gray-600">当前位置</div>
-          </div>
-          <div class="text-center">
-            <div class="text-2xl font-bold text-green-600">{{ masteredCount }}</div>
-            <div class="text-sm text-gray-600">已掌握</div>
-          </div>
-          <div class="text-center">
-            <div class="text-2xl font-bold text-orange-600">{{ progress }}%</div>
-            <div class="text-sm text-gray-600">复习进度</div>
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { useSentenceStore } from '@/stores/sentence'
 import { useAuthStore } from '@/stores/auth'
-import { useToast } from '@/composables/useToast'
 import { sentenceService } from '@/services/sentence.service'
-import Button from '@/components/common/Button.vue'
-import Loading from '@/components/common/Loading.vue'
-import SentenceCard from '@/components/learning/SentenceCard.vue'
-import ProgressBar from '@/components/learning/ProgressBar.vue'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
-const sentenceStore = useSentenceStore()
 const authStore = useAuthStore()
-const { showToast } = useToast()
+const { success, error, info } = useToast()
 
-// 响应式数据
-const studyMode = ref('review') // review: 复习模式, dictation: 听写模式
-const dictationMode = ref('en2zh') // en2zh: 英译汉, zh2en: 汉译英
-const errorSentences = ref([])
-const currentIndex = ref(0)
-const showChinese = ref(false)
-const userAnswer = ref('')
-const showResult = ref(false)
-const isCorrect = ref(false)
-const masteredCount = ref(0)
 const loading = ref(false)
+const sentences = ref([])
+const currentIndex = ref(0)
+const mode = ref('learning')
+const dictationMode = ref('en2zh')
+const dictationModes = [
+  { label: '英译汉', value: 'en2zh' },
+  { label: '汉译英', value: 'zh2en' }
+]
+const userInput = ref('')
+const showAnswer = ref(false)
+const isCorrect = ref(false)
+const isPlaying = ref(false)
+const inputRef = ref(null)
 
-// 计算属性
-const currentSentence = computed(() => errorSentences.value[currentIndex.value] || null)
-const hasNext = computed(() => currentIndex.value < errorSentences.value.length - 1)
+const currentSentence = computed(() => sentences.value[currentIndex.value] || null)
+const totalSentences = computed(() => sentences.value.length)
+const hasNext = computed(() => currentIndex.value < totalSentences.value - 1)
 const hasPrev = computed(() => currentIndex.value > 0)
 const progress = computed(() => {
-  if (errorSentences.value.length === 0) return 0
-  return Math.round(((currentIndex.value + 1) / errorSentences.value.length) * 100)
+  if (totalSentences.value === 0) return 0
+  return Math.round(((currentIndex.value + 1) / totalSentences.value) * 100)
 })
 
-const correctAnswer = computed(() => {
-  if (!currentSentence.value) return ''
-  return dictationMode.value === 'en2zh' ? currentSentence.value.chinese : currentSentence.value.sentence
-})
-
-// 方法
-const goBack = () => {
-  router.back()
+const ensureContext = () => {
+  if (!authStore.user?.id) throw new Error('用户未登录')
 }
 
 const loadErrorSentences = async () => {
   try {
+    ensureContext()
     loading.value = true
-    
-    if (!authStore.user?.id) {
-      throw new Error('用户未登录')
-    }
-    
-    // 使用新的错句接口
-    const response = await sentenceService.getErrorSentences(authStore.user.id)
-    
-    if (response.success) {
-      if (typeof response.data === 'string') {
-        // 如果返回的是字符串消息（没有错句）
-        errorSentences.value = []
-        showToast(response.data, 'success')
-      } else if (Array.isArray(response.data)) {
-        // 如果返回的是错句数组
-        errorSentences.value = response.data
-        currentIndex.value = 0
-        masteredCount.value = 0
-        
-        if (errorSentences.value.length === 0) {
-          showToast('恭喜！您目前没有错句', 'success')
-        }
-      }
-    } else {
-      throw new Error(response.message || '获取错句失败')
-    }
-  } catch (error) {
-    console.error('加载错句失败:', error)
-    showToast('加载错句失败，请重试', 'error')
-    errorSentences.value = []
+    const res = await sentenceService.getErrorSentences(authStore.user.id)
+    sentences.value = Array.isArray(res.data) ? res.data : []
+    currentIndex.value = 0
+    resetDictationState()
+  } catch (err) {
+    console.error(err)
+    error(err.message || '获取错句列表失败')
+    sentences.value = []
   } finally {
     loading.value = false
   }
 }
 
+const goBack = () => router.push('/')
+const reload = () => loadErrorSentences()
+
+const setMode = (target) => {
+  mode.value = target
+  resetDictationState()
+  if (target === 'dictation') {
+    nextTick(() => inputRef.value?.focus())
+  }
+}
+
+const setDictationMode = (target) => {
+  if (dictationMode === target) return
+  dictationMode.value = target
+  resetDictationState()
+}
+
 const nextSentence = () => {
   if (hasNext.value) {
-    currentIndex.value++
-    resetAnswerState()
-    showChinese.value = studyMode.value === 'review' ? false : true
-  } else {
-    // 完成所有错句
-    if (studyMode.value === 'dictation') {
-      showToast(`听写完成！已掌握 ${masteredCount.value} 个错句`, 'success')
-    } else {
-      showToast(`复习完成！已掌握 ${masteredCount.value} 个错句`, 'success')
-    }
-    goBack()
+    currentIndex.value += 1
+  } else if (totalSentences.value > 0) {
+    info('本组错句已完成，重新开始循环')
+    currentIndex.value = 0
   }
+  resetDictationState()
 }
 
 const prevSentence = () => {
   if (hasPrev.value) {
-    currentIndex.value--
-    resetAnswerState()
-    showChinese.value = studyMode.value === 'review' ? false : true
+    currentIndex.value -= 1
+    resetDictationState()
   }
 }
 
-const toggleChinese = () => {
-  showChinese.value = !showChinese.value
+const handleRemovalAfterGrasp = () => {
+  sentences.value.splice(currentIndex.value, 1)
+  if (currentIndex.value >= sentences.value.length) {
+    currentIndex.value = Math.max(sentences.value.length - 1, 0)
+  }
+  resetDictationState()
 }
 
-const markAsGrasped = async () => {
+const handleGrasped = async () => {
   if (!currentSentence.value) return
-  
   try {
-    await sentenceStore.markCurrentAsGrasped()
-    
-    // 更新本地状态
-    currentSentence.value.isGrasp = 1
-    masteredCount.value++
-    
-    showToast('已标记为掌握', 'success')
-    
-    // 自动进入下一句
-    setTimeout(() => {
-      nextSentence()
-    }, 1000)
-  } catch (error) {
-    console.error('标记已掌握失败:', error)
-    showToast('操作失败，请重试', 'error')
+    await sentenceService.markAsGrasped(currentSentence.value.id || currentSentence.value.sentenceId || currentSentence.value.sentenceId)
+    success('已标记掌握，移出错句本')
+    handleRemovalAfterGrasp()
+  } catch (err) {
+    console.error(err)
+    error('标记失败：' + (err.message || ''))
   }
 }
 
-const markAsError = async () => {
+const handleNotGrasped = async () => {
   if (!currentSentence.value) return
-  
   try {
-    await sentenceStore.markCurrentAsError()
-    
-    // 更新本地状态
-    currentSentence.value.isGrasp = 2
+    await sentenceService.markAsError(currentSentence.value.id || currentSentence.value.sentenceId || currentSentence.value.sentenceId)
     currentSentence.value.errorTimes = (currentSentence.value.errorTimes || 0) + 1
-    
-    showToast('已加入错句本', 'info')
-    
-    // 自动进入下一句
-    setTimeout(() => {
-      nextSentence()
-    }, 1000)
-  } catch (error) {
-    console.error('标记错句失败:', error)
-    showToast('操作失败，请重试', 'error')
+    info('已记录为未掌握，继续巩固')
+  } catch (err) {
+    console.error(err)
+    error('标记失败：' + (err.message || ''))
   }
 }
 
-const checkAnswer = async () => {
-  if (!userAnswer.value.trim()) {
-    showToast('请输入答案', 'warning')
+const handleDictationWrong = async () => {
+  if (!currentSentence.value) return
+  await handleNotGrasped()
+  isCorrect.value = false
+  showAnswer.value = true
+}
+
+const checkAnswer = () => {
+  if (!currentSentence.value || !userInput.value.trim()) return
+  const correct = dictationMode.value === 'en2zh' ? currentSentence.value.chinese : currentSentence.value.sentence
+  const normalize = (text) => (text || '').replace(/\s+/g, '').toLowerCase()
+  isCorrect.value = normalize(userInput.value) === normalize(correct)
+  showAnswer.value = true
+  if (!isCorrect.value) {
+    handleNotGrasped()
+  }
+}
+
+const playSentence = () => {
+  if (!currentSentence.value?.sentence || isPlaying.value) return
+  if (!('speechSynthesis' in window)) {
+    error('当前浏览器不支持语音播放')
     return
   }
+  const text = currentSentence.value.sentence
+  window.speechSynthesis.cancel()
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = 'en-US'
+  isPlaying.value = true
+  utterance.onend = () => { isPlaying.value = false }
+  utterance.onerror = () => { isPlaying.value = false }
+  window.speechSynthesis.speak(utterance)
+}
 
-  const correct = correctAnswer.value.toLowerCase().trim()
-  const user = userAnswer.value.toLowerCase().trim()
-  
-  // 简单的答案比较
-  isCorrect.value = correct === user || correct.includes(user) || user.includes(correct)
-  
-  if (isCorrect.value) {
-    // 自动标记为已掌握
-    try {
-      await sentenceStore.markCurrentAsGrasped()
-      currentSentence.value.isGrasp = 1
-      masteredCount.value++
-    } catch (error) {
-      console.error('标记已掌握失败:', error)
+const resetDictationState = () => {
+  userInput.value = ''
+  showAnswer.value = false
+  isCorrect.value = false
+  nextTick(() => {
+    if (mode.value === 'dictation') {
+      inputRef.value?.focus()
     }
-    
-    // 3秒后自动进入下一句
-    setTimeout(() => {
-      if (showResult.value && isCorrect.value) {
-        nextSentence()
-      }
-    }, 3000)
-  } else {
-    // 增加错误次数
-    try {
-      await sentenceStore.markCurrentAsError()
-      currentSentence.value.errorTimes = (currentSentence.value.errorTimes || 0) + 1
-    } catch (error) {
-      console.error('标记错句失败:', error)
+  })
+}
+
+watch(
+  () => authStore.user?.id,
+  (newVal, oldVal) => {
+    if (newVal && newVal !== oldVal) {
+      loadErrorSentences()
     }
   }
-  
-  showResult.value = true
-}
+)
 
-const showAnswer = () => {
-  showResult.value = true
-  isCorrect.value = false
-}
-
-const retryAnswer = () => {
-  userAnswer.value = ''
-  showResult.value = false
-  isCorrect.value = false
-}
-
-const resetAnswerState = () => {
-  userAnswer.value = ''
-  showResult.value = false
-  isCorrect.value = false
-}
-
-// 生命周期
 onMounted(async () => {
   await loadErrorSentences()
-  showChinese.value = studyMode.value === 'review' ? false : true
-})
-
-onUnmounted(() => {
-  // 清理状态
 })
 </script>
+
+<style scoped>
+.animate-shake-correct {
+  animation: shake-correct 0.4s ease;
+}
+
+.animate-shake-wrong {
+  animation: shake-wrong 0.4s ease;
+}
+
+@keyframes shake-correct {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+
+@keyframes shake-wrong {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+</style>
