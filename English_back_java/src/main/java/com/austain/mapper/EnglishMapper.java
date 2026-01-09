@@ -19,6 +19,29 @@ public interface EnglishMapper {
     @Select("select * from english_word_01 where user_id = #{userId} and book_id = #{bookId} and is_grasp = 2")
     List<Englishs> getErrorWordList(WordRequest request);
 
+    @Select("SELECT COUNT(*) FROM english_word_01 WHERE user_id = #{userId}")
+    int countTotalWords(@Param("userId") int userId);
+
+    @Select("SELECT COUNT(*) FROM english_word_01 WHERE user_id = #{userId} AND is_grasp = 1")
+    int countMasteredWords(@Param("userId") int userId);
+
+    @Select("SELECT COUNT(*) FROM english_word_01 WHERE user_id = #{userId} AND is_grasp = 2")
+    int countErrorWords(@Param("userId") int userId);
+
+    @Select("<script>" +
+            "SELECT COUNT(*) FROM english_word_01 " +
+            "WHERE user_id = #{userId} AND is_grasp = 1 AND DATE(update_time) = CURDATE() " +
+            "<if test='bookId != null'>AND book_id = #{bookId}</if>" +
+            "</script>")
+    int countTodayMasteredWords(@Param("userId") int userId, @Param("bookId") Integer bookId);
+
+    @Select("<script>" +
+            "SELECT COUNT(*) FROM english_word_01 " +
+            "WHERE user_id = #{userId} AND is_grasp = 2 AND DATE(update_time) = CURDATE() " +
+            "<if test='bookId != null'>AND book_id = #{bookId}</if>" +
+            "</script>")
+    int countTodayErrorWords(@Param("userId") int userId, @Param("bookId") Integer bookId);
+
     // 标记已掌握，在原数据表中修改字段
     @Update("UPDATE english_word_01 SET is_grasp = 1 where id = #{id}")
     int isGrasp(int id);
@@ -38,6 +61,15 @@ public interface EnglishMapper {
     // 获取用户的所有句子（用于统计）
     @Select("select * from english_sentence01 where user_id in (#{userId},0,1,2,3,4,5)")
     List<Sentence> getAllSentencesByUser(@Param("userId") int userId);
+
+    @Select("SELECT COUNT(*) FROM english_sentence01 WHERE user_id = #{userId}")
+    int countTotalSentences(@Param("userId") int userId);
+
+    @Select("SELECT COUNT(*) FROM english_sentence01 WHERE user_id = #{userId} AND is_grasp = 1")
+    int countMasteredSentences(@Param("userId") int userId);
+
+    @Select("SELECT COUNT(*) FROM english_sentence01 WHERE user_id = #{userId} AND is_grasp = 2")
+    int countErrorSentences(@Param("userId") int userId);
 
     // 在原数据表中标记未掌握单词
     @Update("UPDATE english_word_01 SET is_grasp = 2, error_times = error_times + 1 where id = #{id}")

@@ -26,13 +26,13 @@
             </div>
 
             <!-- 用户头像 -->
-            <div class="flex items-center gap-3 pl-3 sm:border-l border-slate-200">
+            <div class="flex items-center gap-3 pl-3 sm:border-l border-slate-200 relative" ref="userMenuRef">
               <div class="text-right hidden sm:block">
                 <p class="text-sm font-semibold text-slate-900">{{ getGreeting() }}</p>
                 <p class="text-xs text-slate-500 max-w-[100px] truncate">{{ displayName }}</p>
               </div>
               <button 
-                @click="openLogoutConfirm"
+                @click="toggleUserMenu"
                 class="relative group"
               >
                 <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-white shadow-md overflow-hidden bg-slate-100 transition-transform transform group-hover:scale-105 group-active:scale-95">
@@ -47,11 +47,24 @@
                     {{ getUserInitial() }}
                   </div>
                 </div>
-                <!-- 退出提示 -->
-                <div class="absolute top-full right-0 mt-2 w-max px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                  退出登录
-                </div>
               </button>
+
+              <!-- 用户菜单 -->
+              <transition name="fade">
+                <div
+                  v-if="showUserMenu"
+                  class="absolute top-14 right-0 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50"
+                >
+                  <button @click="goToProfile" class="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 10-6 0 3 3 0 006 0z"/></svg>
+                    个人中心
+                  </button>
+                  <button @click="openLogoutConfirm" class="w-full px-4 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    退出登录
+                  </button>
+                </div>
+              </transition>
             </div>
           </div>
         </div>
@@ -212,51 +225,45 @@
               </button>
             </div>
 
-            <!-- 快速任务建议 -->
+            <!-- 今日单词表现 -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <div class="rounded-2xl border border-slate-100 bg-gradient-to-br from-emerald-50 to-white p-4 flex flex-col gap-2 shadow-sm">
-                <div class="flex items-center justify-between text-xs font-semibold text-emerald-600 uppercase tracking-widest">
-                  待复习单词
-                  <span class="px-2 py-0.5 rounded-full bg-white text-emerald-600">{{ stats.errorWords || 0 }} 个</span>
+              <div class="rounded-2xl border border-slate-100 bg-gradient-to-br from-sky-50 to-white p-4 flex flex-col gap-2 shadow-sm">
+                <div class="flex items-center justify-between text-xs font-semibold text-sky-600 uppercase tracking-widest">
+                  今日掌握单词
+                  <span class="px-2 py-0.5 rounded-full bg-white text-sky-600">{{ stats.todayMasteredWords || 0 }} 个</span>
                 </div>
-                <p class="text-2xl font-bold text-slate-900">{{ getWordMasteryRate() }}%</p>
-                <p class="text-sm text-slate-500">优先巩固错词，保持记忆曲线。</p>
-                <button
-                  @click="currentBook ? goToWordReview() : goToBooks()"
-                  class="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 hover:text-emerald-900"
-                >
-                  去复习
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
+                <p class="text-3xl font-bold text-slate-900">{{ stats.todayMasteredWords || 0 }}</p>
               </div>
-              <div class="rounded-2xl border border-slate-100 bg-gradient-to-br from-violet-50 to-white p-4 flex flex-col gap-2 shadow-sm">
-                <div class="flex items-center justify-between text-xs font-semibold text-violet-600 uppercase tracking-widest">
-                  句子强化
-                  <span class="px-2 py-0.5 rounded-full bg-white text-violet-600">{{ stats.errorSentences || 0 }} 句</span>
+              <div class="rounded-2xl border border-slate-100 bg-gradient-to-br from-rose-50 to-white p-4 flex flex-col gap-2 shadow-sm">
+                <div class="flex items-center justify-between text-xs font-semibold text-rose-600 uppercase tracking-widest">
+                  今日错词数量
+                  <span class="px-2 py-0.5 rounded-full bg-white text-rose-600">{{ stats.todayErrorWords || 0 }} 个</span>
                 </div>
-                <p class="text-2xl font-bold text-slate-900">{{ getSentenceMasteryRate() }}%</p>
-                <p class="text-sm text-slate-500">通过听写/错句本拉齐薄弱项。</p>
-                <div class="mt-2 flex flex-wrap gap-3 text-xs font-semibold">
-                  <button
-                    @click="goToSentenceDictation"
-                    class="inline-flex items-center gap-1 text-violet-700 hover:text-violet-900"
-                  >
-                    去听写
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                  <button
-                    @click="goToErrorSentenceBook"
-                    class="inline-flex items-center gap-1 text-violet-700 hover:text-violet-900"
-                  >
-                    查错句
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
+                <p class="text-3xl font-bold text-slate-900">{{ stats.todayErrorWords || 0 }}</p>
+              </div>
+            </div>
+
+            <!-- 课本词汇概览 -->
+            <div class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 sm:p-5 shadow-inner">
+              <div class="flex items-center justify-between mb-4">
+                <p class="text-sm font-semibold text-slate-600 flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                  课本词汇概览
+                </p>
+                <span class="text-xs text-slate-400">实时更新</span>
+              </div>
+              <div class="grid grid-cols-3 gap-3 text-center">
+                <div class="bg-white rounded-xl py-3 px-2 border border-white/60 shadow-sm">
+                  <p class="text-xs text-slate-400">总词汇</p>
+                  <p class="text-2xl font-bold text-slate-900 mt-1">{{ stats.totalWords || 0 }}</p>
+                </div>
+                <div class="bg-white rounded-xl py-3 px-2 border border-white/60 shadow-sm">
+                  <p class="text-xs text-emerald-500">已掌握</p>
+                  <p class="text-2xl font-bold text-emerald-600 mt-1">{{ stats.masteredWords || 0 }}</p>
+                </div>
+                <div class="bg-white rounded-xl py-3 px-2 border border-white/60 shadow-sm">
+                  <p class="text-xs text-rose-500">错词</p>
+                  <p class="text-2xl font-bold text-rose-600 mt-1">{{ stats.errorWords || 0 }}</p>
                 </div>
               </div>
             </div>
@@ -660,7 +667,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import { useAuthStore } from '@/stores/auth'
 import { useBookStore } from '@/stores/book'
@@ -715,9 +722,15 @@ const userAvatar = computed(() => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.43.106:8080'
   return avatar ? `${baseUrl}${avatar}` : ''
 })
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 const avatarLoadError = ref(false)
 const showLogoutConfirm = ref(false)
 const showBookSelector = ref(false)
+const showUserMenu = ref(false)
+const userMenuRef = ref(null)
 
 // 学习统计数据
 const stats = ref({
@@ -906,7 +919,23 @@ const handleAvatarError = () => {
   avatarLoadError.value = true
 }
 
+const toggleUserMenu = () => {
+  showUserMenu.value = !showUserMenu.value
+}
+
+const closeUserMenu = () => {
+  showUserMenu.value = false
+}
+
+const handleClickOutside = (event) => {
+  if (!userMenuRef.value) return
+  if (!userMenuRef.value.contains(event.target)) {
+    closeUserMenu()
+  }
+}
+
 const openLogoutConfirm = () => {
+  closeUserMenu()
   showLogoutConfirm.value = true
 }
 
@@ -920,6 +949,11 @@ const confirmLogout = async () => {
 }
 
 // 课本选择方法
+const goToProfile = () => {
+  closeUserMenu()
+  router.push('/profile')
+}
+
 const selectBook = async (book) => {
   try {
     await bookStore.selectBook(book)
@@ -931,6 +965,7 @@ const selectBook = async (book) => {
 }
 
 onMounted(async () => {
+  document.addEventListener('click', handleClickOutside)
   // 初始化课本信息
   try {
     await bookStore.fetchBooks()

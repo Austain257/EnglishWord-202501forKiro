@@ -107,38 +107,37 @@ public class EnglishController {
     // TODO
     @GetMapping("/stats/{userId}")
     public Result getUserStats(@PathVariable int userId, @RequestParam(required = false) Integer bookId) {
-        System.out.println("获取用户学习统计数据已触发");
-        System.out.println("bookId: " + bookId);
-        System.out.println();
         try {
             Map<String, Object> stats = new HashMap<>();
-            
+
+            int totalWords;
+            int masteredWords;
+            int errorWords;
+
             if (bookId != null) {
-                // 获取指定课本的统计数据
                 List<Englishs> allWords = englishMapper.getAllWordsByUserAndBook(userId, bookId);
-                stats.put("totalWords", allWords.size());
-                stats.put("masteredWords", allWords.stream().mapToInt(w -> w.getIsGrasp() == 1 ? 1 : 0).sum());
-                stats.put("errorWords", allWords.stream().mapToInt(w -> w.getIsGrasp() == 2 ? 1 : 0).sum());
-                
-                // 获取句子统计
-                List<Sentence> allSentences = englishMapper.getAllSentencesByUser(userId);
-                stats.put("totalSentences", allSentences.size());
-                stats.put("masteredSentences", allSentences.stream().mapToInt(s -> s.getIsGrasp() == 1 ? 1 : 0).sum());
-                stats.put("errorSentences", allSentences.stream().mapToInt(s -> s.getIsGrasp() == 2 ? 1 : 0).sum());
+                totalWords = allWords.size();
+                masteredWords = (int) allWords.stream().filter(w -> w.getIsGrasp() != null && w.getIsGrasp() == 1).count();
+                errorWords = (int) allWords.stream().filter(w -> w.getIsGrasp() != null && w.getIsGrasp() == 2).count();
             } else {
-                // 获取用户所有数据的统计
-                stats.put("totalWords", 0);
-                stats.put("masteredWords", 0);
-                stats.put("errorWords", 0);
-                stats.put("totalSentences", 0);
-                stats.put("masteredSentences", 0);
-                stats.put("errorSentences", 0);
+                totalWords = englishMapper.countTotalWords(userId);
+                masteredWords = englishMapper.countMasteredWords(userId);
+                errorWords = englishMapper.countErrorWords(userId);
             }
-            
-            // 计算学习天数（从用户创建时间开始）
-            // 这里可以根据实际需求调整计算逻辑
+
+            stats.put("totalWords", totalWords);
+            stats.put("masteredWords", masteredWords);
+            stats.put("errorWords", errorWords);
+
+            List<Sentence> allSentences = englishMapper.getAllSentencesByUser(userId);
+            stats.put("totalSentences", allSentences.size());
+            stats.put("masteredSentences", allSentences.stream().mapToInt(s -> s.getIsGrasp() == 1 ? 1 : 0).sum());
+            stats.put("errorSentences", allSentences.stream().mapToInt(s -> s.getIsGrasp() == 2 ? 1 : 0).sum());
+
+            stats.put("todayMasteredWords", englishMapper.countTodayMasteredWords(userId, bookId));
+            stats.put("todayErrorWords", englishMapper.countTodayErrorWords(userId, bookId));
             stats.put("studyDays", 1);
-            
+
             return Result.success(stats);
         } catch (Exception e) {
             return Result.error("获取统计数据失败：" + e.getMessage());

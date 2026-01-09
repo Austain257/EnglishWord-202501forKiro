@@ -18,6 +18,10 @@ api.interceptors.request.use(
     const authStore = useAuthStore()
     if (authStore.token) {
       config.headers.Authorization = `Bearer ${authStore.token}`
+      config.headers['X-Token'] = authStore.token
+    }
+    if (authStore.user?.id) {
+      config.headers['X-User-Id'] = authStore.user.id
     }
     return config
   },

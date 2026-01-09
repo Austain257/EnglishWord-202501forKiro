@@ -95,6 +95,12 @@ const routes = [
     meta: { requiresAuth: true, requiresBook: true, title: '单词泡泡龙', studyScene: 'word_game' }
   },
   {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('@/views/Profile.vue'),
+    meta: { requiresAuth: true, title: '个人中心' }
+  },
+  {
     path: '/word/option',
     name: 'WordOption',
     component: () => import('@/views/WordOption.vue'),
