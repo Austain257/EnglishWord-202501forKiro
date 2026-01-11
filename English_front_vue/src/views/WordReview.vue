@@ -39,13 +39,11 @@
           <span class="text-slate-400">/</span>
           <span>{{ totalWords }}</span>
         </div>
-
-        <!-- 当前范围 -->
-         <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/60 text-xs font-medium text-slate-600">
+        <!-- 范围 -->
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/60 text-xs font-medium text-slate-600">
           <span>当前范围</span>
-          <span class="text-amber-600 font-bold">{{ wordStore.learningRange.start }}-{{ wordStore.learningRange.end }}</span>
+          <span class="text-amber-600 font-bold">{{ currentStudyRange }}</span>
         </div>
-
         <!-- 范围设置 -->
         <button 
           @click="showRangeModal = true"
@@ -63,6 +61,33 @@
 
     <!-- 主体内容 -->
     <main class="flex-1 relative z-10 flex flex-col max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-6">
+      
+      <!-- 复习完成标记区域 -->
+      <div class="mb-5">
+        <div class="rounded-xl border border-amber-100 bg-white px-4 py-3 text-sm text-slate-600">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <span class="font-semibold text-slate-800">第一轮复习</span>
+            <span class="text-xs text-slate-400">范围 {{ currentStudyRange }}</span>
+          </div>
+
+          <div v-if="initializing" class="text-xs text-slate-400">复习数据加载中，请稍候...</div>
+
+          <template v-else>
+            <div v-if="round1Completed" class="text-sm text-slate-600">
+              当前你已经完成新词的第一轮复习，请在规定时间内完成第二轮复习。
+            </div>
+            <div v-else class="flex justify-end">
+              <button
+                @click="markFirstRoundComplete"
+                :disabled="markingRound1 || !latestRecord"
+                class="px-4 py-2 rounded-lg font-semibold text-white bg-emerald-500 hover:bg-emerald-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-xs"
+              >
+                {{ markingRound1 ? '标记中...' : '标记第一轮复习完成' }}
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
       
       <!-- 进度条 (移动端) -->
       <div class="sm:hidden mb-6 px-1">
@@ -134,7 +159,7 @@
                 
                 <div class="flex items-center gap-3 mb-12">
                   <span class="text-xl text-slate-500 font-serif italic">
-                    /{{ currentWord.phonetic || currentWord.pronounce || '...' }}/
+                    {{ currentWord.phonetic || currentWord.pronounce || '...' }}
                   </span>
                   <button 
                     @click="playPronunciation"
@@ -309,22 +334,38 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWordStore } from '@/stores/word'
 import { useBookStore } from '@/stores/book'
+import { useWordStudyStore } from '@/stores/wordStudy'
+import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const wordStore = useWordStore()
 const bookStore = useBookStore()
+const wordStudyStore = useWordStudyStore()
+const authStore = useAuthStore()
 const { success, error } = useToast()
 
 // 状态
 const showRangeModal = ref(false)
 const markingGrasped = ref(false)
 const markingError = ref(false)
+const markingRound1 = ref(false)
 const reviewMode = ref('en2cn') // 'en2cn' | 'cn2en'
 const showAnswer = ref(false)
+const initializing = ref(true)
+const latestRecord = ref(null)
 const rangeForm = ref({
   start: 1,
   end: 50
+})
+
+const currentStudyRange = computed(() => {
+  return `${wordStore.learningRange.start}-${wordStore.learningRange.end}`
+})
+const round1Completed = computed(() => !!latestRecord.value?.round1ReviewTime)
+const round1CompletedTimeText = computed(() => {
+  if (!latestRecord.value?.round1ReviewTime) return ''
+  return formatDateTime(latestRecord.value.round1ReviewTime)
 })
 
 // 计算属性
@@ -339,15 +380,63 @@ const currentBook = computed(() => bookStore.currentBook)
 // 方法
 const goBack = () => router.push('/word/review')
 
-const loadWords = async () => {
+const ensureBookSelected = async (bookId) => {
+  if (!bookId) {
+    throw new Error('学习记录缺少课本信息')
+  }
+  if (bookStore.currentBook?.id === bookId) {
+    return
+  }
+  if (!bookStore.books?.length) {
+    await bookStore.fetchBooks()
+  }
+  const targetBook = bookStore.books?.find((book) => book.id === bookId)
+  if (!targetBook) {
+    throw new Error('未找到对应课本，请先在课本列表中选择')
+  }
+  await bookStore.selectBook(targetBook)
+}
+
+const loadWords = async (range = null) => {
   try {
-    await wordStore.fetchWords()
+    await wordStore.fetchWords(range)
     showAnswer.value = false
     if (wordStore.totalWords === 0) {
       error('当前范围内没有可复习的单词')
     }
   } catch (err) {
     error('加载单词失败：' + err.message)
+    throw err
+  }
+}
+
+const initializeFromLatestRecord = async () => {
+  if (!authStore.user?.id) {
+    initializing.value = false
+    return
+  }
+  try {
+    initializing.value = true
+    const record = await wordStudyStore.getLatestRecord(authStore.user.id)
+    if (!record) {
+      error('未找到学习记录，请先完成一次学习会话')
+      initializing.value = false
+      return
+    }
+    latestRecord.value = record
+    await ensureBookSelected(record.bookId)
+    const range = {
+      start: record.startId || 1,
+      end: record.endId || 50
+    }
+    wordStore.setLearningRange(range)
+    rangeForm.value = { ...range }
+    await loadWords(range)
+  } catch (err) {
+    console.error('初始化复习数据失败:', err)
+    error('初始化复习数据失败：' + (err.message || '请稍后重试'))
+  } finally {
+    initializing.value = false
   }
 }
 
@@ -413,12 +502,11 @@ const applyRange = async () => {
   }
   
   try {
-    await wordStore.fetchWords(rangeForm.value)
-    showAnswer.value = false
+    await loadWords(rangeForm.value)
     showRangeModal.value = false
     success(`已设置复习范围：${rangeForm.value.start}-${rangeForm.value.end}`)
   } catch (err) {
-    error('设置范围失败：' + err.message)
+    // loadWords 内已有提示
   }
 }
 
@@ -427,9 +515,45 @@ const cancelRangeSelection = () => {
   rangeForm.value = { ...wordStore.learningRange }
 }
 
+const markFirstRoundComplete = async () => {
+  if (!latestRecord.value || markingRound1.value) return
+  if (!authStore.user?.id) {
+    error('请先登录后再标记复习完成')
+    return
+  }
+  try {
+    markingRound1.value = true
+    await wordStudyStore.markReviewComplete({
+      userId: authStore.user.id,
+      sessionId: latestRecord.value.id,
+      reviewRound: 1,
+      completedTime: new Date()
+    })
+    latestRecord.value = {
+      ...latestRecord.value,
+      round1ReviewTime: new Date().toISOString()
+    }
+    success('第一轮复习已完成')
+  } catch (err) {
+    console.error('标记第一轮复习失败:', err)
+    error('标记第一轮复习失败：' + (err.message || '请稍后重试'))
+  } finally {
+    markingRound1.value = false
+  }
+}
+
+const formatDateTime = (value) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const pad = (num) => String(num).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 // 键盘快捷键
 const handleKeydown = (e) => {
   if (showRangeModal.value) return
+
   switch(e.code) {
     case 'Space': 
       e.preventDefault()
@@ -452,14 +576,10 @@ const handleKeydown = (e) => {
   }
 }
 
-onMounted(async () => {
+onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
   rangeForm.value = { ...wordStore.learningRange }
-  if (wordStore.totalWords === 0) {
-    await loadWords()
-  } else {
-    showAnswer.value = false
-  }
+  initializeFromLatestRecord()
 })
 
 onUnmounted(() => {

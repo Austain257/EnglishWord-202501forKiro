@@ -9,7 +9,23 @@ import java.util.List;
 public interface EnglishMapper {
 
     // 获取词库列表（包括用户自己的课本和公开的课本）
-    @Select("SELECT * FROM user_books WHERE (user_id = #{userId} OR (user_id in (0,1,2,3,4,5) AND visibility = 'PUBLIC')) AND status = 1 ORDER BY word_count")
+    @Select("SELECT " +
+            " ub.*, " +
+            " COALESCE(stats.total_words, 0) AS totalWords, " +
+            " COALESCE(stats.error_words, 0) AS errorWordCount, " +
+            " COALESCE(stats.mastered_words, 0) AS masteredWordCount " +
+            "FROM user_books ub " +
+            "LEFT JOIN ( " +
+            "   SELECT book_id, COUNT(*) AS total_words, " +
+            "          SUM(CASE WHEN is_grasp = 2 THEN 1 ELSE 0 END) AS error_words, " +
+            "          SUM(CASE WHEN is_grasp = 1 THEN 1 ELSE 0 END) AS mastered_words " +
+            "   FROM english_word_01 " +
+            "   WHERE user_id IN (#{userId},0,1,2,3,4,5) " +
+            "   GROUP BY book_id " +
+            ") stats ON stats.book_id = ub.id " +
+            "WHERE (ub.user_id = #{userId} OR (ub.user_id in (0,1,2,3,4,5) AND ub.visibility = 'PUBLIC')) " +
+            "  AND ub.status = 1 " +
+            "ORDER BY ub.word_count")
     List<WordBook> getWordBookList(int userId);
 
     // 根据词库代码获取单词列表  TODO 为这三个键加索引
@@ -72,7 +88,7 @@ public interface EnglishMapper {
     int countErrorSentences(@Param("userId") int userId);
 
     // 在原数据表中标记未掌握单词
-    @Update("UPDATE english_word_01 SET is_grasp = 2, error_times = error_times + 1 where id = #{id}")
+    @Update("UPDATE english_word_01 SET is_grasp = 2, error_times = error_times + 1, update_time = NOW() where id = #{id}")
     int setNotGrasp(int id);
 
     // 获取用户所有未掌握的句子

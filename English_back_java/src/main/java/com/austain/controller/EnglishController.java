@@ -1,8 +1,11 @@
 package com.austain.controller;
 
 import com.austain.domain.dto.Result;
-import com.austain.domain.po.*;
+import com.austain.domain.po.Englishs;
+import com.austain.domain.po.Sentence;
+import com.austain.domain.po.WordBook;
 import com.austain.mapper.EnglishMapper;
+import com.austain.mapper.StudyStatMapper;
 import com.austain.srevice.EnglishService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +34,9 @@ public class EnglishController {
     
     @Autowired
     private EnglishMapper englishMapper;
+    
+    @Autowired
+    private StudyStatMapper studyStatMapper;
 
     /**
      * 获取词库列表
@@ -104,7 +110,6 @@ public class EnglishController {
     /**
      * 获取用户学习统计数据
      */
-    // TODO
     @GetMapping("/stats/{userId}")
     public Result getUserStats(@PathVariable int userId, @RequestParam(required = false) Integer bookId) {
         try {
@@ -136,7 +141,7 @@ public class EnglishController {
 
             stats.put("todayMasteredWords", englishMapper.countTodayMasteredWords(userId, bookId));
             stats.put("todayErrorWords", englishMapper.countTodayErrorWords(userId, bookId));
-            stats.put("studyDays", 1);
+            stats.put("studyDays", studyStatMapper.countStudyDays(userId));
 
             return Result.success(stats);
         } catch (Exception e) {

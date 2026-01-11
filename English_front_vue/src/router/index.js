@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useBookStore } from '@/stores/book'
 import { useStudyTrackerStore } from '@/stores/studyTracker'
+import { studyLockGuard } from './guards'
 
 const routes = [
   {
@@ -38,13 +39,13 @@ const routes = [
     path: '/word/review',
     name: 'WordReviewSelection',
     component: () => import('@/views/WordReviewSelection.vue'),
-    meta: { requiresAuth: true, requiresBook: true, title: '单词复习选择' }
+    meta: { requiresAuth: true, requiresBook: false, title: '单词复习选择' }
   },
   {
     path: '/word/review/first',
     name: 'WordReview',
     component: () => import('@/views/WordReview.vue'),
-    meta: { requiresAuth: true, requiresBook: true, title: '第一轮复习', studyScene: 'word_review_first' }
+    meta: { requiresAuth: true, requiresBook: false, title: '第一轮复习', studyScene: 'word_review_first' }
   },
   {
     path: '/word/dictation',
@@ -86,7 +87,7 @@ const routes = [
     path: '/jottings',
     name: 'Jottings',
     component: () => import('@/views/Jottings.vue'),
-    meta: { requiresAuth: true, requiresBook: true, title: '积累本', studyScene: 'jottings' }
+    meta: { requiresAuth: true, requiresBook: false, title: '积累本', studyScene: 'jottings' }
   },
   {
     path: '/word/game',
@@ -143,11 +144,13 @@ router.beforeEach(async (to, from, next) => {
 
   document.title = to.meta.title ? `${to.meta.title} - 英语学习平台` : '英语学习平台'
 
+  // 1. 认证检查
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
     return
   }
 
+  // 2. 课本检查
   if (to.meta.requiresBook) {
     if (!authStore.currentBookId) {
       next('/books')
@@ -174,12 +177,18 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
+  // 3. 登录页面检查
   if ((to.name === 'Login' || to.name === 'Register') && authStore.isAuthenticated) {
     next('/')
     return
   }
 
-  next()
+  // 4. 学习锁定检查（在认证和课本检查通过后）
+  if (authStore.isAuthenticated) {
+    await studyLockGuard(to, from, next)
+  } else {
+    next()
+  }
 })
 
 // 路由后钩子：处理学习会话管理

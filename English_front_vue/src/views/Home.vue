@@ -230,16 +230,16 @@
               <div class="rounded-2xl border border-slate-100 bg-gradient-to-br from-sky-50 to-white p-4 flex flex-col gap-2 shadow-sm">
                 <div class="flex items-center justify-between text-xs font-semibold text-sky-600 uppercase tracking-widest">
                   今日掌握单词
-                  <span class="px-2 py-0.5 rounded-full bg-white text-sky-600">{{ stats.todayMasteredWords || 0 }} 个</span>
+                  <span class="px-2 py-0.5 rounded-full bg-white text-sky-600">{{ globalStats.todayMasteredWords || 0 }} 个</span>
                 </div>
-                <p class="text-3xl font-bold text-slate-900">{{ stats.todayMasteredWords || 0 }}</p>
+                <p class="text-3xl font-bold text-slate-900">{{ globalStats.todayMasteredWords || 0 }}</p>
               </div>
               <div class="rounded-2xl border border-slate-100 bg-gradient-to-br from-rose-50 to-white p-4 flex flex-col gap-2 shadow-sm">
                 <div class="flex items-center justify-between text-xs font-semibold text-rose-600 uppercase tracking-widest">
                   今日错词数量
-                  <span class="px-2 py-0.5 rounded-full bg-white text-rose-600">{{ stats.todayErrorWords || 0 }} 个</span>
+                  <span class="px-2 py-0.5 rounded-full bg-white text-rose-600">{{ globalStats.todayErrorWords || 0 }} 个</span>
                 </div>
-                <p class="text-3xl font-bold text-slate-900">{{ stats.todayErrorWords || 0 }}</p>
+                <p class="text-3xl font-bold text-slate-900">{{ globalStats.todayErrorWords || 0 }}</p>
               </div>
             </div>
 
@@ -632,10 +632,14 @@
               <h4 class="font-bold text-slate-900 mb-1 line-clamp-1" :title="book.bookName || book.name">{{ book.bookName || book.name }}</h4>
               <p class="text-xs text-slate-500 mb-4 line-clamp-2 min-h-[2.5em]">{{ book.description || '暂无描述信息' }}</p>
               
-              <div class="flex items-center gap-4 text-xs font-medium text-slate-400 bg-slate-50 p-2 rounded-lg">
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-slate-500 bg-slate-50 p-2 rounded-lg">
                 <span class="flex items-center gap-1">
                   <div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
-                  {{ book.wordCount || 0 }} 词
+                  {{ getBookWordCount(book) }} 词
+                </span>
+                <span class="flex items-center gap-1">
+                  <div class="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
+                  已掌握 {{ getBookMasteredCount(book) }}
                 </span>
                 <span class="flex items-center gap-1">
                   <div class="w-1.5 h-1.5 rounded-full bg-rose-400"></div>
@@ -674,12 +678,14 @@ import { useBookStore } from '@/stores/book'
 import { useRouter } from 'vue-router'
 import { useMotivation } from '@/composables/useMotivation'
 import { useStudyStatStore } from '@/stores/studyStat'
+import { useWordStudyStore } from '@/stores/wordStudy'
 
 const { logout } = useAuth()
 const authStore = useAuthStore()
 const bookStore = useBookStore()
 const router = useRouter()
 const studyStatStore = useStudyStatStore()
+const wordStudyStore = useWordStudyStore()
 
 // 激励文案相关
 const {
@@ -732,6 +738,16 @@ const showBookSelector = ref(false)
 const showUserMenu = ref(false)
 const userMenuRef = ref(null)
 
+const getBookWordCount = (book) => {
+  if (!book) return 0
+  return book.totalWords ?? book.wordCount ?? 0
+}
+
+const getBookMasteredCount = (book) => {
+  if (!book) return 0
+  return book.masteredWordCount ?? 0
+}
+
 // 学习统计数据
 const stats = ref({
   totalWords: 0,
@@ -740,7 +756,14 @@ const stats = ref({
   totalSentences: 0,
   masteredSentences: 0,
   errorSentences: 0,
-  studyDays: 0
+  studyDays: 0,
+  todayMasteredWords: 0,
+  todayErrorWords: 0
+})
+
+const globalStats = ref({
+  todayMasteredWords: 0,
+  todayErrorWords: 0
 })
 
 // 进度计算 - 基于总体掌握情况
@@ -756,6 +779,8 @@ const remainingCount = computed(() => {
   const total = (stats.value.totalWords || 0) + (stats.value.totalSentences || 0)
   return Math.max(total - masteredCount.value, 0)
 })
+
+const latestRecordLoading = ref(false)
 
 // 获取单词掌握率
 const getWordMasteryRate = () => {
@@ -811,53 +836,65 @@ const formatUpdateTime = (time) => {
 }
 
 // 加载学习统计数据
+const mapStatsResponse = (statsData = {}) => ({
+  totalWords: statsData.totalWords || 0,
+  masteredWords: statsData.masteredWords || 0,
+  errorWords: statsData.errorWords || 0,
+  totalSentences: statsData.totalSentences || 0,
+  masteredSentences: statsData.masteredSentences || 0,
+  errorSentences: statsData.errorSentences || 0,
+  studyDays: statsData.studyDays || 0,
+  todayMasteredWords: statsData.todayMasteredWords || 0,
+  todayErrorWords: statsData.todayErrorWords || 0
+})
+
+const fetchStats = async (bookId = null) => {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.43.106:8080'
+  let url = `${baseUrl}/api/english/stats/${authStore.user.id}`
+  if (bookId) {
+    url += `?bookId=${bookId}`
+  }
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authStore.token}`
+    }
+  })
+  if (!response.ok) return null
+  const data = await response.json()
+  if (data.code !== 1 || !data.data) return null
+  return mapStatsResponse(data.data)
+}
+
 const loadLearningStats = async () => {
   if (!authStore.user?.id) {
     return
   }
   
   try {
-    const bookId = currentBook.value?.id
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.43.106:8080'
-    const url = bookId 
-      ? `${baseUrl}/api/english/stats/${authStore.user.id}?bookId=${bookId}`
-      : `${baseUrl}/api/english/stats/${authStore.user.id}`
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authStore.token}`
-      }
-    })
-    
-    if (response.ok) {
-      const data = await response.json()
-      if (data.code === 1 && data.data) {
-        const statsData = data.data
-        stats.value = {
-          totalWords: statsData.totalWords || 0,
-          masteredWords: statsData.masteredWords || 0,
-          errorWords: statsData.errorWords || 0,
-          totalSentences: statsData.totalSentences || 0,
-          masteredSentences: statsData.masteredSentences || 0,
-          errorSentences: statsData.errorSentences || 0,
-          studyDays: statsData.studyDays || 0
-        }
-      }
+    // 全部课本今日统计
+    const overallStats = await fetchStats()
+    if (overallStats) {
+      globalStats.value.todayMasteredWords = overallStats.todayMasteredWords
+      globalStats.value.todayErrorWords = overallStats.todayErrorWords
+    } else {
+      globalStats.value.todayMasteredWords = 0
+      globalStats.value.todayErrorWords = 0
     }
-    
+
+    // 当前课本统计
+    if (currentBook.value?.id) {
+      const bookStats = await fetchStats(currentBook.value.id)
+      stats.value = bookStats || mapStatsResponse()
+    } else {
+      stats.value = overallStats || mapStatsResponse()
+    }
   } catch (error) {
     console.error('加载学习统计失败:', error)
-    stats.value = {
-      totalWords: 0,
-      masteredWords: 0,
-      errorWords: 0,
-      totalSentences: 0,
-      masteredSentences: 0,
-      errorSentences: 0,
-      studyDays: 0
-    }
+    stats.value = mapStatsResponse()
+    globalStats.value.todayMasteredWords = 0
+    globalStats.value.todayErrorWords = 0
   }
 }
 
@@ -964,6 +1001,32 @@ const selectBook = async (book) => {
   }
 }
 
+const autoSelectLatestBook = async () => {
+  if (currentBook.value?.id || !authStore.user?.id) {
+    return
+  }
+  try {
+    latestRecordLoading.value = true
+    const record = await wordStudyStore.getLatestRecord(authStore.user.id)
+    if (!record?.bookId) {
+      return
+    }
+    if (!bookStore.books?.length) {
+      await bookStore.fetchBooks()
+    }
+    const targetBook = bookStore.books.find((book) => book.id === record.bookId)
+    if (targetBook) {
+      await bookStore.selectBook(targetBook)
+    } else {
+      console.warn('最新学习记录关联的课本未在课本列表中找到')
+    }
+  } catch (error) {
+    console.error('根据最新学习记录自动选择课本失败:', error)
+  } finally {
+    latestRecordLoading.value = false
+  }
+}
+
 onMounted(async () => {
   document.addEventListener('click', handleClickOutside)
   // 初始化课本信息
@@ -974,6 +1037,7 @@ onMounted(async () => {
     console.error('初始化课本信息失败:', error)
   }
   
+  await autoSelectLatestBook()
   await studyStatStore.init()
 
   // 加载激励文案
@@ -982,7 +1046,7 @@ onMounted(async () => {
     startAutoPlay()
   }
   
-  // 手动触发一次stats加载
+  // 手动触发一次stats加载（若已有课本）
   if (currentBook.value) {
     await loadLearningStats()
   }
@@ -990,7 +1054,7 @@ onMounted(async () => {
 
 // 监听当前课本变化
 watch(currentBook, async (newBook) => {
-  if (newBook) {
+  if (newBook?.id) {
     await loadLearningStats()
   }
 }, { immediate: false })

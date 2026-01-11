@@ -52,6 +52,15 @@ public interface StudyStatMapper {
     java.util.List<UserStudyDaily> findRecentStats(@Param("userId") Long userId, @Param("days") Integer days);
 
     /**
+     * 统计用户累计学习天数（按有学习时长的日期计数）
+     */
+    @Select("SELECT COUNT(*) FROM (" +
+            " SELECT stat_date FROM user_study_daily" +
+            " WHERE user_id = #{userId} AND total_sec > 0 GROUP BY stat_date" +
+            ") t")
+    int countStudyDays(@Param("userId") int userId);
+
+    /**
      * 初始化用户学习统计数据
      */
     @Insert("INSERT IGNORE INTO user_study_summary (user_id, total_sec, updated_at) " +
