@@ -4,7 +4,7 @@ import com.austain.domain.dto.PageResult;
 import com.austain.domain.dto.Result;
 import com.austain.domain.po.Jotting;
 import com.austain.domain.po.PageRequest;
-import com.austain.srevice.JottingService;
+import com.austain.service.JottingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

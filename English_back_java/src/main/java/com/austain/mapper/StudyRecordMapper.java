@@ -42,7 +42,6 @@ public interface StudyRecordMapper {
      * 批量更新已标记的记录
      * @param ids 记录ID列表
      */
-    @Update("<script>update learning_checklist set selected = 1 where id in <foreach collection='list' item='id' open='(' separator=',' close=')'>#{id}</foreach></script>")
     void updateSelected(List<Integer> ids);
 
     /**
@@ -72,4 +71,6 @@ public interface StudyRecordMapper {
     // 重置已复习的记录
     @Update("update learning_checklist set already_reviewed = 0 where user_id = #{userId}")
     void resetReviewed(int userId);
+
+    void MergeStudyRecords();
 }

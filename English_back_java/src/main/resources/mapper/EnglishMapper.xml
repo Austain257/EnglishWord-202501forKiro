@@ -2,21 +2,47 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.austain.mapper.EnglishMapper">
-<!--    <insert id="addAgainWord">-->
-<!--        INSERT INTO word_error_review(user_id, book_id,word,chinese,pronounce,times)-->
-<!--            VALUES (#{userId}, #{bookId}, #{word}, #{chinese}, #{pronounce}, #{times})-->
-<!--    </insert>-->
-
-
-<!--    <update id="setNotGrasp">-->
-<!--        UPDATE english_word_01-->
-<!--        SET times = times + 1, is_grasp = 2-->
-<!--        WHERE id = #{id}-->
-<!--    </update>-->
 
 
     <select id="getEnglishListByBookCode" resultType="com.austain.domain.po.Englishs">
-        SELECT * FROM english_word_01
-        WHERE user_id in (#{userId},0,1,2,3,4,5) AND book_id = #{bookId} AND is_grasp != 1 order by id
+        SELECT * FROM english_word_02
+        WHERE user_id = #{userId} AND book_id = #{bookId} AND is_grasp != 1 order by id
+    </select>
+    <select id="getWordBookList" resultType="com.austain.domain.po.WordBook">
+        SELECT ub.*,
+               COALESCE(stats.total_words, 0)    AS totalWords,
+               COALESCE(stats.error_words, 0)    AS errorWordCount,
+               COALESCE(stats.mastered_words, 0) AS masteredWordCount
+        FROM user_books ub
+                 LEFT JOIN (SELECT book_id,
+                                   COUNT(*)                                      AS total_words,
+                                   SUM(CASE WHEN is_grasp = 2 THEN 1 ELSE 0 END) AS error_words,
+                                   SUM(CASE WHEN is_grasp = 1 THEN 1 ELSE 0 END) AS mastered_words
+                            FROM english_word_02
+                            WHERE user_id = #{userId}
+                            GROUP BY book_id) stats ON stats.book_id = ub.id
+        WHERE (ub.user_id = #{userId} OR (ub.user_id = #{userId} AND ub.visibility = 'PUBLIC'))
+          AND ub.status = 1
+        ORDER BY ub.word_count
+    </select>
+    <select id="countTodayMasteredWords" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM english_word_02
+        WHERE user_id = #{userId}
+        AND is_grasp = 1
+        AND DATE(update_time) = CURDATE()
+        <if test="bookId != null">
+            AND book_id = #{bookId}
+        </if>
+    </select>
+    <select id="countTodayErrorWords" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM english_word_02
+        WHERE user_id = #{userId}
+        AND is_grasp = 2
+        AND DATE(update_time) = CURDATE()
+        <if test="bookId != null">
+            AND book_id = #{bookId}
+        </if>
     </select>
 </mapper>

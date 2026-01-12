@@ -63,6 +63,8 @@ public class ProfileDashboardDTO {
     public static class ProgressTrends {
         private int weeklyPlanProgress;
         private int weeklyStudySeconds;
+        private int weeklyPlanMinutes;
+        private int weeklyStudyMinutes;
         private List<DailyTrendPoint> trends;
     }
 

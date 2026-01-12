@@ -306,7 +306,8 @@ const startTimer = async () => {
     })
     
     sessionId.value = response.id
-    startTime.value = new Date()
+    // 如果是继续已有会话，使用原有的开始时间；否则使用当前时间
+    startTime.value = response.startTime ? new Date(response.startTime) : new Date()
     timerStatus.value = 'running'
     
     // 开始倒计时
@@ -324,11 +325,11 @@ const startTimer = async () => {
       }
     }, 1000)
     
-    emit('study-started', { sessionId: sessionId.value, startTime: startTime.value })
+    emit('study-started', { sessionId: sessionId.value, startTime: startTime.value, isExistingSession: !!response.startTime })
     // success('学习计时已开始')
   } catch (err) {
     console.error('开始学习失败：', err.message)
-    // error('开始学习失败：' + err.message)
+    error('开始学习失败：' + err.message)
   }
 }
 

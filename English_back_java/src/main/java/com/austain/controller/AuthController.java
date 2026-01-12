@@ -2,7 +2,7 @@ package com.austain.controller;
 
 import com.austain.domain.dto.Result;
 import com.austain.domain.po.User;
-import com.austain.srevice.AuthService;
+import com.austain.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

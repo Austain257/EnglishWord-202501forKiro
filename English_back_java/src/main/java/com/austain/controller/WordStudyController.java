@@ -2,7 +2,7 @@ package com.austain.controller;
 
 import com.austain.domain.dto.*;
 import com.austain.domain.po.WordStudyRecord;
-import com.austain.srevice.WordStudyService;
+import com.austain.service.WordStudyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

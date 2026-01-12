@@ -1,6 +1,5 @@
-package com.austain.srevice.impl;
+package com.austain.service.impl;
 
-import com.austain.domain.dto.profile.ProfileDashboardDTO;
 import com.austain.domain.dto.profile.ProfileDashboardDTO;
 import com.austain.domain.dto.profile.ProfileDashboardDTO.ProgressTrends;
 import com.austain.domain.dto.profile.ProfileDashboardDTO.ChecklistSnapshot;
@@ -24,8 +23,8 @@ import com.austain.mapper.StudyRecordMapper;
 import com.austain.mapper.StudyStatMapper;
 import com.austain.mapper.UserMapper;
 import com.austain.mapper.WordStudyRecordMapper;
-import com.austain.srevice.ProfileService;
-import com.austain.srevice.StudySessionService;
+import com.austain.service.ProfileService;
+import com.austain.service.StudySessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,10 +32,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.util.StringUtils;
@@ -264,20 +260,34 @@ public class ProfileServiceImpl implements ProfileService {
         List<UserStudyDaily> recentStats = studyStatMapper.findRecentStats(userId, 7);
         if (recentStats == null) recentStats = List.of();
 
-        List<DailyTrendPoint> points = recentStats.stream()
-                .sorted(Comparator.comparing(UserStudyDaily::getStatDate))
-                .map(item -> DailyTrendPoint.builder()
-                        .date(item.getStatDate().format(DATE_FORMAT))
-                        .seconds(item.getTotalSec() == null ? 0 : item.getTotalSec())
-                        .build())
-                .collect(Collectors.toList());
+        Map<LocalDate, Integer> dailySecondsMap = recentStats.stream()
+                .filter(item -> item.getStatDate() != null)
+                .collect(Collectors.toMap(
+                        UserStudyDaily::getStatDate,
+                        item -> item.getTotalSec() == null ? 0 : item.getTotalSec(),
+                        Integer::sum
+                ));
+
+        List<DailyTrendPoint> points = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        for (int i = 6; i >= 0; i--) {
+            LocalDate date = today.minusDays(i);
+            points.add(DailyTrendPoint.builder()
+                    .date(date.format(DATE_FORMAT))
+                    .seconds(dailySecondsMap.getOrDefault(date, 0))
+                    .build());
+        }
 
         int weeklyTotal = points.stream().mapToInt(DailyTrendPoint::getSeconds).sum();
         int weeklyProgress = weeklyPlan == 0 ? 0 : Math.min(100, weeklyTotal * 100 / weeklyPlan);
+        int weeklyPlanMinutes = weeklyPlan / 60;
+        int weeklyStudyMinutes = weeklyTotal / 60;
 
         return ProgressTrends.builder()
                 .weeklyPlanProgress(weeklyProgress)
                 .weeklyStudySeconds(weeklyTotal)
+                .weeklyPlanMinutes(weeklyPlanMinutes)
+                .weeklyStudyMinutes(weeklyStudyMinutes)
                 .trends(points)
                 .build();
     }

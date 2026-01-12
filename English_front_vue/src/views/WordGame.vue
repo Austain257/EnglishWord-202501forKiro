@@ -26,7 +26,7 @@
     <nav class="relative z-40 px-4 sm:px-6 lg:px-10 h-16 sm:h-20 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <button 
-          @click="router.back()"
+          @click="goBack"
           class="p-2 -ml-2 text-slate-500 hover:text-slate-900 hover:bg-white/60 rounded-xl transition-all duration-200"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,6 +49,11 @@
           <span class="text-indigo-600 font-bold">{{ progressCurrent }}</span>
           <span class="text-slate-400">/</span>
           <span>{{ progressTotal }}</span>
+        </div>
+        <!-- 当前课本 -->
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/70 rounded-xl border border-white/70 text-xs font-semibold text-slate-500 max-w-[220px]">
+          <span>当前课本</span>
+          <span class="text-indigo-600 font-bold truncate" :title="currentBookName">{{ currentBookName }}</span>
         </div>
         <!-- 范围 -->
         <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/70 rounded-xl border border-white/70 text-xs font-semibold text-slate-500">
@@ -252,7 +257,7 @@
               
               <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <button 
-                  @click="router.push('/')"
+                  @click="goBack"
                   class="flex-1 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-bold text-base sm:text-lg hover:bg-slate-200 transition-colors"
                 >
                   返回首页
@@ -365,6 +370,7 @@ const cardBottomLimit = ref(0)
 const initializing = ref(true)
 const latestRecord = ref(null)
 const gameWords = ref([])
+const currentBookName = computed(() => bookStore.currentBook?.bookName || bookStore.currentBook?.name || '未选择课本')
 const initialWordCount = ref(0)
 const completedWordIds = ref(new Set())
 const showTimeUpModal = ref(false)
@@ -621,6 +627,14 @@ const renderCurrentBubbles = (immediate = false) => {
   else nextTick(action)
 }
 
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
+
 const ensureBookSelected = async (bookId) => {
   if (!bookId) {
     throw new Error('学习记录缺少课本信息')
@@ -643,12 +657,28 @@ const preloadLatestWords = async () => {
   }
   try {
     initializing.value = true
-    const record = await wordStudyStore.getLatestRecord(authStore.user.id)
+    const record = await wordStudyStore.getLatestRecord(authStore.user.id, bookStore.currentBook?.id)
+    
     if (!record) {
-      showError('未找到学习记录，请先完成学习后再进入第二轮复习')
-      router.push('/word/review')
+      // 无学习记录时，弹窗提示用户
+      if (!bookStore.currentBook?.id) {
+        confirm('未找到学习记录且未选择课本，请先选择课本后开始学习。')
+        router.push('/word/review')
+        return
+      }
+      const confirmed = confirm('当前课本还未学习，请先学习把~')
+      if (!confirmed) {
+        router.push('/word/learning')
+        return
+      }
+      const bookWordCount = bookStore.currentBook?.wordCount || 0
+      const defaultEnd = Math.min(10, bookWordCount || 10)
+      const range = { start: 1, end: defaultEnd }
+      await wordStore.fetchWords(range)
+      latestRecord.value = null
       return
     }
+    
     await ensureBookSelected(record.bookId)
     const range = {
       start: record.startId || 1,
@@ -697,7 +727,7 @@ const startGame = async () => {
     router.push('/word/review')
     return
   }
-  if (words.value.length < 4) {
+  if (words.value.length < 1) {
     showError('单词数量不足，无法开始游戏')
     return
   }
@@ -860,12 +890,13 @@ const markSecondRoundComplete = async () => {
     await wordStudyStore.markReviewComplete({
       userId: authStore.user?.id,
       sessionId: latestRecord.value.id,
-      reviewRound: 2,
-      completedTime: new Date()
+      reviewRound: 2
+      // 移除completedTime，让后端使用服务器时间
     })
-    latestRecord.value = {
-      ...latestRecord.value,
-      round2ReviewTime: new Date().toISOString()
+    // 重新获取记录以获得正确的时间
+    const updatedRecord = await wordStudyStore.getLatestRecord(authStore.user.id, bookStore.currentBook?.id)
+    if (updatedRecord) {
+      latestRecord.value = updatedRecord
     }
     showSuccess('第二轮复习已完成')
   } catch (error) {

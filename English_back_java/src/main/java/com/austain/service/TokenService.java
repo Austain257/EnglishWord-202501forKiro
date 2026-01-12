@@ -1,6 +1,5 @@
-package com.austain.srevice;
+package com.austain.service;
 
-import com.austain.domain.po.User;
 import com.austain.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

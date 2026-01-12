@@ -17,7 +17,7 @@ public class RecordRequest {
     private int type;
     private int selected;
     private int alreadyReviewed;
-    private LocalDate dueDate;  // 截止时间
+//    private LocalDate dueDate;  // 截止时间
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 

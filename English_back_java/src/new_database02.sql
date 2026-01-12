@@ -53,8 +53,8 @@ CREATE TABLE `user_books` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='用户自定义课本表';
 
 -- 建立英语单词表
-DROP TABLE IF EXISTS `english_word_01`;
-CREATE TABLE `english_word_01` (
+DROP TABLE IF EXISTS `english_word_02`;
+CREATE TABLE `english_word_02` (
     `id` int NOT NULL AUTO_INCREMENT COMMENT '单词编号',
     `user_id` bigint NOT NULL DEFAULT 0 COMMENT '用户编号',
     `book_id` bigint NOT NULL COMMENT '单词本编号',
@@ -72,9 +72,9 @@ CREATE TABLE `english_word_01` (
     KEY `idx_is_grasp` (`is_grasp`),
     KEY `idx_error_times` (`error_times`),
     KEY `idx_create_time` (`create_time`),
-    CONSTRAINT `fk_english_word_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_english_word_book` FOREIGN KEY (`book_id`) REFERENCES `user_books` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='生单词表';
+    CONSTRAINT `fk_english_word_02_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_english_word_02_book` FOREIGN KEY (`book_id`) REFERENCES `user_books` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='生单词表2';
 
 -- 建立错词二次复习表
 DROP TABLE IF EXISTS `word_error_review`;

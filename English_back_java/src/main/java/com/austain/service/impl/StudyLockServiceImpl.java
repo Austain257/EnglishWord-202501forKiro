@@ -1,12 +1,11 @@
-package com.austain.srevice.impl;
+package com.austain.service.impl;
 
 import com.austain.domain.dto.StudyLockStatusResponse;
-import com.austain.srevice.StudyLockService;
-import com.austain.srevice.WordStudyService;
+import com.austain.service.StudyLockService;
+import com.austain.service.WordStudyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**

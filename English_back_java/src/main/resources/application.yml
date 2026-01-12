@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: EnglishAndWord
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 30MB
+      resolve-lazily: true
+      enabled: true
   datasource:
       driver-class-name: com.mysql.cj.jdbc.Driver
       url: jdbc:mysql://localhost:3306/english_for_kiro?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true

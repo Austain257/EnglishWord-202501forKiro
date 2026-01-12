@@ -162,7 +162,7 @@
         </div>
 
         <!-- 课本状态卡片 (重新设计 - 紧凑信息) -->
-        <div class="lg:col-span-4 bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col gap-6 h-full hover:shadow-lg transition-shadow duration-300">
+        <div class="lg:col-span-4 bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col justify-between gap-6 hover:shadow-lg transition-shadow duration-300 min-h-[500px]">
           
           <!-- 头部：标题与切换 -->
           <div class="flex justify-between items-start">
@@ -188,28 +188,72 @@
           </div>
 
           <!-- 内容区域 -->
-          <div class="space-y-5" v-if="currentBook && currentBook.id">
-            <!-- 进度数值 -->
-            <div class="flex items-end gap-2">
-              <span class="text-4xl font-bold text-slate-900 leading-none">{{ progressPercent }}</span>
-              <span class="text-sm font-medium text-slate-400">%</span>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-semibold">学习进度</span>
-            </div>
-            
-            <!-- 进度条 -->
-            <div class="space-y-2">
-              <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-              <div 
-                class="h-full bg-blue-600 rounded-full transition-all duration-1000 ease-out" 
-                :style="{ width: `${progressPercent}%` }"
-              ></div>
+          <div class="flex-1 flex flex-col justify-between gap-5" v-if="currentBook && currentBook.id">
+            <!-- 上半部分：进度信息 -->
+            <div class="space-y-4">
+              <!-- 进度数值 -->
+              <div class="flex items-end gap-2">
+                <span class="text-4xl font-bold text-slate-900 leading-none">{{ progressPercent }}</span>
+                <span class="text-sm font-medium text-slate-400">%</span>
+                <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-semibold">学习进度</span>
               </div>
-              <div class="flex justify-between text-xs text-slate-400 font-medium">
-                <span>已完成 {{ masteredCount }} 项</span>
-                <span>剩余 {{ remainingCount }}</span>
+              
+              <!-- 进度条 -->
+              <div class="space-y-2">
+                <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div 
+                  class="h-full bg-blue-600 rounded-full transition-all duration-1000 ease-out" 
+                  :style="{ width: `${progressPercent}%` }"
+                ></div>
+                </div>
+                <div class="flex justify-between text-xs text-slate-400 font-medium">
+                  <span>已完成 {{ masteredCount }} 项</span>
+                  <span>剩余 {{ remainingCount }}</span>
+                </div>
+              </div>
+
+              <!-- 今日单词表现 -->
+              <div class="grid grid-cols-2 gap-2">
+                <div class="rounded-xl border border-slate-100 bg-gradient-to-br from-sky-50 to-white p-3 flex flex-col gap-1 shadow-sm">
+                  <div class="text-xs font-semibold text-sky-600 uppercase tracking-wider">
+                    今日掌握
+                  </div>
+                  <p class="text-2xl font-bold text-slate-900">{{ globalStats.todayMasteredWords || 0 }}</p>
+                </div>
+                <div class="rounded-xl border border-slate-100 bg-gradient-to-br from-rose-50 to-white p-3 flex flex-col gap-1 shadow-sm">
+                  <div class="text-xs font-semibold text-rose-600 uppercase tracking-wider">
+                    今日错词
+                  </div>
+                  <p class="text-2xl font-bold text-slate-900">{{ globalStats.todayErrorWords || 0 }}</p>
+                </div>
               </div>
             </div>
 
+            <!-- 中间部分：课本词汇概览 -->
+            <div class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 shadow-inner">
+              <div class="flex items-center justify-between mb-3">
+                <p class="text-sm font-semibold text-slate-600 flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                  课本词汇概览
+                </p>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-white rounded-xl py-2.5 px-1.5 border border-white/60 shadow-sm">
+                  <p class="text-xs text-slate-400">总词汇</p>
+                  <p class="text-xl font-bold text-slate-900 mt-1">{{ stats.totalWords || 0 }}</p>
+                </div>
+                <div class="bg-white rounded-xl py-2.5 px-1.5 border border-white/60 shadow-sm">
+                  <p class="text-xs text-emerald-500">已掌握</p>
+                  <p class="text-xl font-bold text-emerald-600 mt-1">{{ stats.masteredWords || 0 }}</p>
+                </div>
+                <div class="bg-white rounded-xl py-2.5 px-1.5 border border-white/60 shadow-sm">
+                  <p class="text-xs text-rose-500">错词</p>
+                  <p class="text-xl font-bold text-rose-600 mt-1">{{ stats.errorWords || 0 }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 底部：操作按钮 -->
             <div class="flex gap-3">
               <button 
                 @click="showBookSelector = true"
@@ -223,49 +267,6 @@
               >
                 继续学习
               </button>
-            </div>
-
-            <!-- 今日单词表现 -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <div class="rounded-2xl border border-slate-100 bg-gradient-to-br from-sky-50 to-white p-4 flex flex-col gap-2 shadow-sm">
-                <div class="flex items-center justify-between text-xs font-semibold text-sky-600 uppercase tracking-widest">
-                  今日掌握单词
-                  <span class="px-2 py-0.5 rounded-full bg-white text-sky-600">{{ globalStats.todayMasteredWords || 0 }} 个</span>
-                </div>
-                <p class="text-3xl font-bold text-slate-900">{{ globalStats.todayMasteredWords || 0 }}</p>
-              </div>
-              <div class="rounded-2xl border border-slate-100 bg-gradient-to-br from-rose-50 to-white p-4 flex flex-col gap-2 shadow-sm">
-                <div class="flex items-center justify-between text-xs font-semibold text-rose-600 uppercase tracking-widest">
-                  今日错词数量
-                  <span class="px-2 py-0.5 rounded-full bg-white text-rose-600">{{ globalStats.todayErrorWords || 0 }} 个</span>
-                </div>
-                <p class="text-3xl font-bold text-slate-900">{{ globalStats.todayErrorWords || 0 }}</p>
-              </div>
-            </div>
-
-            <!-- 课本词汇概览 -->
-            <div class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 sm:p-5 shadow-inner">
-              <div class="flex items-center justify-between mb-4">
-                <p class="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                  课本词汇概览
-                </p>
-                <span class="text-xs text-slate-400">实时更新</span>
-              </div>
-              <div class="grid grid-cols-3 gap-3 text-center">
-                <div class="bg-white rounded-xl py-3 px-2 border border-white/60 shadow-sm">
-                  <p class="text-xs text-slate-400">总词汇</p>
-                  <p class="text-2xl font-bold text-slate-900 mt-1">{{ stats.totalWords || 0 }}</p>
-                </div>
-                <div class="bg-white rounded-xl py-3 px-2 border border-white/60 shadow-sm">
-                  <p class="text-xs text-emerald-500">已掌握</p>
-                  <p class="text-2xl font-bold text-emerald-600 mt-1">{{ stats.masteredWords || 0 }}</p>
-                </div>
-                <div class="bg-white rounded-xl py-3 px-2 border border-white/60 shadow-sm">
-                  <p class="text-xs text-rose-500">错词</p>
-                  <p class="text-2xl font-bold text-rose-600 mt-1">{{ stats.errorWords || 0 }}</p>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -290,6 +291,27 @@
         </div>
 
         <div class="space-y-8">
+          <!-- 创建课本入口 -->
+          <section class="bg-white rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div class="flex-1">
+                <h3 class="text-xl font-bold text-slate-900 mb-2">创建专属课本</h3>
+                <p class="text-slate-600 text-sm leading-relaxed">
+                  上传PDF单词表，AI自动解析并创建个性化学习课本，支持音标识别和释义提取。
+                </p>
+              </div>
+              <button
+                @click="showCreateBookModal = true"
+                class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all duration-300"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                创建课本
+              </button>
+            </div>
+          </section>
+
           <!-- 单词专区 -->
           <div>
             <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -668,10 +690,197 @@
       </div>
     </div>
   </div>
+
+  <!-- 创建课本弹窗 -->
+  <div v-if="showCreateBookModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <!-- 弹窗头部 -->
+      <div class="flex items-center justify-between p-6 border-b border-slate-100">
+        <div>
+          <h3 class="text-xl font-bold text-slate-900">创建专属课本</h3>
+          <p class="text-sm text-slate-600 mt-1">上传PDF单词表，AI自动解析并创建学习课本</p>
+        </div>
+        <button
+          @click="closeCreateBookModal"
+          class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- 弹窗内容 -->
+      <div class="p-6 overflow-y-auto flex-1">
+        <div class="space-y-6">
+          <!-- PDF文件上传区域 -->
+          <div
+            :class="[
+              'border-2 border-dashed rounded-2xl p-6 text-center transition-colors duration-200',
+              isDraggingUpload ? 'border-blue-400 bg-blue-50/40 shadow-inner shadow-blue-100' : 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/10'
+            ]"
+            @dragover.prevent="handleDragOver"
+            @dragleave.prevent="handleDragLeave"
+            @drop.prevent="handleDrop"
+          >
+            <div class="space-y-3">
+              <div class="w-16 h-16 mx-auto bg-blue-50 rounded-2xl flex items-center justify-center">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold text-slate-900 mb-1">选择PDF文件</h4>
+                <p class="text-sm text-slate-600">支持单词表格式，文件大小不超过30MB</p>
+              </div>
+              <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  @click="triggerPdfUpload"
+                  class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" />
+                  </svg>
+                  选择文件
+                </button>
+                <div v-if="pdfFileName" class="text-sm text-slate-600 bg-slate-50 px-3 py-2 rounded-lg">
+                  {{ pdfFileName }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 课本信息表单 -->
+          <div class="space-y-4">
+            <h4 class="text-lg font-semibold text-slate-900">课本信息</h4>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">课本名称 *</label>
+                <input
+                  v-model="bookForm.bookName"
+                  type="text"
+                  maxlength="120"
+                  class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                  placeholder="例：CET-4 高频词汇（2025版）"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">预计词汇量</label>
+                <input
+                  v-model="bookForm.wordCount"
+                  type="number"
+                  min="1"
+                  class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                  placeholder="可不填，默认为解析数量"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">封面地址</label>
+                <input
+                  v-model="bookForm.coverUrl"
+                  type="text"
+                  class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                  placeholder="可自定义封面URL"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">可见范围</label>
+                <select
+                  v-model="bookForm.visibility"
+                  class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                >
+                  <option value="PRIVATE">私有</option>
+                  <option value="PUBLIC">公开</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">课本简介</label>
+              <textarea
+                v-model="bookForm.description"
+                rows="3"
+                class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors resize-none"
+                placeholder="为学习者写一段简短介绍，让记忆更有仪式感~"
+              />
+            </div>
+          </div>
+
+          <!-- 导入状态显示 -->
+          <div v-if="importResult || selectedPdfFile" class="bg-slate-50 rounded-2xl p-4">
+            <h4 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              导入状态
+            </h4>
+            <div class="space-y-2 text-sm">
+              <template v-if="importResult">
+                <div class="flex items-center gap-2 text-green-600">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  课本创建成功！
+                </div>
+                <p class="text-slate-600">课本ID: {{ importResult.bookId }}</p>
+                <p class="text-slate-600">解析单词: {{ importResult.parsedCount }} 条</p>
+                <p class="text-slate-600">成功导入: {{ importResult.importedCount }} 条</p>
+              </template>
+              <template v-else-if="selectedPdfFile">
+                <p class="text-slate-600">已选择文件: {{ pdfFileName }}</p>
+                <p class="text-slate-500 text-xs">填写课本信息后点击"创建并导入"开始处理</p>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 弹窗底部操作按钮 -->
+      <div class="flex items-center justify-end gap-3 p-6 border-t border-slate-100 bg-slate-50/50">
+        <button
+          @click="closeCreateBookModal"
+          class="px-6 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-xl transition-colors"
+        >
+          取消
+        </button>
+        <button
+          @click="clearImportForm"
+          class="px-6 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-xl transition-colors"
+        >
+          重置
+        </button>
+        <button
+          @click="submitBookImport"
+          :disabled="importingBook || !selectedPdfFile || !bookForm.bookName.trim()"
+          class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <svg v-if="importingBook" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          {{ importingBook ? '创建中...' : '创建并导入' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- 隐藏的文件输入框 -->
+    <input
+      ref="pdfUploadInput"
+      type="file"
+      accept="application/pdf"
+      class="hidden"
+      @change="handlePdfFileChange"
+    />
+  </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import { useAuthStore } from '@/stores/auth'
 import { useBookStore } from '@/stores/book'
@@ -679,6 +888,8 @@ import { useRouter } from 'vue-router'
 import { useMotivation } from '@/composables/useMotivation'
 import { useStudyStatStore } from '@/stores/studyStat'
 import { useWordStudyStore } from '@/stores/wordStudy'
+import { useToast } from '@/composables/useToast'
+import { fileService } from '@/services/file.service'
 
 const { logout } = useAuth()
 const authStore = useAuthStore()
@@ -686,6 +897,7 @@ const bookStore = useBookStore()
 const router = useRouter()
 const studyStatStore = useStudyStatStore()
 const wordStudyStore = useWordStudyStore()
+const toast = useToast()
 
 // 激励文案相关
 const {
@@ -737,6 +949,154 @@ const showLogoutConfirm = ref(false)
 const showBookSelector = ref(false)
 const showUserMenu = ref(false)
 const userMenuRef = ref(null)
+const showCreateBookModal = ref(false)
+
+// PDF上传与课本创建相关
+const pdfUploadInput = ref(null)
+const selectedPdfFile = ref(null)
+const pdfFileName = ref('')
+const importingBook = ref(false)
+const importResult = ref(null)
+const isDraggingUpload = ref(false)
+
+const defaultBookForm = () => ({
+  bookName: '',
+  description: '',
+  coverUrl: '',
+  wordCount: '',
+  visibility: 'PRIVATE'
+})
+
+const bookForm = reactive(defaultBookForm())
+
+const triggerPdfUpload = () => {
+  pdfUploadInput.value?.click()
+}
+
+const applySelectedPdfFile = (file) => {
+  if (!file) return false
+  if (file.type && file.type !== 'application/pdf') {
+    toast.error('请上传PDF文件')
+    return false
+  }
+  const maxSize = 30 * 1024 * 1024
+  if (file.size > maxSize) {
+    toast.error('文件大小不能超过30MB')
+    return false
+  }
+  selectedPdfFile.value = file
+  pdfFileName.value = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)}MB`
+  importResult.value = null
+  return true
+}
+
+const handlePdfFileChange = (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+  if (!applySelectedPdfFile(file)) {
+    event.target.value = ''
+  }
+}
+
+const handleDragOver = (event) => {
+  if (event.dataTransfer?.types?.includes('Files')) {
+    event.dataTransfer.dropEffect = 'copy'
+    isDraggingUpload.value = true
+  }
+}
+
+const handleDragLeave = (event) => {
+  if (!event.currentTarget.contains(event.relatedTarget)) {
+    isDraggingUpload.value = false
+  }
+}
+
+const handleDrop = (event) => {
+  isDraggingUpload.value = false
+  const file = event.dataTransfer?.files?.[0]
+  if (file) {
+    applySelectedPdfFile(file)
+  }
+}
+
+const resetBookForm = () => {
+  const defaults = defaultBookForm()
+  Object.keys(defaults).forEach((key) => {
+    bookForm[key] = defaults[key]
+  })
+}
+
+const resetUploadState = () => {
+  selectedPdfFile.value = null
+  pdfFileName.value = ''
+  if (pdfUploadInput.value) {
+    pdfUploadInput.value.value = ''
+  }
+}
+
+const clearImportForm = () => {
+  resetUploadState()
+  resetBookForm()
+  importResult.value = null
+}
+
+const closeCreateBookModal = () => {
+  showCreateBookModal.value = false
+  // 延迟清理表单，避免关闭动画时看到表单重置
+  setTimeout(() => {
+    clearImportForm()
+  }, 300)
+}
+
+const submitBookImport = async () => {
+  if (importingBook.value) return
+  const userId = authStore.user?.id
+  if (!userId) {
+    toast.error('请先登录账号')
+    return
+  }
+  if (!selectedPdfFile.value) {
+    toast.error('请先选择PDF文件')
+    return
+  }
+  if (!bookForm.bookName.trim()) {
+    toast.error('课本名称不能为空')
+    return
+  }
+  importingBook.value = true
+  try {
+    const payload = {
+      userId,
+      bookName: bookForm.bookName.trim(),
+      description: bookForm.description?.trim(),
+      coverUrl: bookForm.coverUrl?.trim(),
+      wordCount: bookForm.wordCount ? Number(bookForm.wordCount) : undefined,
+      visibility: bookForm.visibility
+    }
+    const response = await fileService.parseWordPdf({
+      file: selectedPdfFile.value,
+      book: payload
+    })
+    importResult.value = response.data || null
+    toast.success('课本创建成功，已自动导入单词')
+    await bookStore.fetchBooks()
+    if (response.data?.bookId) {
+      const newBook = bookStore.books.find((book) => book.id === response.data.bookId)
+      if (newBook) {
+        await bookStore.selectBook(newBook)
+      }
+    }
+    // 延迟关闭弹窗，让用户看到成功状态
+    setTimeout(() => {
+      closeCreateBookModal()
+    }, 2000)
+  } catch (error) {
+    console.error('创建课本失败:', error)
+    toast.error(error.message || '创建课本失败')
+  } finally {
+    importingBook.value = false
+  }
+}
 
 const getBookWordCount = (book) => {
   if (!book) return 0
@@ -766,18 +1126,19 @@ const globalStats = ref({
   todayErrorWords: 0
 })
 
-// 进度计算 - 基于总体掌握情况
+// 进度计算 - 仅基于单词掌握情况
 const progress = computed(() => {
-  const totalItems = (stats.value.totalWords || 0) + (stats.value.totalSentences || 0)
-  const masteredItems = (stats.value.masteredWords || 0) + (stats.value.masteredSentences || 0)
-  if (totalItems === 0) return 0
-  return (masteredItems / totalItems) * 100
+  const totalWords = stats.value.totalWords || 0
+  const masteredWords = stats.value.masteredWords || 0
+  if (totalWords === 0) return 0
+  return (masteredWords / totalWords) * 100
 })
 const progressPercent = computed(() => Math.round(progress.value))
-const masteredCount = computed(() => (stats.value.masteredWords || 0) + (stats.value.masteredSentences || 0))
+const masteredCount = computed(() => stats.value.masteredWords || 0)
 const remainingCount = computed(() => {
-  const total = (stats.value.totalWords || 0) + (stats.value.totalSentences || 0)
-  return Math.max(total - masteredCount.value, 0)
+  const totalWords = stats.value.totalWords || 0
+  const masteredWords = stats.value.masteredWords || 0
+  return Math.max(totalWords - masteredWords, 0)
 })
 
 const latestRecordLoading = ref(false)
@@ -1001,32 +1362,6 @@ const selectBook = async (book) => {
   }
 }
 
-const autoSelectLatestBook = async () => {
-  if (currentBook.value?.id || !authStore.user?.id) {
-    return
-  }
-  try {
-    latestRecordLoading.value = true
-    const record = await wordStudyStore.getLatestRecord(authStore.user.id)
-    if (!record?.bookId) {
-      return
-    }
-    if (!bookStore.books?.length) {
-      await bookStore.fetchBooks()
-    }
-    const targetBook = bookStore.books.find((book) => book.id === record.bookId)
-    if (targetBook) {
-      await bookStore.selectBook(targetBook)
-    } else {
-      console.warn('最新学习记录关联的课本未在课本列表中找到')
-    }
-  } catch (error) {
-    console.error('根据最新学习记录自动选择课本失败:', error)
-  } finally {
-    latestRecordLoading.value = false
-  }
-}
-
 onMounted(async () => {
   document.addEventListener('click', handleClickOutside)
   // 初始化课本信息
@@ -1036,8 +1371,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('初始化课本信息失败:', error)
   }
-  
-  await autoSelectLatestBook()
+
   await studyStatStore.init()
 
   // 加载激励文案

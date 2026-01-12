@@ -29,6 +29,12 @@
           <span>{{ totalWords }}</span>
         </div>
 
+        <!-- Current Book -->
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/60 text-xs font-medium text-slate-600 max-w-[220px]">
+          <span>当前课本</span>
+          <span class="text-sky-600 font-bold truncate" :title="currentBookName">{{ currentBookName }}</span>
+        </div>
+
         <!-- Current Range -->
          <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/60 text-xs font-medium text-slate-600">
           <span>当前范围</span>
@@ -204,10 +210,12 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWordStore } from '@/stores/word'
+import { useBookStore } from '@/stores/book'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const wordStore = useWordStore()
+const bookStore = useBookStore()
 const { success, error, info } = useToast()
 
 const showRangeModal = ref(false)
@@ -231,6 +239,7 @@ const loading = computed(() => wordStore.loading)
 const currentWord = computed(() => wordStore.currentWord)
 const currentIndex = computed(() => wordStore.currentIndex)
 const totalWords = computed(() => wordStore.totalWords)
+const currentBookName = computed(() => bookStore.currentBook?.bookName || bookStore.currentBook?.name || '未选择课本')
 const hasNext = computed(() => wordStore.hasNext)
 
 const inputPlaceholder = computed(() => {
@@ -255,7 +264,13 @@ const answerDetail = computed(() => {
   }
 })
 
-const goBack = () => router.push('/')
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
 
 const setMainMode = (newMainMode) => {
   mainMode.value = newMainMode

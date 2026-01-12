@@ -4,9 +4,10 @@ import com.austain.domain.dto.Result;
 import com.austain.domain.po.Englishs;
 import com.austain.domain.po.Sentence;
 import com.austain.domain.po.WordBook;
+import com.austain.domain.po.WordRequest;
 import com.austain.mapper.EnglishMapper;
 import com.austain.mapper.StudyStatMapper;
-import com.austain.srevice.EnglishService;
+import com.austain.service.EnglishService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -139,8 +140,9 @@ public class EnglishController {
             stats.put("masteredSentences", allSentences.stream().mapToInt(s -> s.getIsGrasp() == 1 ? 1 : 0).sum());
             stats.put("errorSentences", allSentences.stream().mapToInt(s -> s.getIsGrasp() == 2 ? 1 : 0).sum());
 
-            stats.put("todayMasteredWords", englishMapper.countTodayMasteredWords(userId, bookId));
-            stats.put("todayErrorWords", englishMapper.countTodayErrorWords(userId, bookId));
+            // 今日统计始终跨所有课本，不限制特定课本
+            stats.put("todayMasteredWords", englishMapper.countTodayMasteredWords(userId, null));
+            stats.put("todayErrorWords", englishMapper.countTodayErrorWords(userId, null));
             stats.put("studyDays", studyStatMapper.countStudyDays(userId));
 
             return Result.success(stats);

@@ -1,4 +1,4 @@
-package com.austain.srevice;
+package com.austain.service;
 
 import com.austain.domain.dto.profile.ProfileDashboardDTO;
 import com.austain.domain.dto.profile.ProfileDashboardDTO.Settings;

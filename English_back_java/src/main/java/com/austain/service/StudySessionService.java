@@ -1,4 +1,4 @@
-package com.austain.srevice;
+package com.austain.service;
 
 import com.austain.domain.dto.StudySessionDTO;
 import com.austain.domain.dto.StudyStatVO;

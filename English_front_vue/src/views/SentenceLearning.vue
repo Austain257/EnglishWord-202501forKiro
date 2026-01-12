@@ -312,7 +312,13 @@ const playPronunciation = () => {
 }
 
 // 核心功能
-const goBack = () => router.back()
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
 
 const loadSentences = async (range = null) => {
   try {

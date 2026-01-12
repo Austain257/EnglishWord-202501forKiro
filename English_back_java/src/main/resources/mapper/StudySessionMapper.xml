@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.austain.mapper.StudySessionMapper">
+    <insert id="insertSession">
+        INSERT INTO user_study_session (user_id, book_id, study_scene, start_time, status, last_heartbeat, source,
+                                        client_meta, created_at, updated_at)
+        VALUES (#{userId}, #{bookId}, #{studyScene}, #{startTime}, #{status}, #{lastHeartbeat}, #{source},
+                #{clientMeta}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <update id="finishSession">
+        UPDATE user_study_session
+        SET end_time           = #{endTime},
+            duration_sec       = #{durationSec},
+            pause_duration_sec = #{pauseDurationSec},
+            is_paused          = 0,
+            paused_at          = NULL,
+            status             = #{status},
+            updated_at         = #{updatedAt}
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </update>
+
+
+    <update id="updateHeartbeat">
+        UPDATE user_study_session
+        SET last_heartbeat = #{heartbeatTime},
+            updated_at     = #{updatedAt}
+        WHERE id = #{sessionId}
+          AND user_id = #{userId}
+          AND status = 0
+    </update>
+
+
+    <update id="forceFinishSession">
+        UPDATE user_study_session
+        SET end_time           = #{endTime},
+            duration_sec       = #{durationSec},
+            pause_duration_sec = #{pauseDurationSec},
+            is_paused          = 0,
+            paused_at          = NULL,
+            status             = 2,
+            updated_at         = #{updatedAt}
+        WHERE id = #{sessionId}
+    </update>
+
+
+    <update id="pauseSession">
+        UPDATE user_study_session
+        SET is_paused  = 1,
+            paused_at  = #{pausedAt},
+            updated_at = #{updatedAt}
+        WHERE id = #{sessionId}
+          AND user_id = #{userId}
+          AND status = 0
+    </update>
+
+
+    <update id="resumeSession">
+        UPDATE user_study_session
+        SET is_paused          = 0,
+            paused_at          = NULL,
+            pause_duration_sec = IFNULL(pause_duration_sec, 0) + #{pauseDuration},
+            last_heartbeat     = #{resumeTime},
+            updated_at         = #{updatedAt}
+        WHERE id = #{sessionId}
+          AND user_id = #{userId}
+          AND status = 0
+    </update>
+
+    <select id="findSessionById" resultType="com.austain.domain.po.UserStudySession">
+        SELECT * FROM user_study_session WHERE id = #{sessionId}
+        <if test="userId != null">
+            AND user_id = #{userId}
+        </if>
+    </select>
+
+
+    <select id="findTimeoutSessions" resultType="com.austain.domain.po.UserStudySession">
+        SELECT *
+        FROM user_study_session
+        WHERE status = 0
+          AND is_paused = 0
+          AND TIMESTAMPDIFF(MINUTE, last_heartbeat, #{currentTime}) > #{timeoutMinutes}
+    </select>
+
+
+    <select id="findPausedTimeoutSessions" resultType="com.austain.domain.po.UserStudySession">
+        SELECT *
+        FROM user_study_session
+        WHERE status = 0
+          AND is_paused = 1
+          AND paused_at IS NOT NULL
+          AND TIMESTAMPDIFF(MINUTE, paused_at, #{currentTime}) > #{pausedTimeoutMinutes}
+    </select>
+
+
+    <select id="findSessionsByUserAndDate" resultType="com.austain.domain.po.UserStudySession">
+        SELECT *
+        FROM user_study_session
+        WHERE user_id = #{userId}
+          AND DATE(start_time) = #{date}
+          AND status IN (1, 2)
+        ORDER BY start_time
+    </select>
+
+    <select id="findRunningSession" resultType="com.austain.domain.po.UserStudySession">
+        SELECT *
+        FROM user_study_session
+        WHERE user_id = #{userId}
+          AND status = 0
+        ORDER BY start_time DESC
+        LIMIT 1
+    </select>
+</mapper>

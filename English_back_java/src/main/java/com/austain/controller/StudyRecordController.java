@@ -3,12 +3,11 @@ package com.austain.controller;
 import com.austain.domain.dto.Result;
 import com.austain.domain.dto.RecordResult;
 import com.austain.domain.po.RecordRequest;
-import com.austain.srevice.StudyRecordService;
+import com.austain.service.StudyRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/studyRecord")

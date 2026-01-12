@@ -1,6 +1,5 @@
-package com.austain.srevice;
+package com.austain.service;
 
-import com.austain.srevice.StudySessionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

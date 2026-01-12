@@ -4,7 +4,7 @@
 <mapper namespace="com.austain.mapper.StudyRecordMapper">
 
     <insert id="addStudyRecord" keyProperty="id">
-        insert learning_checklist (user_id, learning_record, type, due_date) value (#{userId}, #{learningRecord}, #{type}, #{dueDate})
+        insert learning_checklist (user_id, learning_record, type) value (#{userId}, #{learningRecord}, #{type})
     </insert>
 
     <update id="updateRecord">
@@ -30,6 +30,12 @@
             #{item}
         </foreach>
     </update>
+    <update id="updateSelected">
+        update learning_checklist set selected = 1 where id in
+        <foreach collection='list' item='id' open='(' separator=',' close=')'>
+            #{id}
+        </foreach>
+    </update>
 
 
     <!-- 批量删除学习记录 -->
@@ -39,5 +45,9 @@
             #{item}
         </foreach>
     </delete>
+
+    <select id="MergeStudyRecords" statementType="CALLABLE">
+         CALL GenerateDailyLearningChecklist();
+    </select>
 
 </mapper>

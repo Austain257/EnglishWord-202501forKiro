@@ -1,9 +1,9 @@
-package com.austain.srevice.impl;
+package com.austain.service.impl;
 
 import com.austain.domain.dto.*;
 import com.austain.domain.po.WordStudyRecord;
 import com.austain.mapper.WordStudyRecordMapper;
-import com.austain.srevice.WordStudyService;
+import com.austain.service.WordStudyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +29,8 @@ public class WordStudyServiceImpl implements WordStudyService {
         // 检查是否有进行中的会话
         WordStudyRecord activeSession = wordStudyRecordMapper.selectActiveSession(request.getUserId());
         if (activeSession != null) {
-            throw new RuntimeException("您有正在进行中的学习会话，请先结束当前会话");
+            // 如果有进行中的会话，直接返回该会话信息，让前端继续使用
+            return activeSession;
         }
         
         // 创建新的学习记录

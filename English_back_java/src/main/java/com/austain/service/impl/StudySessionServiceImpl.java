@@ -1,4 +1,4 @@
-package com.austain.srevice.impl;
+package com.austain.service.impl;
 
 import com.austain.domain.dto.StudySessionDTO;
 import com.austain.domain.dto.StudyStatVO;
@@ -7,12 +7,11 @@ import com.austain.domain.po.UserStudySession;
 import com.austain.domain.po.UserStudySummary;
 import com.austain.mapper.StudySessionMapper;
 import com.austain.mapper.StudyStatMapper;
-import com.austain.srevice.StudySessionService;
+import com.austain.service.StudySessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;

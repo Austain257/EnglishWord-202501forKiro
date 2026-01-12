@@ -55,6 +55,10 @@ const refreshQuote = () => {
 }
 
 const goBack = () => {
-  router.push('/')
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
 }
 </script>

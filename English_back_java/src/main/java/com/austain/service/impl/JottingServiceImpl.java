@@ -1,10 +1,10 @@
-package com.austain.srevice.impl;
+package com.austain.service.impl;
 
 import com.austain.domain.dto.PageResult;
 import com.austain.domain.po.Jotting;
 import com.austain.domain.po.PageRequest;
 import com.austain.mapper.JottingMapper;
-import com.austain.srevice.JottingService;
+import com.austain.service.JottingService;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import org.springframework.beans.factory.annotation.Autowired;

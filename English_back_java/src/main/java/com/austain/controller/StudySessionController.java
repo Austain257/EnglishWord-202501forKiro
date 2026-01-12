@@ -3,8 +3,8 @@ package com.austain.controller;
 import com.austain.domain.dto.Result;
 import com.austain.domain.dto.StudySessionDTO;
 import com.austain.domain.dto.StudyStatVO;
-import com.austain.srevice.StudySessionService;
-import com.austain.srevice.TokenService;
+import com.austain.service.StudySessionService;
+import com.austain.service.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

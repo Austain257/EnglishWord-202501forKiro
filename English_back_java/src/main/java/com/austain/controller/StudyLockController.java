@@ -2,7 +2,7 @@ package com.austain.controller;
 
 import com.austain.domain.dto.Result;
 import com.austain.domain.dto.StudyLockStatusResponse;
-import com.austain.srevice.StudyLockService;
+import com.austain.service.StudyLockService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

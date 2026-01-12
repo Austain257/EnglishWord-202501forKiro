@@ -33,6 +33,11 @@
           <span>{{ totalWords }}</span>
         </div>
 
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/60 text-xs font-medium text-slate-600 max-w-[200px]">
+          <span>当前课本</span>
+          <span class="text-blue-600 font-bold truncate" :title="currentBookName">{{ currentBookName }}</span>
+        </div>
+
         <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/60 text-xs font-medium text-slate-600">
           <span>当前范围</span>
           <span class="text-blue-600 font-bold">{{ wordStore.learningRange.start }}-{{ wordStore.learningRange.end }}</span>
@@ -181,7 +186,7 @@
               <button 
                 @click="prevWord"
                 :disabled="!hasPrev"
-                class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 sm:py-3 rounded-2xl text-base font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300 active:scale-95"
+                class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 sm:py-3.5 rounded-2xl text-base font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed text-slate-700 bg-gradient-to-r from-slate-100 to-slate-200 border border-slate-200 shadow-lg shadow-slate-400/20 hover:shadow-slate-400/30 hover:-translate-y-0.5 active:scale-95"
                 title="上一个 (←)"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,12 +222,12 @@
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
-                @click="setQuickRange(range.start, range.end)"
+            <button @click="setQuickRange(range.start, range.end)"
                 class="px-2 py-2 text-xs font-medium rounded-lg border hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors text-slate-600 border-slate-200"
              >
                {{ range.label }}
-             </button>
-           </div>
+            </button>
+           <!-- </div> -->
         </div>
 
         <div class="flex gap-3">
@@ -230,7 +235,7 @@
           <button @click="applyRange" class="flex-1 px-6 py-3.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-colors">确认应用</button>
         </div>
       </div>
-    </div>
+    <!-- </div> -->
   </div>
 </template>
 
@@ -271,6 +276,7 @@ const totalWords = computed(() => wordStore.totalWords)
 const hasNext = computed(() => wordStore.hasNext)
 const hasPrev = computed(() => wordStore.hasPrev)
 const currentBook = computed(() => bookStore.currentBook)
+const currentBookName = computed(() => currentBook.value?.bookName || currentBook.value?.name || '未选择课本')
 const canJumpNextTen = computed(() => {
   const total = currentBook.value?.wordCount || 0
   if (!total) return false
@@ -324,7 +330,13 @@ const playPronunciation = () => {
 }
 
 // 核心功能方法
-const goBack = () => router.push('/')
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
 
 const applyPendingRange = (range) => {
   if (!range) return
@@ -365,16 +377,46 @@ const initializeFromLatestRecord = async () => {
     initializing.value = true
     const record = await wordStudyStore.getLatestRecord(authStore.user.id, currentBook.value.id)
     latestRecord.value = record || null
-    const range = calculateInitialRange(record)
-    if (!range) {
-      error('当前课本已完成全部单词，暂无法继续学习')
-      pendingRange.value = null
-      return
+    
+    let range
+    if (!record) {
+      // 无学习记录时，弹窗提示用户
+      const confirmed = confirm('未找到学习记录，将从第1-10个单词开始学习，点击确定继续。')
+      if (!confirmed) {
+        initializing.value = false
+        return
+      }
+      const bookWordCount = currentBook.value?.wordCount || 0
+      const defaultEnd = Math.min(10, bookWordCount || 10)
+      range = { start: 1, end: defaultEnd }
+    } else if (record.endTime && !record.round1ReviewTime) {
+      // 检测到上一轮学习已完成但复习未完成，继续该记录的范围
+      range = {
+        start: record.startId || 1,
+        end: record.endId || 10
+      }
+      success(`检测到未完成复习，继续学习范围 ${range.start}-${range.end}`)
+    } else {
+      // 计算下一个学习范围
+      range = calculateInitialRange(record)
+      if (!range) {
+        // 如果计算范围失败，使用当前课本前10个单词作为fallback
+        const bookWordCount = currentBook.value?.wordCount || 0
+        const defaultEnd = Math.min(10, bookWordCount || 10)
+        range = { start: 1, end: defaultEnd }
+        success('当前课本学习进度已完成，重新从第1-10个单词开始')
+      }
     }
+    
     applyPendingRange(range)
   } catch (err) {
     console.error('初始化学习范围失败:', err)
-    error('初始化学习范围失败：' + (err.message || '请稍后重试'))
+    // 发生错误时的fallback逻辑
+    const bookWordCount = currentBook.value?.wordCount || 0
+    const defaultEnd = Math.min(10, bookWordCount || 10)
+    const fallbackRange = { start: 1, end: defaultEnd }
+    applyPendingRange(fallbackRange)
+    error('初始化失败，已设置默认学习范围1-10')
   } finally {
     initializing.value = false
   }
@@ -484,13 +526,34 @@ const handleKeydown = (e) => {
 }
 
 // StudyTimer 事件处理
-const onStudyStarted = (data) => {
+const onStudyStarted = async (data) => {
   console.log('学习会话已开始:', data)
   studyStarted.value = true
+  
+  // 如果是继续已有会话，需要重新获取该会话的学习记录信息
+  if (data.isExistingSession) {
+    try {
+      const record = await wordStudyStore.getLatestRecord(authStore.user.id, currentBook.value.id)
+      if (record && record.status === 1) { // 进行中的会话
+        const existingRange = {
+          start: record.startId || 1,
+          end: record.endId || 10
+        }
+        applyPendingRange(existingRange)
+        success(`继续之前的学习会话，范围: ${existingRange.start}-${existingRange.end}`)
+      }
+    } catch (error) {
+      console.error('获取已有会话信息失败:', error)
+    }
+  }
+  
   if (!wordsLoaded.value && pendingRange.value) {
     loadWords(pendingRange.value)
   }
-  success('30分钟学习计时已开始！')
+  
+  if (!data.isExistingSession) {
+    success('30分钟学习计时已开始！')
+  }
 }
 
 const onStudyEnded = () => {

@@ -44,6 +44,12 @@
             <button @click="showPasswordModal = true" class="px-5 py-2 rounded-xl border border-white/40 text-white hover:bg-white/10">
               修改密码
             </button>
+            <button
+              @click="openLogoutConfirm"
+              class="px-5 py-2 rounded-xl border border-white/40 text-white hover:bg-red-500/20 hover:border-red-300 transition"
+            >
+              退出登录
+            </button>
           </div>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
@@ -61,29 +67,22 @@
       <!-- 统计 & 趋势 -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
-          <div class="flex items-center justify-between mb-6">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div>
               <h2 class="text-lg font-bold text-slate-900">学习趋势</h2>
               <p class="text-sm text-slate-500">最近 7 天学习时长（分钟）</p>
             </div>
-            <span class="text-sm font-semibold text-indigo-600">{{ progress?.weeklyPlanProgress || 0 }}% 达成</span>
-          </div>
-          <div v-if="trendData.length" class="flex items-end gap-3 h-48">
-            <div
-              v-for="(value, index) in trendData"
-              :key="index"
-              class="flex-1 flex flex-col items-center gap-2"
-            >
-              <div class="w-full bg-indigo-100 rounded-xl flex items-end justify-center h-full">
-                <div
-                  class="w-full bg-gradient-to-t from-indigo-500 to-blue-400 rounded-xl"
-                  :style="{ height: `${Math.max(value, 4)}%` }"
-                ></div>
-              </div>
-              <p class="text-xs text-slate-500">{{ trendCategories[index] }}</p>
+            <div class="text-right">
+              <p class="text-xs uppercase tracking-[0.35em] text-slate-400 mb-1">本周学习时长</p>
+              <p class="text-2xl font-bold text-slate-900">
+                {{ weeklyStudyMinutes }} <span class="text-base font-semibold text-slate-500">分钟</span>
+              </p>
             </div>
           </div>
-          <p v-else class="text-sm text-slate-400 text-center py-10">暂无趋势数据</p>
+          <StudyTrendChart 
+            :trend-data="trendData" 
+            :trend-categories="trendCategories" 
+          />
         </div>
         <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 flex flex-col gap-4">
           <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -205,8 +204,29 @@
       <p class="text-slate-500 text-sm">正在加载个人中心...</p>
     </div>
 
+    <!-- 退出确认弹窗 -->
+    <div v-if="showLogoutConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4">
+      <div class="w-full max-w-sm rounded-3xl bg-white shadow-2xl p-6 animate-scale-in">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">确认退出？</h3>
+            <p class="text-sm text-slate-500">退出后需要重新登录。</p>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+          <button @click="closeLogoutConfirm" class="px-5 py-2.5 rounded-xl text-slate-600 font-medium hover:bg-slate-100 transition-colors">取消</button>
+          <button @click="confirmLogout" class="px-5 py-2.5 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 shadow-lg shadow-red-500/30 transition-colors">退出登录</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 编辑信息弹窗 -->
-    <div v-if="showProfileModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div v-if="showProfileModal" class="fixed inset-0 bg黑/40 backdrop-blur-sm flex items-center justify-center z-50">
       <div class="bg-white rounded-3xl shadow-xl w-full max-w-2xl p-6 space-y-5">
         <div class="flex items-center justify-between">
           <div>
@@ -337,13 +357,17 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useProfileStore } from '@/stores/profile'
 import { useAuthStore } from '@/stores/auth'
+import StudyTrendChart from '@/components/StudyTrendChart.vue'
 
 const router = useRouter()
 const profileStore = useProfileStore()
 const authStore = useAuthStore()
+const { summary, overview, checklist, achievements, quickActions, notifications, settings, trendData, trendCategories, studyMinutes, progress } =
+  storeToRefs(profileStore)
 const avatarError = ref(false)
 const showProfileModal = ref(false)
 const showPasswordModal = ref(false)
@@ -353,16 +377,32 @@ onMounted(async () => {
   await profileStore.loadProfile()
 })
 
-const summary = computed(() => profileStore.summary)
-const overview = computed(() => profileStore.overview)
-const checklist = computed(() => profileStore.checklist || {})
-const achievements = computed(() => profileStore.achievements || [])
-const quickActions = computed(() => profileStore.quickActions || [])
-const notifications = computed(() => profileStore.notifications || [])
-const settings = computed(() => profileStore.settings || {})
-const trendData = computed(() => profileStore.trendData)
-const trendCategories = computed(() => profileStore.trendCategories)
-const studyMinutes = computed(() => profileStore.studyMinutes)
+const trendBarPercents = computed(() => {
+  const data = trendData.value || []
+  if (!data.length) return []
+  const maxValue = Math.max(...data, 0)
+  if (maxValue <= 0) {
+    return data.map(() => 0)
+  }
+  return data.map((value) => Math.round((value / maxValue) * 100))
+})
+
+const weeklyStudyMinutes = computed(() => {
+  return Math.round((progress.value?.weeklyStudySeconds || 0) / 60)
+})
+
+const weeklyPlanMinutes = computed(() => {
+  return (summary.value?.dailyTargetMinutes || 60) * 7
+})
+
+const weeklyProgress = computed(() => {
+  if (typeof progress.value?.weeklyPlanProgress === 'number') {
+    return progress.value.weeklyPlanProgress
+  }
+  if (!weeklyPlanMinutes.value) return 0
+  return Math.min(100, Math.round((weeklyStudyMinutes.value / weeklyPlanMinutes.value) * 100))
+})
+
 const previewAvatarSrc = computed(() => {
   const inputVal = profileStore.settings?.avatar?.trim()
   if (inputVal) {
@@ -379,8 +419,8 @@ const userInitial = computed(() => {
 const overviewCards = computed(() => [
   { title: '今日学习', value: formatMinutes(overview.value?.todayStudySeconds || 0), subtitle: '分钟' },
   { title: '累计学习', value: formatHours(overview.value?.totalStudySeconds || 0), subtitle: '小时' },
-  { title: '错词本', value: overview.value?.errorWordCount || 0, subtitle: '待复习单词' },
-  { title: '错句本', value: overview.value?.errorSentenceCount || 0, subtitle: '待复习句子' }
+  { title: '累计错词', value: overview.value?.errorWordCount || 0, subtitle: '个' },
+  { title: '累计错句', value: overview.value?.errorSentenceCount || 0, subtitle: '句' }
 ])
 
 const formatMinutes = (seconds) => Math.round(seconds / 60)
@@ -415,6 +455,22 @@ const handleChangePassword = async () => {
   if (success !== false) {
     showPasswordModal.value = false
   }
+}
+
+const showLogoutConfirm = ref(false)
+
+const openLogoutConfirm = () => {
+  showLogoutConfirm.value = true
+}
+
+const closeLogoutConfirm = () => {
+  showLogoutConfirm.value = false
+}
+
+const confirmLogout = () => {
+  closeLogoutConfirm()
+  authStore.logout()
+  router.push('/login')
 }
 
 watch(showProfileModal, (val) => {
@@ -453,6 +509,7 @@ const formatAvatar = (avatar) => {
   background-color: #c7d2fe;
   border-radius: 9999px;
 }
+
 
 .form-input {
   @apply w-full rounded-2xl border border-slate-200 px-4 py-2.5 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition;

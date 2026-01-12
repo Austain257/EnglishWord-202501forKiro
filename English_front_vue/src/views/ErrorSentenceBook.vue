@@ -337,7 +337,14 @@ const loadErrorSentences = async () => {
   }
 }
 
-const goBack = () => router.push('/')
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
+
 const reload = () => loadErrorSentences()
 
 const setMode = (target) => {

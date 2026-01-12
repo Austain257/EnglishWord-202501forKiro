@@ -3,8 +3,8 @@ package com.austain.controller;
 import com.austain.domain.dto.Result;
 import com.austain.domain.dto.profile.ProfileDashboardDTO;
 import com.austain.domain.dto.profile.ProfileDashboardDTO.PasswordUpdate;
-import com.austain.srevice.ProfileService;
-import com.austain.srevice.TokenService;
+import com.austain.service.ProfileService;
+import com.austain.service.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

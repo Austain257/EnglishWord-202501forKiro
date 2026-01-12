@@ -1,7 +1,7 @@
-package com.austain.srevice.impl;
+package com.austain.service.impl;
 
 import com.austain.mapper.StudyRecordMapper;
-import com.austain.srevice.TaskService;
+import com.austain.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -21,6 +21,19 @@ public class TaskServiceImpl implements TaskService {
         // 如果需要清理旧数据，可以在这里添加清理逻辑
         studyRecordMapper.resetSelect();
         System.out.println("定时任务执行完成！");
+    }
+
+
+    // 每天 00:00 执行定时任务（注意：使用 24 小时制，0 0 0 * * ? 表示 秒 分 时 日 月 周）
+    // 调用数据库存储过程合并学习记录并插入
+    @Scheduled(cron = "0 0 2 * * ?", zone = "Asia/Shanghai")
+    @Override
+    public void MergeStudyRecords() {
+        System.out.println("执行每日定时任务...");
+        System.out.println("开始合并学习记录...");
+        // 如果需要清理旧数据，可以在这里添加清理逻辑
+        studyRecordMapper.MergeStudyRecords();
+        System.out.println("已完成学习记录合并！");
     }
 }
 

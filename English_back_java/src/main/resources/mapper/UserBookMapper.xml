@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.austain.mapper.UserBookMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_books (user_id, book_name, description, cover_url, word_count, visibility, status)
+        VALUES (#{userId}, #{bookName}, #{description}, #{coverUrl}, #{wordCount}, #{visibility}, #{status})
+    </insert>
+
+    <insert id="insertBatch">
+        INSERT INTO english_word_02 (user_id, book_id, word, chinese, pronounce, times, is_grasp, error_times) VALUES
+        <foreach collection='list' item='item' separator=','>
+            (#{item.userId}, #{item.bookId}, #{item.word}, #{item.chinese}, #{item.pronounce}, #{item.times}, #{item.isGrasp}, #{item.errorTimes})
+        </foreach>
+    </insert>
+</mapper>

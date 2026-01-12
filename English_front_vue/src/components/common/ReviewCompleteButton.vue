@@ -109,8 +109,8 @@ const markComplete = async () => {
     const success = await wordStudyStore.markReviewComplete({
       userId: authStore.user?.id,
       sessionId: props.sessionId,
-      reviewRound: currentRound.value,
-      completedTime: new Date()
+      reviewRound: currentRound.value
+      // 移除completedTime，让后端使用服务器当前时间，避免时区问题
     })
     
     if (success) {

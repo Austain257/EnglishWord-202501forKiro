@@ -1,8 +1,8 @@
-package com.austain.srevice.impl;
+package com.austain.service.impl;
 
 import com.austain.domain.dto.MotivationQuoteResult;
 import com.austain.mapper.GlobalMapper;
-import com.austain.srevice.GlobalService;
+import com.austain.service.GlobalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

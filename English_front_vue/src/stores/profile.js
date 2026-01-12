@@ -34,12 +34,32 @@ export const useProfileStore = defineStore('profile', () => {
     return Math.round((overview.value.todayStudySeconds || 0) / 60)
   })
 
+  const buildTrendPoints = () => {
+    const points = progress.value?.trends
+    if (points?.length) {
+      return points
+    }
+    const fallback = []
+    const today = new Date()
+    for (let i = 6; i >= 0; i -= 1) {
+      const date = new Date(today)
+      date.setDate(today.getDate() - i)
+      const month = `${date.getMonth() + 1}`.padStart(2, '0')
+      const day = `${date.getDate()}`.padStart(2, '0')
+      fallback.push({
+        date: `${month}-${day}`,
+        seconds: 0
+      })
+    }
+    return fallback
+  }
+
   const trendCategories = computed(() => {
-    return progress.value?.trends?.map((item) => item.date) || []
+    return buildTrendPoints().map((item) => item.date)
   })
 
   const trendData = computed(() => {
-    return progress.value?.trends?.map((item) => Math.round(item.seconds / 60)) || []
+    return buildTrendPoints().map((item) => Math.round(item.seconds / 60))
   })
 
   const reminderEnabled = computed({

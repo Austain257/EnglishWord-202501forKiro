@@ -44,6 +44,12 @@
           <span>当前范围</span>
           <span class="text-amber-600 font-bold">{{ currentStudyRange }}</span>
         </div>
+
+        <!-- 当前课本 -->
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/60 text-xs font-medium text-slate-600 max-w-[220px]">
+          <span>当前课本</span>
+          <span class="font-bold text-amber-600 truncate" :title="currentBookName">{{ currentBookName }}</span>
+        </div>
         <!-- 范围设置 -->
         <button 
           @click="showRangeModal = true"
@@ -376,9 +382,16 @@ const totalWords = computed(() => wordStore.totalWords)
 const hasNext = computed(() => wordStore.hasNext)
 const hasPrev = computed(() => wordStore.hasPrev)
 const currentBook = computed(() => bookStore.currentBook)
+const currentBookName = computed(() => currentBook.value?.bookName || currentBook.value?.name || '未选择课本')
 
 // 方法
-const goBack = () => router.push('/word/review')
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
 
 const ensureBookSelected = async (bookId) => {
   if (!bookId) {
@@ -417,12 +430,29 @@ const initializeFromLatestRecord = async () => {
   }
   try {
     initializing.value = true
-    const record = await wordStudyStore.getLatestRecord(authStore.user.id)
+    const record = await wordStudyStore.getLatestRecord(authStore.user.id, bookStore.currentBook?.id)
+    
     if (!record) {
-      error('未找到学习记录，请先完成一次学习会话')
-      initializing.value = false
+      // 无学习记录时，弹窗提示用户
+      if (!bookStore.currentBook?.id) {
+        confirm('未找到学习记录且未选择课本，请先选择课本后开始学习。')
+        initializing.value = false
+        return
+      }
+      const confirmed = confirm('当前课本还未学习，请先学习把~')
+      if (!confirmed) {
+        initializing.value = false
+        return
+      }
+      const bookWordCount = bookStore.currentBook?.wordCount || 0
+      const defaultEnd = Math.min(10, bookWordCount || 10)
+      const range = { start: 1, end: defaultEnd }
+      wordStore.setLearningRange(range)
+      rangeForm.value = { ...range }
+      await loadWords(range)
       return
     }
+    
     latestRecord.value = record
     await ensureBookSelected(record.bookId)
     const range = {
@@ -526,12 +556,13 @@ const markFirstRoundComplete = async () => {
     await wordStudyStore.markReviewComplete({
       userId: authStore.user.id,
       sessionId: latestRecord.value.id,
-      reviewRound: 1,
-      completedTime: new Date()
+      reviewRound: 1
+      // 移除completedTime，让后端使用服务器时间
     })
-    latestRecord.value = {
-      ...latestRecord.value,
-      round1ReviewTime: new Date().toISOString()
+    // 重新获取记录以获得正确的时间
+    const updatedRecord = await wordStudyStore.getLatestRecord(authStore.user.id, bookStore.currentBook?.id)
+    if (updatedRecord) {
+      latestRecord.value = updatedRecord
     }
     success('第一轮复习已完成')
   } catch (err) {

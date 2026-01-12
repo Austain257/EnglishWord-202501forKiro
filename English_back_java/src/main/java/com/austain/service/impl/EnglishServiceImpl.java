@@ -1,8 +1,8 @@
-package com.austain.srevice.impl;
+package com.austain.service.impl;
 
 import com.austain.domain.po.*;
 import com.austain.mapper.EnglishMapper;
-import com.austain.srevice.EnglishService;
+import com.austain.service.EnglishService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

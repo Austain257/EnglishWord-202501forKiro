@@ -1,14 +1,7 @@
 package com.austain.controller;
 
 // TODO
-import com.austain.domain.po.Englishs;
-import com.austain.srevice.EnglishService;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/article")

@@ -172,7 +172,11 @@ const isNavigating = ref(false)
 
 // 返回首页
 const goBack = () => {
-  router.push('/')
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
 }
 
 const navigateWithSilkyTransition = (target) => {

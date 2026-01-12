@@ -3,7 +3,7 @@ package com.austain.controller;
 
 import com.austain.domain.dto.MotivationQuoteResult;
 import com.austain.domain.dto.Result;
-import com.austain.srevice.GlobalService;
+import com.austain.service.GlobalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

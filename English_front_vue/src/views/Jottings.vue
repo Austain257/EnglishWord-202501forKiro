@@ -216,7 +216,13 @@ const hasSelectedItems = computed(() => selectedItems.value.length > 0)
 const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value))
 
 // Methods
-const goBack = () => router.push('/')
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
 
 const setActiveTab = (tabIndex) => {
   if (activeTab.value === tabIndex) return

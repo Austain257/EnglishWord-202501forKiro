@@ -33,6 +33,11 @@
           <span>{{ totalWords }}</span>
         </div>
 
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/60 text-xs font-medium text-slate-600 max-w-[220px]">
+          <span>当前课本</span>
+          <span class="font-bold text-rose-600 truncate" :title="currentBookName">{{ currentBookName }}</span>
+        </div>
+
         <div class="relative bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 p-1 flex items-center text-xs font-semibold">
           <button
             @click="setMode('learning')"
@@ -303,6 +308,7 @@ const isPlaying = ref(false)
 const inputRef = ref(null)
 
 const currentWord = computed(() => words.value[currentIndex.value] || null)
+const currentBookName = computed(() => bookStore.currentBook?.bookName || bookStore.currentBook?.name || '未选择课本')
 const totalWords = computed(() => words.value.length)
 const hasNext = computed(() => currentIndex.value < totalWords.value - 1)
 const hasPrev = computed(() => currentIndex.value > 0)
@@ -337,7 +343,13 @@ const loadErrorWords = async () => {
   }
 }
 
-const goBack = () => router.push('/')
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
 
 const reload = () => loadErrorWords()
 
