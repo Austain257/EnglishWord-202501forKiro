@@ -27,6 +27,12 @@ public class StudyRecordServiceImpl implements StudyRecordService {
     @Override
     @Transactional
     public int addStudyRecord(RecordRequest recordRequest) {
+        if (recordRequest.getSelected() == 0) {
+            recordRequest.setSelected(0);
+        }
+        if (recordRequest.getAlreadyReviewed() == 0) {
+            recordRequest.setAlreadyReviewed(0);
+        }
         studyRecordMapper.setSelected(recordRequest.getUserId());
         return studyRecordMapper.addStudyRecord(recordRequest);
     }
@@ -41,13 +47,13 @@ public class StudyRecordServiceImpl implements StudyRecordService {
     public List<RecordResult> getTodayList(int userId, int type) {
 
         // TODO 由前端统一计算距今天数
-        List<RecordResult> recordResultList;  // 返回结果,定义全局，不用重复定义
+        List<RecordResult> recordResultList = new ArrayList<>();  // 返回结果
         List<Integer> ids = new ArrayList<>();  // 定义数组用来存放要标记的记录id，一次性更新
 
         // 第一次从数据库查询后做标记，今天之内就不做更改，只要数据库有标记即返回不为空，只从数据库查，不再走下方代码计算
-        recordResultList = studyRecordMapper.getTodayListSelected(userId, type);
-        if (recordResultList != null && !recordResultList.isEmpty()) {
-            return recordResultList;
+        List<RecordResult> selectedList = studyRecordMapper.getTodayListSelected(userId, type);
+        if (selectedList != null && !selectedList.isEmpty()) {
+            return selectedList;
         }
 
         // 数据库返回为空，说明为当天第一天查询
@@ -56,7 +62,7 @@ public class StudyRecordServiceImpl implements StudyRecordService {
 
         // 空校验
         if (studyRecordListALL == null || studyRecordListALL.isEmpty()) {
-            return recordResultList;  // controller类要做判断，如果为空，返回错误提示“该用户还未添加学习清单”
+            return recordResultList;  // 返回空列表
         }
 
 
@@ -124,6 +130,10 @@ public class StudyRecordServiceImpl implements StudyRecordService {
             return 1;
         }
         return studyRecordMapper.setReview(ids);  // 批量更新已复习
+    }
 
+    @Override
+    public int resetSelected(int userId) {
+        return studyRecordMapper.resetSelectByUserId(userId);
     }
 }

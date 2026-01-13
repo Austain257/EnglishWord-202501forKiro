@@ -3,8 +3,32 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.austain.mapper.StudyRecordMapper">
 
-    <insert id="addStudyRecord" keyProperty="id">
-        insert learning_checklist (user_id, learning_record, type) value (#{userId}, #{learningRecord}, #{type})
+    <insert id="addStudyRecord" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO learning_checklist (
+            user_id,
+            book_id,
+            start_id,
+            end_id,
+            record_ids,
+            learning_record,
+            type,
+            selected,
+            already_reviewed,
+            create_time,
+            update_time
+        ) VALUES (
+            #{userId},
+            #{bookId},
+            #{startId},
+            #{endId},
+            #{recordIds},
+            #{learningRecord},
+            #{type},
+            #{selected},
+            #{alreadyReviewed},
+            NOW(),
+            NOW()
+        )
     </insert>
 
     <update id="updateRecord">
@@ -13,14 +37,26 @@
               <if test="learningRecord != null">
                  learning_record = #{learningRecord},
              </if>
-              <if test="type != null">
+             <if test="bookId != null">
+                book_id = #{bookId},
+             </if>
+             <if test="startId != null">
+                start_id = #{startId},
+             </if>
+             <if test="endId != null">
+                end_id = #{endId},
+             </if>
+             <if test="recordIds != null">
+                record_ids = #{recordIds},
+             </if>
+             <if test="type != null">
                  type = #{type},
              </if>
-              <if test="dueDate != null">
-                 due_date = #{dueDate},
+             <if test="alreadyReviewed != null">
+                 already_reviewed = #{alreadyReviewed},
              </if>
-         </set>
-         where user_id = #{userId} and id = #{id}
+        </set>
+        where user_id = #{userId} and id = #{id}
     </update>
     <update id="setReview">
         update learning_checklist

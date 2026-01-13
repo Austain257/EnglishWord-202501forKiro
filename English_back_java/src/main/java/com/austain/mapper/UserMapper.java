@@ -21,7 +21,6 @@ public interface UserMapper {
     /**
      * 插入新用户
      */
-    @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(User user);
 
     // 根据ID查询用户

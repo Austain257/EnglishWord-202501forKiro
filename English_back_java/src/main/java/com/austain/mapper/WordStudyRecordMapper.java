@@ -18,7 +18,6 @@ public interface WordStudyRecordMapper {
     /**
      * 插入学习记录
      */
-    @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertStudyRecord(WordStudyRecord record);
     
     /**
@@ -63,4 +62,9 @@ public interface WordStudyRecordMapper {
      * 查询指定课本的最新完成学习记录
      */
     WordStudyRecord selectLatestFinishedRecordByBook(@Param("userId") Long userId, @Param("bookId") Long bookId);
+
+    /**
+     * 根据ID集合查询学习记录
+     */
+    List<WordStudyRecord> selectByIds(@Param("ids") List<Long> ids);
 }

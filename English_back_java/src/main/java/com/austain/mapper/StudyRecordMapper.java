@@ -63,7 +63,7 @@ public interface StudyRecordMapper {
      * 重置所有人的已标记的记录
      */
     @Update("update learning_checklist set selected = 0,already_reviewed = 0")
-    void resetSelect();
+    int resetSelect();
 
     // 批量更新已复习的记录
     int setReview(List<Integer> ids);
@@ -73,4 +73,7 @@ public interface StudyRecordMapper {
     void resetReviewed(int userId);
 
     void MergeStudyRecords();
+
+    @Update("update learning_checklist set selected = 0, already_reviewed = 0 where user_id = #{userId}")
+    int resetSelectByUserId(int userId);
 }

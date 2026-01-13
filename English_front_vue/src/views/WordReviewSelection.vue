@@ -36,7 +36,7 @@
     </nav>
 
     <!-- 主要内容区域 -->
-    <main class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <main class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       <!-- 页面标题和描述 -->
       <div class="text-center mb-8 sm:mb-12">
         <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">选择复习模式</h2>
@@ -46,7 +46,7 @@
       </div>
 
       <!-- 复习模式选择卡片 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         <!-- 第一轮复习 -->
         <div 
           @click="goToFirstReview"
@@ -134,6 +134,53 @@
             </div>
           </div>
         </div>
+
+        <!-- 其他轮次复习 -->
+        <div 
+          @click="goToOtherReview"
+          class="group cursor-pointer bg-white rounded-3xl p-8 sm:p-10 border border-amber-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden"
+        >
+          <div class="absolute inset-0 bg-gradient-to-br from-amber-50/60 via-orange-50/50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          
+          <div class="relative z-10">
+            <!-- 图标 -->
+            <div class="w-16 h-16 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-amber-200 transition-all duration-300">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7M5 12h14M12 5v14" />
+              </svg>
+            </div>
+
+            <!-- 标题和副标题 -->
+            <h3 class="text-2xl font-bold text-slate-900 mb-3 group-hover:text-amber-700 transition-colors">
+              其他轮次复习
+            </h3>
+            <p class="text-slate-500 text-lg mb-6 leading-relaxed">
+              支持从听写、游戏等场景跳转，按记录的 <span class="text-amber-600 font-semibold">用户/课本/范围</span> 直接复习。
+            </p>
+
+            <!-- 特点标签 -->
+            <div class="flex flex-wrap gap-2 mb-6">
+              <span class="inline-flex items-center text-xs font-semibold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-full">
+                记录直达
+              </span>
+              <span class="inline-flex items-center text-xs font-semibold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-full">
+                异常兜底
+              </span>
+            </div>
+
+            <!-- 进入按钮 -->
+            <div class="flex items-center text-amber-600 font-semibold group-hover:text-amber-700 transition-colors">
+              <span class="mr-2">打开复习记录</span>
+              <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </div>
+
+            <p class="text-xs text-slate-400 mt-5">
+              默认情况下使用当前账号 + 课本7 的 1-10 范围，可根据需要在跳转前拼接参数。
+            </p>
+          </div>
+        </div>
       </div>
 
       <!-- 学习建议 -->
@@ -196,6 +243,11 @@ const goToFirstReview = () => {
 const goToSecondReview = () => {
   const randomTarget = Math.random() < 0.5 ? '/word/option' : '/word/game'
   navigateWithSilkyTransition(randomTarget)
+}
+
+// 其他轮次复习 - 跳转到参数复习页面
+const goToOtherReview = () => {
+  navigateWithSilkyTransition('/word/review/other')
 }
 </script>
 

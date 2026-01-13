@@ -13,12 +13,14 @@ import java.time.LocalDateTime;
 public class RecordRequest {
     private int id;  // 添加单词的id
     private int userId;
+    private Long bookId;
+    private Integer startId;
+    private Integer endId;
+    private String recordIds;
     private String learningRecord;
     private int type;
     private int selected;
     private int alreadyReviewed;
-//    private LocalDate dueDate;  // 截止时间
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
-
 }

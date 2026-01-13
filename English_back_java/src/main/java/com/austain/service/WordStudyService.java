@@ -31,6 +31,11 @@ public interface WordStudyService {
     boolean markReviewComplete(ReviewCompleteRequest request);
     
     /**
+     * 根据ID列表获取学习记录
+     */
+    List<WordStudyRecord> getRecordsByIds(Long userId, List<Long> recordIds);
+    
+    /**
      * 获取用户今日学习记录
      */
     List<WordStudyRecord> getTodayRecords(Long userId);

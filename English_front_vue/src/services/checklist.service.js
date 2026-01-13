@@ -28,5 +28,12 @@ export const checklistService = {
   // 设置学习清单为已复习（支持批量）
   async setReview(userId, ids) {
     return api.post(`/api/studyRecord/setReview/${userId}`, ids)
+  },
+
+  // 重置指定用户的已选择状态
+  async resetSelected(userId) {
+    return api.post('/api/studyRecord/resetSelected', null, {
+      params: { userId }
+    })
   }
 }

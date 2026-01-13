@@ -19,8 +19,8 @@ public class TaskServiceImpl implements TaskService {
         System.out.println("执行每日定时任务...");
         // 新的数据库结构使用study_records表，按日期自动分组，不需要重置操作
         // 如果需要清理旧数据，可以在这里添加清理逻辑
-        studyRecordMapper.resetSelect();
-        System.out.println("定时任务执行完成！");
+        int updateRow = studyRecordMapper.resetSelect();
+        System.out.println("定时任务执行完成！更新" + updateRow + "行数据");
     }
 
 

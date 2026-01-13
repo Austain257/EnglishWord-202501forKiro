@@ -22,6 +22,11 @@ export const wordStudyService = {
     return api.post('/api/word-study/review/complete', request)
   },
   
+  // 批量获取学习记录
+  getRecordsByIds(request) {
+    return api.post('/api/word-study/records/batch', request)
+  },
+  
   // 获取今日学习记录
   getTodayRecords(userId) {
     return api.get(`/api/word-study/today-records/${userId}`)

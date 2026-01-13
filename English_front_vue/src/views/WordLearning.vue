@@ -147,7 +147,7 @@
                 
                 <div class="flex items-center gap-3 mb-10">
                   <span class="text-xl text-slate-500 font-serif italic">
-                    {{ currentWord.phonetic || currentWord.pronounce || '...' }}
+                    /{{ currentWord.phonetic || currentWord.pronounce || '...' }}/
                   </span>
                   <button 
                     @click="playPronunciation"

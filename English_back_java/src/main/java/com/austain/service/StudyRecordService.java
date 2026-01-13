@@ -34,4 +34,6 @@ public interface StudyRecordService {
     int updateRecord(RecordRequest request);
 
     int setReview(int userId, List< Integer> ids);
+
+    int resetSelected(int userId);
 }

@@ -1210,7 +1210,7 @@ const mapStatsResponse = (statsData = {}) => ({
 })
 
 const fetchStats = async (bookId = null) => {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.43.106:8080'
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.106:8080'
   let url = `${baseUrl}/api/english/stats/${authStore.user.id}`
   if (bookId) {
     url += `?bookId=${bookId}`
@@ -1299,6 +1299,10 @@ const goToWordDictation = () => {
 
 const goToErrorWordBook = () => {
   router.push('/word/error-book')
+}
+
+const goToOtherRoundReview = () => {
+  router.push('/word/review/other')
 }
 
 const goToSentenceLearning = () => {

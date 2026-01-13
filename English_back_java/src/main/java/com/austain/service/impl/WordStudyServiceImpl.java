@@ -11,7 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 单词学习服务实现类
@@ -129,48 +131,57 @@ public class WordStudyServiceImpl implements WordStudyService {
     @Override
     @Transactional
     public boolean markReviewComplete(ReviewCompleteRequest request) {
-        if (request == null || request.getSessionId() == null || request.getReviewRound() == null) {
+        if (request == null || request.getReviewRound() == null) {
             throw new IllegalArgumentException("复习标记参数不完整");
         }
 
-        WordStudyRecord record = wordStudyRecordMapper.selectById(request.getSessionId());
-        if (record == null) {
-            throw new RuntimeException("学习记录不存在");
-        }
-        if (request.getUserId() != null && !request.getUserId().equals(record.getUserId())) {
-            throw new RuntimeException("无权操作该学习记录");
-        }
-        if (record.getStatus() == null || record.getStatus() != 0) {
-            throw new RuntimeException("仅已完成的学习记录可以标记复习");
+        List<Long> sessionIds = resolveSessionIds(request);
+        if (sessionIds.isEmpty()) {
+            throw new IllegalArgumentException("未提供有效的学习记录ID");
         }
 
         int reviewRound = request.getReviewRound();
-        if (reviewRound < 1 || reviewRound > 8) {
+        if (reviewRound < 1 || reviewRound > 9) {
             throw new IllegalArgumentException("复习轮次超出范围");
         }
 
-        if (reviewRound > 1) {
-            LocalDateTime previousRoundTime = getRoundTime(record, reviewRound - 1);
-            if (previousRoundTime == null) {
-                throw new RuntimeException("请先完成第" + (reviewRound - 1) + "轮复习");
+        List<WordStudyRecord> records = wordStudyRecordMapper.selectByIds(sessionIds);
+        if (records == null || records.isEmpty()) {
+            throw new RuntimeException("未找到对应的学习记录");
+        }
+        if (records.size() != sessionIds.size()) {
+            throw new RuntimeException("部分学习记录不存在或已被删除");
+        }
+
+        Long userId = request.getUserId();
+        if (userId != null) {
+            boolean invalidOwner = records.stream().anyMatch(r -> !userId.equals(r.getUserId()));
+            if (invalidOwner) {
+                throw new RuntimeException("存在无权操作的学习记录");
             }
         }
 
-        if (getRoundTime(record, reviewRound) != null) {
-            // 已标记完成直接返回
-            return true;
+        // 校验前置轮次与状态
+        for (WordStudyRecord record : records) {
+            if (record.getStatus() == null || record.getStatus() != 0) {
+                throw new RuntimeException("仅已完成的学习记录可以标记复习");
+            }
+            if (reviewRound > 1) {
+                LocalDateTime previousRoundTime = getRoundTime(record, reviewRound - 1);
+                if (previousRoundTime == null) {
+                    throw new RuntimeException("请先完成第" + (reviewRound - 1) + "轮复习");
+                }
+            }
         }
 
         LocalDateTime completedTime = request.getCompletedTime() != null
             ? request.getCompletedTime()
             : LocalDateTime.now();
 
-        int result = wordStudyRecordMapper.updateReviewTime(
-            request.getSessionId(),
-            reviewRound,
-            completedTime
-        );
-        return result > 0;
+        for (Long id : sessionIds) {
+            wordStudyRecordMapper.updateReviewTime(id, reviewRound, completedTime);
+        }
+        return true;
     }
 
     private LocalDateTime getRoundTime(WordStudyRecord record, int round) {
@@ -191,6 +202,8 @@ public class WordStudyServiceImpl implements WordStudyService {
                 return record.getRound7ReviewTime();
             case 8:
                 return record.getRound8ReviewTime();
+            case 9:
+                return record.getRound9ReviewTime();
             default:
                 return null;
         }
@@ -218,5 +231,61 @@ public class WordStudyServiceImpl implements WordStudyService {
             return getLatestFinishedRecord(userId);
         }
         return wordStudyRecordMapper.selectLatestFinishedRecordByBook(userId, bookId);
+    }
+
+    @Override
+    public List<WordStudyRecord> getRecordsByIds(Long userId, List<Long> recordIds) {
+        if (recordIds == null || recordIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<WordStudyRecord> records = wordStudyRecordMapper.selectByIds(recordIds);
+        if (records == null || records.isEmpty()) {
+            return records;
+        }
+
+        if (userId != null) {
+            boolean invalidOwner = records.stream().anyMatch(record -> !userId.equals(record.getUserId()));
+            if (invalidOwner) {
+                throw new RuntimeException("存在无权访问的学习记录");
+            }
+        }
+
+        return records;
+    }
+
+    /**
+     * 解析请求中的 sessionIds 或 recordIdsText 或单个 sessionId
+     */
+    private List<Long> resolveSessionIds(ReviewCompleteRequest request) {
+        Set<Long> ids = new HashSet<>();
+
+        if (request.getSessionIds() != null) {
+            request.getSessionIds().forEach(id -> {
+                if (id != null && id > 0) {
+                    ids.add(id);
+                }
+            });
+        }
+
+        if (ids.isEmpty() && request.getRecordIdsText() != null) {
+            String text = request.getRecordIdsText();
+            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\d+").matcher(text);
+            while (matcher.find()) {
+                try {
+                    long id = Long.parseLong(matcher.group());
+                    if (id > 0) {
+                        ids.add(id);
+                    }
+                } catch (NumberFormatException ignore) {
+                }
+            }
+        }
+
+        if (ids.isEmpty() && request.getSessionId() != null && request.getSessionId() > 0) {
+            ids.add(request.getSessionId());
+        }
+
+        return new ArrayList<>(ids);
     }
 }

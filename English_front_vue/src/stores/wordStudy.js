@@ -94,6 +94,19 @@ export const useWordStudyStore = defineStore('wordStudy', () => {
       throw error
     }
   }
+
+  const getRecordsByIds = async ({ userId, recordIds }) => {
+    try {
+      const response = await wordStudyService.getRecordsByIds({
+        userId,
+        recordIds
+      })
+      return response.data
+    } catch (error) {
+      console.error('根据ID获取学习记录失败:', error)
+      throw error
+    }
+  }
   
   const resetState = () => {
     currentSession.value = null
@@ -119,6 +132,7 @@ export const useWordStudyStore = defineStore('wordStudy', () => {
     markReviewComplete,
     getTodayRecords,
     getLatestRecord,
+    getRecordsByIds,
     resetState
   }
 })

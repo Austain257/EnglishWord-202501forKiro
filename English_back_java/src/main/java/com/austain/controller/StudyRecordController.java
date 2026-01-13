@@ -24,7 +24,51 @@ public class StudyRecordController {
      */
     @PostMapping("/addRecord")
     public Result addStudyRecord(@RequestBody RecordRequest recordRequest) {
-        System.out.println("添加记录为：" + recordRequest.getLearningRecord() + "，类型：" + recordRequest.getType());
+        System.out.println("添加记录为：" + (recordRequest != null ? recordRequest.getLearningRecord() : "null") + "，类型：" + (recordRequest != null ? recordRequest.getType() : "null"));
+        if (recordRequest == null) {
+            return Result.error("请求参数不能为空");
+        }
+        if (recordRequest.getUserId() <= 0) {
+            return Result.error("请先登录后再添加学习清单");
+        }
+        if (recordRequest.getType() < 0 || recordRequest.getType() > 2) {
+            return Result.error("学习类型不合法");
+        }
+        if (recordRequest.getLearningRecord() == null || recordRequest.getLearningRecord().trim().isEmpty()) {
+            return Result.error("请填写学习内容");
+        }
+        recordRequest.setLearningRecord(recordRequest.getLearningRecord().trim());
+
+        int type = recordRequest.getType();
+        if (type == 1) {  // 单词
+            if (recordRequest.getBookId() == null || recordRequest.getBookId() <= 0) {
+                return Result.error("请选择关联课本");
+            }
+            if (recordRequest.getStartId() == null || recordRequest.getEndId() == null) {
+                return Result.error("请填写单词范围");
+            }
+            if (recordRequest.getStartId() <= 0 || recordRequest.getEndId() <= 0 || recordRequest.getStartId() >= recordRequest.getEndId()) {
+                return Result.error("单词范围不合法");
+            }
+            if (recordRequest.getRecordIds() == null || recordRequest.getRecordIds().trim().isEmpty()) {
+                recordRequest.setRecordIds(recordRequest.getStartId() + "-" + recordRequest.getEndId());
+            } else {
+                recordRequest.setRecordIds(recordRequest.getRecordIds().trim());
+            }
+        } else if (type == 0) {  // 句子
+            recordRequest.setBookId(999L);
+            recordRequest.setStartId(0);
+            recordRequest.setEndId(1);
+            recordRequest.setRecordIds("I am sentence record");
+        } else if (type == 2) {  // 听力
+            recordRequest.setBookId(998L);
+            recordRequest.setStartId(0);
+            recordRequest.setEndId(1);
+            recordRequest.setRecordIds("I am listening record");
+        }
+
+        recordRequest.setSelected(0);
+        recordRequest.setAlreadyReviewed(0);
         int result = studyRecordService.addStudyRecord(recordRequest);
         return result > 0 ? Result.success() : Result.error("添加失败");
     }
@@ -76,5 +120,12 @@ public class StudyRecordController {
         System.out.println("删除学习记录");
         int result = studyRecordService.deleteRecords(ids, userId);
         return result > 0 ? Result.success() : Result.error("删除失败");
+    }
+
+    @PostMapping("/resetSelected")
+    public Result resetSelected(@RequestParam int userId){
+        System.out.println("重置已选择");
+        int result = studyRecordService.resetSelected(userId);
+        return result > 0 ? Result.success("刷新成功") : Result.error("刷新数据失败/今日暂无学习数据，可以休息一下~");
     }
 }

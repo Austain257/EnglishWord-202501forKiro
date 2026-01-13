@@ -13,6 +13,10 @@ import java.time.LocalDateTime;
 public class RecordResult {
     private int id;  // 添加单词的id
     private int userId;
+    private Long bookId;
+    private Integer startId;
+    private Integer endId;
+    private String recordIds;
     private String learningRecord;
     private int type;
     private int selected;

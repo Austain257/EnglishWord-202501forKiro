@@ -15,7 +15,6 @@ public interface StudySessionMapper {
     /**
      * 插入新的学习会话
      */
-    @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertSession(UserStudySession session);
 
     /**

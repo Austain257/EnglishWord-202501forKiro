@@ -195,6 +195,19 @@ export const useChecklistStore = defineStore('checklist', () => {
     }
   }
 
+  const resetSelected = async () => {
+    try {
+      const authStore = useAuthStore()
+      if (!authStore.user?.id) {
+        throw new Error('用户未登录')
+      }
+      return await checklistService.resetSelected(authStore.user.id)
+    } catch (error) {
+      console.error('重置已选择项失败:', error)
+      throw error
+    }
+  }
+
   return {
     // 状态
     checklists,
@@ -217,6 +230,7 @@ export const useChecklistStore = defineStore('checklist', () => {
     setActiveTab,
     markSelectedAsCompleted,
     setReview,
-    markAllAsCompleted
+    markAllAsCompleted,
+    resetSelected
   }
 })

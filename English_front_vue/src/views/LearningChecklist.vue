@@ -29,9 +29,20 @@
         <div class="flex items-center gap-3">
           <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/60 text-xs font-medium text-slate-600">
             <span>今日计划</span>
-            <span class="font-bold text-blue-600">{{ filteredChecklists.length }}</span>
+            <span class="font-bold text-blue-600">{{ totalChecklists }}</span>
             <span class="text-slate-400">项</span>
           </div>
+
+          <button
+            @click="refreshList"
+            class="flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl bg-white/80 hover:bg-slate-100 transition-all"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span class="hidden sm:inline">刷新清单</span>
+            <span class="sm:hidden text-sm">刷新</span>
+          </button>
 
           <button
             @click="openCreateModal"
@@ -98,9 +109,8 @@
               <article
                 v-for="item in filteredChecklists"
                 :key="item.id"
-                @click="toggleSelection(item.id)"
                 :class="[
-                  'relative rounded-2xl border transition-all duration-300 group cursor-pointer bg-slate-50/80 hover:bg-white hover:-translate-y-1',
+                  'relative rounded-2xl border transition-all duration-300 group bg-slate-50/80 hover:bg-white hover:-translate-y-1',
                   selectedItems.includes(item.id) ? 'border-blue-400 shadow-lg shadow-blue-500/20' : 'border-slate-200'
                 ]"
               >
@@ -115,42 +125,50 @@
                         @change="toggleSelection(item.id)"
                       />
                     </div>
-                    <div class="flex-1 space-y-4">
-                      <div class="flex items-center justify-between">
-                        <span
-                          class="px-3 py-1 text-xs font-semibold rounded-full"
-                          :class="item.alreadyReviewed ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'"
-                        >
-                          {{ item.alreadyReviewed ? '已复习' : '待复习' }}
-                        </span>
-                        <button
-                          class="p-2 text-emerald-500 hover:text-emerald-600 transition-opacity opacity-0 group-hover:opacity-100"
-                          @click.stop="editItem(item)"
-                          title="编辑该清单"
-                        >
-                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 3h6v6m-11 6l9-9" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      <p :class="['text-lg font-semibold leading-relaxed', item.alreadyReviewed ? 'text-slate-400 line-through' : 'text-slate-900']">
-                        {{ item.learningRecord }}
-                      </p>
-
-                      <div class="space-y-2 text-sm text-slate-500">
-                        <div class="flex items-center gap-2">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span>{{ getDaysFromNow(item.createTime, item.toDate) }}</span>
+                    <div
+                      class="flex-1 space-y-4 cursor-pointer"
+                      @click="handleCardClick(item)"
+                    >
+                      <div class="flex flex-col gap-3">
+                        <div class="flex items-center justify-between">
+                          <div class="flex flex-wrap items-center gap-2">
+                            <span
+                              class="px-3 py-1 text-xs font-semibold rounded-full"
+                              :class="item.alreadyReviewed ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'"
+                            >
+                              {{ item.alreadyReviewed ? '已复习' : '待复习' }}
+                            </span>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-indigo-50 text-indigo-600">
+                              {{ getReviewRound(item) }}
+                            </span>
+                          </div>
+                          <button
+                            class="p-2 text-emerald-500 hover:text-emerald-600 transition-opacity opacity-0 group-hover:opacity-100"
+                            @click.stop="editItem(item)"
+                            title="编辑该清单"
+                          >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v10a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2h-2m-6 0a2 2 0 014 0" />
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 3h6v6m-11 6l9-9" />
+                            </svg>
+                          </button>
                         </div>
-                        <div v-if="item.dueDate" class="flex items-center gap-2">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span>截止：{{ formatDate(item.dueDate) }}</span>
+
+                        <p :class="['text-lg font-semibold leading-relaxed', item.alreadyReviewed ? 'text-slate-400 line-through' : 'text-slate-900']">
+                          {{ item.learningRecord }}
+                        </p>
+
+                        <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+                          <div class="flex items-center gap-2 text-slate-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>{{ getDaysFromNow(item.createTime) }}</span>
+                          </div>
+                          <div class="flex items-center gap-2 text-slate-400 text-xs">
+                            <span>创建于 {{ new Date(item.createTime).toLocaleDateString('zh-CN') }}</span>
+                            <span v-if="item.updateTime">· 更新于 {{ new Date(item.updateTime).toLocaleDateString('zh-CN') }}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -240,9 +258,64 @@
             </div>
           </div>
 
-          <div>
-            <label class="block text-sm font-semibold text-slate-600 mb-2">截止日期（可选）</label>
-            <input v-model="form.dueDate" type="date" class="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white transition-all" />
+          <div v-if="isWordType" class="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-2">关联课本</label>
+              <select
+                v-model="form.bookId"
+                class="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl bg-white focus:outline-none focus:border-blue-500"
+              >
+                <option value="" disabled>请选择课本</option>
+                <option
+                  v-for="book in books"
+                  :key="book.id"
+                  :value="book.id"
+                >
+                  {{ book.bookName || book.name || `课本 #${book.id}` }}
+                </option>
+              </select>
+              <p class="mt-1 text-xs text-slate-400">如无可选课本，请先前往课本管理新增。</p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-slate-600 mb-2">单词范围</label>
+              <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                <input
+                  v-model.number="form.startId"
+                  type="number"
+                  min="1"
+                  class="w-full sm:flex-1 px-4 py-3 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-blue-500"
+                  placeholder="起始 ID"
+                />
+                <span class="text-slate-400 text-sm text-center sm:w-auto">至</span>
+                <input
+                  v-model.number="form.endId"
+                  type="number"
+                  min="1"
+                  class="w-full sm:flex-1 px-4 py-3 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-blue-500"
+                  placeholder="结束 ID"
+                />
+              </div>
+              <p class="mt-1 text-xs text-slate-400">需为正整数，且结束 ID 大于起始 ID。</p>
+            </div>
+          </div>
+
+          <div v-else class="rounded-2xl border-2 border-dashed border-slate-200 p-4 text-sm text-slate-500 bg-slate-50/60">
+            句子 / 听力类型会自动绑定系统默认课本与范围，无需手动填写，提交后会自动进入今日清单。
+          </div>
+
+          <div v-if="isWordType">
+            <label class="block text-sm font-semibold text-slate-600 mb-2">关联记录 ID（可选）</label>
+            <input
+              v-model="form.recordIds"
+              type="text"
+              class="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
+              placeholder="例如 101,102,103 或 101-120"
+            />
+            <p class="mt-1 text-xs text-slate-400">留空将默认保存为“起始ID-结束ID”。</p>
+          </div>
+          <div v-else class="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3 text-xs text-slate-500">
+            句子/听力默认记录信息即可，无需额外填写记录 ID。
           </div>
 
           <div class="flex flex-col sm:flex-row gap-3 pt-2">
@@ -271,10 +344,16 @@
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChecklistStore } from '@/stores/checklist'
+import { useBookStore } from '@/stores/book'
+import { useAuthStore } from '@/stores/auth'
+import { useWordStudyStore } from '@/stores/wordStudy'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const checklistStore = useChecklistStore()
+const bookStore = useBookStore()
+const authStore = useAuthStore()
+const wordStudyStore = useWordStudyStore()
 const toast = useToast()
 
 const tabs = [
@@ -286,20 +365,26 @@ const tabs = [
 const showAddModal = ref(false)
 const editingItem = ref(null)
 const formLoading = ref(false)
+const reviewIntervals = [0, 1, 2, 4, 7, 15, 30]
+const DISPLAY_ROUND_OFFSET = 3  // 第三轮对应第0天
+const autoSelectLoading = ref(false)
 
 const form = reactive({
   learningRecord: '',
   type: 1,
-  dueDate: ''
+  bookId: null,
+  startId: 1,
+  endId: 10,
+  recordIds: ''
 })
 
 const loading = computed(() => checklistStore.loading)
 const activeTab = computed(() => checklistStore.activeTab)
 const filteredChecklists = computed(() => checklistStore.filteredChecklists)
+const totalChecklists = computed(() => (checklistStore.checklists?.length ?? 0))
 const selectedItems = computed(() => checklistStore.selectedItems)
 const hasSelectedItems = computed(() => checklistStore.hasSelectedItems)
 const reviewedCount = computed(() => filteredChecklists.value.filter(item => item.alreadyReviewed).length)
-
 const currentTabName = computed(() => tabs[activeTab.value]?.name || '学习清单')
 const tabAccentClass = computed(() => {
   switch (activeTab.value) {
@@ -314,6 +399,10 @@ const tabAccentClass = computed(() => {
   }
 })
 
+const books = computed(() => bookStore.books || [])
+const isWordType = computed(() => form.type === 1)
+const isNavigatingToReview = ref(false)
+
 const goBack = () => {
   if (window.history.length > 1) {
     router.back()
@@ -327,7 +416,10 @@ const openCreateModal = () => {
   editingItem.value = null
   form.learningRecord = ''
   form.type = tabs[activeTab.value]?.value ?? 1
-  form.dueDate = ''
+  form.bookId = bookStore.currentBook?.id || books.value[0]?.id || null
+  form.startId = 1
+  form.endId = 10
+  form.recordIds = ''
 }
 
 const getTabCount = (index) => {
@@ -345,6 +437,46 @@ const setActiveTab = async (tab) => {
 
 const toggleSelection = (itemId) => {
   checklistStore.toggleSelection(itemId)
+}
+
+const goToWordReview = async (item) => {
+  if (!authStore.user?.id) {
+    toast.error('请先登录后再开始复习')
+    return
+  }
+  if (!item.bookId || !item.startId || !item.endId) {
+    toast.error('该清单缺少完整的课本范围，无法跳转')
+    return
+  }
+  if (isNavigatingToReview.value) return
+  isNavigatingToReview.value = true
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 180))
+    await router.push({
+      name: 'WordReviewOther',
+      query: {
+        userId: authStore.user.id,
+        bookId: item.bookId,
+        startId: item.startId,
+        endId: item.endId,
+        recordIds: item.recordIds || ''
+      }
+    })
+  } catch (error) {
+    toast.error('跳转复习页面失败：' + (error?.message || '请稍后重试'))
+  } finally {
+    setTimeout(() => {
+      isNavigatingToReview.value = false
+    }, 320)
+  }
+}
+
+const handleCardClick = (item) => {
+  if (item.type === 1) {
+    goToWordReview(item)
+  } else {
+    toggleSelection(item.id)
+  }
 }
 
 const clearSelection = () => {
@@ -376,7 +508,10 @@ const editItem = (item) => {
   showAddModal.value = true
   form.learningRecord = item.learningRecord
   form.type = item.type
-  form.dueDate = item.dueDate || ''
+  form.bookId = item.bookId || bookStore.currentBook?.id || null
+  form.startId = item.startId || 1
+  form.endId = item.endId || 10
+  form.recordIds = item.recordIds || ''
 }
 
 const closeModal = () => {
@@ -384,16 +519,38 @@ const closeModal = () => {
   editingItem.value = null
   form.learningRecord = ''
   form.type = tabs[activeTab.value]?.value ?? 1
-  form.dueDate = ''
+  form.bookId = bookStore.currentBook?.id || books.value[0]?.id || null
+  form.startId = 1
+  form.endId = 10
+  form.recordIds = ''
 }
 
 const submitForm = async () => {
   try {
     formLoading.value = true
-    const data = {
+    if (isWordType.value) {
+      if (!form.bookId) {
+        toast.error('请先选择关联课本')
+        formLoading.value = false
+        return
+      }
+      if (form.startId <= 0 || form.endId <= 0 || form.startId >= form.endId) {
+        toast.error('请输入正确的单词范围（起始需小于结束）')
+        formLoading.value = false
+        return
+      }
+    }
+    const normalizedRecordIds = isWordType.value ? form.recordIds?.trim() || `${form.startId}-${form.endId}` : null
+    const payload = {
       learningRecord: form.learningRecord,
       type: form.type,
-      dueDate: form.dueDate || null
+      bookId: isWordType.value ? Number(form.bookId) : undefined,
+      startId: isWordType.value ? Number(form.startId) : undefined,
+      endId: isWordType.value ? Number(form.endId) : undefined,
+      recordIds: normalizedRecordIds
+    }
+    const data = {
+      ...payload
     }
     if (editingItem.value) {
       await checklistStore.updateChecklist({ ...editingItem.value, ...data })
@@ -410,15 +567,28 @@ const submitForm = async () => {
   }
 }
 
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  return new Date(dateString).toLocaleDateString('zh-CN')
+const getBookName = (bookId) => {
+  if (!bookId) return '未绑定课本'
+  const match = books.value.find((book) => book.id === Number(bookId))
+  return match?.bookName || match?.name || `课本 #${bookId}`
 }
 
-const getDaysFromNow = (createTime, toDate) => {
-  if (typeof toDate === 'number' && toDate >= 0) {
-    return `距今${toDate}天`
-  }
+const getReviewRound = (item) => {
+  if (!item?.createTime) return `第${DISPLAY_ROUND_OFFSET}轮`
+  const createDate = new Date(item.createTime)
+  const now = new Date()
+  createDate.setHours(0, 0, 0, 0)
+  now.setHours(0, 0, 0, 0)
+  const diffDays = Math.max(0, Math.floor((now - createDate) / (1000 * 3600 * 24)))
+  const stageIndex = reviewIntervals.findIndex((day) => diffDays <= day)
+  const round =
+    stageIndex === -1
+      ? DISPLAY_ROUND_OFFSET + reviewIntervals.length
+      : DISPLAY_ROUND_OFFSET + stageIndex
+  return `第${round}轮`
+}
+
+const getDaysFromNow = (createTime) => {
   if (!createTime) return ''
   const createDate = new Date(createTime)
   const now = new Date()
@@ -428,13 +598,89 @@ const getDaysFromNow = (createTime, toDate) => {
   return `距今${daysDiff}天`
 }
 
+const formatRange = (item) => {
+  if (!item.startId || !item.endId) return '范围未设置'
+  return `${item.startId} - ${item.endId}`
+}
+
+const refreshList = async () => {
+  try {
+    await checklistStore.resetSelected()
+    await checklistStore.fetchChecklists()
+    await autoSelectReviewedByRecordIds()
+    toast.success('学习清单已刷新')
+  } catch (error) {
+    toast.error('刷新失败：' + error.message)
+  }
+}
+
 onMounted(async () => {
   try {
+    if (!bookStore.books.length) {
+      await bookStore.fetchBooks()
+    }
+    form.bookId = bookStore.currentBook?.id || books.value[0]?.id || null
     await checklistStore.fetchChecklists()
+    await autoSelectReviewedByRecordIds()
   } catch (error) {
     toast.error('加载清单失败：' + error.message)
   }
 })
+
+const parseRecordIds = (text) => {
+  if (!text || typeof text !== 'string') return []
+  const matches = text.match(/\d+/g) || []
+  const unique = [...new Set(matches.map((n) => Number(n)).filter((n) => Number.isFinite(n) && n > 0))]
+  return unique
+}
+
+const getTargetRoundNumber = (item) => {
+  const label = getReviewRound(item) || ''
+  const match = label.match(/第(\d+)轮/)
+  return match ? Number(match[1]) : null
+}
+
+const isRoundCompleted = (record, round) => {
+  if (!record || !round) return false
+  const field = `round${round}ReviewTime`
+  return Boolean(record[field])
+}
+
+const autoSelectReviewedByRecordIds = async () => {
+  if (!authStore.user?.id) return
+  const list = filteredChecklists.value || []
+  const wordItems = list.filter((item) => item.type === 1 && item.recordIds)
+  if (!wordItems.length) return
+
+  try {
+    autoSelectLoading.value = true
+    for (const item of wordItems) {
+      const recordIds = parseRecordIds(item.recordIds)
+      const targetRound = getTargetRoundNumber(item)
+      if (!recordIds.length || !targetRound) continue
+
+      try {
+        const records = await wordStudyStore.getRecordsByIds({
+          userId: authStore.user.id,
+          recordIds
+        })
+        if (Array.isArray(records) && records.length) {
+          const allDone = recordIds.every((id) => {
+            const rec = records.find((r) => Number(r.id) === Number(id))
+            return isRoundCompleted(rec, targetRound)
+          })
+          if (allDone && !selectedItems.value.includes(item.id)) {
+            checklistStore.toggleSelection(item.id)
+          }
+        }
+      } catch (err) {
+        console.error('自动检测复习轮次失败：', err)
+      }
+    }
+  } finally {
+    autoSelectLoading.value = false
+  }
+}
 </script>
 
 <style scoped>

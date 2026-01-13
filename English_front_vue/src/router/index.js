@@ -48,6 +48,12 @@ const routes = [
     meta: { requiresAuth: true, requiresBook: false, title: '第一轮复习', studyScene: 'word_review_first' }
   },
   {
+    path: '/word/review/other',
+    name: 'WordReviewOther',
+    component: () => import('@/views/WordReviewOther.vue'),
+    meta: { requiresAuth: true, requiresBook: false, title: '其他轮次复习', studyScene: 'word_review_other' }
+  },
+  {
     path: '/word/dictation',
     name: 'WordDictation',
     component: () => import('@/views/WordDictation.vue'),

@@ -127,7 +127,7 @@ export const useStudyTrackerStore = defineStore('studyTracker', () => {
   
   const sendFinishKeepAlive = (finishData) => {
     const authStore = useAuthStore()
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.43.106:8080'
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.106:8080'
     const url = `${baseUrl}/api/study/session/finish?userId=${authStore.user?.id}`
     let success = false
 

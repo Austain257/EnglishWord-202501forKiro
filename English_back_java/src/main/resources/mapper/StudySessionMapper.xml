@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.austain.mapper.StudySessionMapper">
-    <insert id="insertSession">
+    <insert id="insertSession" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO user_study_session (user_id, book_id, study_scene, start_time, status, last_heartbeat, source,
                                         client_meta, created_at, updated_at)
         VALUES (#{userId}, #{bookId}, #{studyScene}, #{startTime}, #{status}, #{lastHeartbeat}, #{source},

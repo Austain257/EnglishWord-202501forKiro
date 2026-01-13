@@ -103,4 +103,9 @@ public class WordStudyRecord {
      * 第八轮复习结束时间
      */
     private LocalDateTime round8ReviewTime;
+
+    /**
+     * 第九轮复习结束时间
+     */
+    private LocalDateTime round9ReviewTime;
 }

@@ -78,6 +78,19 @@ public class WordStudyController {
             return Result.error("标记复习完成失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 根据ID列表获取学习记录
+     */
+    @PostMapping("/records/batch")
+    public Result getRecordsByIds(@RequestBody RecordsByIdsRequest request) {
+        try {
+            List<WordStudyRecord> records = wordStudyService.getRecordsByIds(request.getUserId(), request.getRecordIds());
+            return Result.success(records);
+        } catch (Exception e) {
+            return Result.error("获取学习记录失败：" + e.getMessage());
+        }
+    }
     
     /**
      * 获取用户今日学习记录

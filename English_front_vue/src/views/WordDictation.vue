@@ -107,7 +107,7 @@
                   <div v-else class="flex flex-col items-center">
                     <h2 class="text-5xl sm:text-6xl md:text-7xl font-bold text-slate-900 mb-4 tracking-tight">{{ currentWord.word }}</h2>
                     <div class="flex items-center gap-3">
-                      <span class="text-xl text-slate-500 font-serif italic">{{ currentWord.phonetic || currentWord.pronounce || '...' }}</span>
+                      <span class="text-xl text-slate-500 font-serif italic">/{{ currentWord.phonetic || currentWord.pronounce || '...' }}/</span>
                       <button @click="playPronunciation" class="p-2 rounded-full bg-sky-50 text-sky-600 hover:bg-sky-100 hover:scale-110 transition-all">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
                       </button>
