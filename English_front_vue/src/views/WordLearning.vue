@@ -182,11 +182,11 @@
           </div>
 
           <div v-if="currentWord" class="mt-auto pt-6 safe-bottom-area">
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-6">
+            <div class="flex flex-row flex-wrap items-center justify-center gap-3 sm:gap-6">
               <button 
                 @click="prevWord"
                 :disabled="!hasPrev"
-                class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 sm:py-3.5 rounded-2xl text-base font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed text-slate-700 bg-gradient-to-r from-slate-100 to-slate-200 border border-slate-200 shadow-lg shadow-slate-400/20 hover:shadow-slate-400/30 hover:-translate-y-0.5 active:scale-95"
+                class="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-8 py-4 sm:py-3.5 rounded-2xl text-base font-bold transition-all disabled:opacity-60 disabled:cursor-not-allowed text-slate-700 bg-gradient-to-r from-slate-100 to-slate-200 border border-slate-200 shadow-lg shadow-slate-400/20 hover:shadow-slate-400/30 hover:-translate-y-0.5 active:scale-95"
                 title="上一个 (←)"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,7 +198,7 @@
               <button 
                 @click="nextWord"
                 :disabled="!hasNext"
-                class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 sm:py-3.5 rounded-2xl text-base font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 active:translate-y-0"
+                class="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-8 py-4 sm:py-3.5 rounded-2xl text-base font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 active:translate-y-0"
                 title="下一个 (→)"
               >
                 <span>下一个</span>
@@ -211,6 +211,38 @@
         </div>
       </template>
     </main>
+
+    <!-- 首次学习确认弹窗 -->
+    <div v-if="firstLearnDialog" class="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+      <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">首次学习提示</h3>
+            <p class="text-sm text-slate-500 mt-1">当前课本是第一次学习哦~ 将从第1-10号单词开始学习。</p>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            @click="cancelFirstLearn"
+            class="flex-1 px-5 py-3 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+          >
+            取消
+          </button>
+          <button
+            @click="confirmFirstLearn"
+            class="flex-1 px-5 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-colors"
+          >
+            确定开始
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- 范围设置模态框 (UI升级) -->
       <div v-if="showRangeModal" class="fixed inset-0 z-50 flex items-center justify-center px-4">
@@ -248,6 +280,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useWordStudyStore } from '@/stores/wordStudy'
 import { useToast } from '@/composables/useToast'
 import StudyTimer from '@/components/learning/StudyTimer.vue'
+import axios from 'axios'
 
 const router = useRouter()
 const wordStore = useWordStore()
@@ -267,6 +300,8 @@ const latestRecord = ref(null)
 const pendingRange = ref(null)
 const studyStarted = ref(false)
 const wordsLoaded = ref(false)
+const firstLearnDialog = ref(false)
+const firstLearnRange = ref({ start: 1, end: 10 })
 
 // 计算属性
 const loading = computed(() => wordStore.loading)
@@ -361,6 +396,26 @@ const calculateInitialRange = (record) => {
   return { start: startId, end: endId }
 }
 
+const fetchLatestRecordSafe = async (userId, bookId) => {
+  const authHeader = authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {}
+  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.106:8080'
+  try {
+    const res = await axios.get(`${baseURL}/api/word-study/latest-record/${userId}`, {
+      params: bookId ? { bookId } : {},
+      headers: authHeader,
+      validateStatus: (status) => status >= 200 && status < 500
+    })
+    const { code, data } = res.data || {}
+    if (code === 1) return data
+    if (code === 0 && res.data?.msg?.includes('未找到学习记录')) return null
+    throw new Error(res.data?.msg || '获取学习记录失败')
+  } catch (err) {
+    const msg = err?.message || ''
+    if (msg.includes('未找到学习记录')) return null
+    throw err
+  }
+}
+
 const initializeFromLatestRecord = async () => {
   if (!authStore.user?.id) {
     error('请先登录后再开始学习')
@@ -375,32 +430,26 @@ const initializeFromLatestRecord = async () => {
   }
   try {
     initializing.value = true
-    const record = await wordStudyStore.getLatestRecord(authStore.user.id, currentBook.value.id)
+    const record = await fetchLatestRecordSafe(authStore.user.id, currentBook.value.id)
     latestRecord.value = record || null
     
     let range
     if (!record) {
-      // 无学习记录时，弹窗提示用户
-      const confirmed = confirm('未找到学习记录，将从第1-10个单词开始学习，点击确定继续。')
-      if (!confirmed) {
-        initializing.value = false
-        return
-      }
       const bookWordCount = currentBook.value?.wordCount || 0
       const defaultEnd = Math.min(10, bookWordCount || 10)
-      range = { start: 1, end: defaultEnd }
+      firstLearnRange.value = { start: 1, end: defaultEnd }
+      firstLearnDialog.value = true
+      initializing.value = false
+      return
     } else if (record.endTime && !record.round1ReviewTime) {
-      // 检测到上一轮学习已完成但复习未完成，继续该记录的范围
       range = {
         start: record.startId || 1,
         end: record.endId || 10
       }
       success(`检测到未完成复习，继续学习范围 ${range.start}-${range.end}`)
     } else {
-      // 计算下一个学习范围
       range = calculateInitialRange(record)
       if (!range) {
-        // 如果计算范围失败，使用当前课本前10个单词作为fallback
         const bookWordCount = currentBook.value?.wordCount || 0
         const defaultEnd = Math.min(10, bookWordCount || 10)
         range = { start: 1, end: defaultEnd }
@@ -411,15 +460,23 @@ const initializeFromLatestRecord = async () => {
     applyPendingRange(range)
   } catch (err) {
     console.error('初始化学习范围失败:', err)
-    // 发生错误时的fallback逻辑
     const bookWordCount = currentBook.value?.wordCount || 0
     const defaultEnd = Math.min(10, bookWordCount || 10)
     const fallbackRange = { start: 1, end: defaultEnd }
     applyPendingRange(fallbackRange)
-    error('初始化失败，已设置默认学习范围1-10')
   } finally {
     initializing.value = false
   }
+}
+
+const confirmFirstLearn = () => {
+  applyPendingRange(firstLearnRange.value)
+  firstLearnDialog.value = false
+}
+
+const cancelFirstLearn = () => {
+  firstLearnDialog.value = false
+  goBack()
 }
 
 const loadWords = async (range = null, { allowWithoutStudy = false } = {}) => {

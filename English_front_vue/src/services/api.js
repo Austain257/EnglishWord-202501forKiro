@@ -35,6 +35,12 @@ api.interceptors.response.use(
   (response) => {
     // 后端返回格式: { code: 1, msg: null, data: {} }
     const { code, msg, data } = response.data
+    const normalizedMsg = msg || '操作失败'
+
+    // 白名单：不弹红色 toast，返回空数据
+    if (normalizedMsg.includes('未添加学习清单')) {
+      return { success: true, data: data || [], message: normalizedMsg }
+    }
     
     if (code === 1) {
       // 成功
@@ -42,8 +48,8 @@ api.interceptors.response.use(
     } else {
       // 业务错误
       const toast = useToast()
-      toast.error(msg || '操作失败')
-      return Promise.reject(new Error(msg || '操作失败'))
+      toast.error(normalizedMsg)
+      return Promise.reject(new Error(normalizedMsg))
     }
   },
   async (error) => {
@@ -51,6 +57,11 @@ api.interceptors.response.use(
     
     if (error.response) {
       const { status, data } = error.response
+      const message = data?.msg || error.message || '请求失败'
+      // 白名单：不弹红色 toast
+      if (message.includes('未添加学习清单')) {
+        return Promise.reject(new Error(message))
+      }
       
       switch (status) {
         case 401:

@@ -441,7 +441,8 @@
         </div>
         <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4 text-sm text-slate-600 space-y-1">
           <p>默认参数：</p>
-          <p>· 课本 ID：7</p>
+          <p>· 课本：{{ fallbackBookName }}</p>
+          <p>· 课本 ID：{{ fallbackBookId || '未选择' }}</p>
           <p>· 范围：1 - 10</p>
           <p>· 用户：当前登录账号</p>
         </div>
@@ -524,6 +525,13 @@ const rangeText = computed(() => {
   return `${reviewParams.value.startId}-${reviewParams.value.endId}`
 })
 const targetBook = computed(() => bookStore.books?.find((book) => book.id === reviewParams.value.bookId) || null)
+const defaultBook = computed(() => {
+  if (bookStore.currentBook) return bookStore.currentBook
+  if (bookStore.books?.length) return bookStore.books[0]
+  return null
+})
+const fallbackBookName = computed(() => defaultBook.value?.bookName || defaultBook.value?.name || '未选择课本')
+const fallbackBookId = computed(() => defaultBook.value?.id || '')
 const currentBookName = computed(() => targetBook.value?.bookName || targetBook.value?.name || (reviewParams.value.bookId ? `课本 ID ${reviewParams.value.bookId}` : '未指定课本'))
 const trackerActive = computed(() => studyTracker.isActive)
 const trackerElapsed = computed(() => studyTracker.formattedElapsed)
@@ -739,6 +747,7 @@ const initializeFromRoute = async () => {
   const params = extractParamsFromRoute()
 
   if (!hasCompleteParams(params)) {
+    await ensureBooksReady()
     showFallbackDialog.value = true
     initializing.value = false
     words.value = []
@@ -931,6 +940,13 @@ const confirmUseDefaultRange = async () => {
     return
   }
 
+  await ensureBooksReady()
+  const defaultBookId = defaultBook.value?.id
+  if (!defaultBookId) {
+    error('未找到默认课本，请先在首页选择课本')
+    return
+  }
+
   showFallbackDialog.value = false
   initializing.value = true
 
@@ -938,7 +954,7 @@ const confirmUseDefaultRange = async () => {
     name: 'WordReviewOther',
     query: {
       userId: authStore.user.id,
-      bookId: 7,
+      bookId: defaultBookId,
       startId: 1,
       endId: 10
     }

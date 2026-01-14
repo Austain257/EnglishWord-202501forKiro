@@ -38,6 +38,14 @@
 
     <!-- Main Content -->
     <main class="flex-1 relative z-10 max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div v-if="message.text" :class="['mb-4 px-4 py-3 rounded-xl text-sm font-semibold flex items-start gap-2 shadow-sm border',
+        message.type === 'error' ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-emerald-50 text-emerald-700 border-emerald-100']">
+        <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="flex-1">{{ message.text }}</span>
+      </div>
+
       <!-- Tab Navigation -->
       <div class="mb-6 sm:mb-8 flex justify-center">
         <div class="relative bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200/60 p-1 flex items-center text-sm font-semibold">
@@ -211,6 +219,19 @@ const form = reactive({
   chinese: ''
 })
 
+const message = reactive({
+  text: '',
+  type: 'info'
+})
+
+const showMessage = (text, type = 'info') => {
+  message.text = text
+  message.type = type
+  setTimeout(() => {
+    message.text = ''
+  }, 3200)
+}
+
 // Computed
 const hasSelectedItems = computed(() => selectedItems.value.length > 0)
 const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value))
@@ -248,13 +269,13 @@ const fetchJottings = async () => {
         item => item.type === tabs[activeTab.value].value
       )
       jottings.value = filteredRecords
-      totalItems.value = filteredRecords.length
+      totalItems.value = data.total
     } else {
       jottings.value = []
       totalItems.value = 0
     }
   } catch (err) {
-    error('加载积累失败: ' + err.message)
+    showMessage('加载积累失败：' + (err?.message || '请稍后重试'), 'error')
   } finally {
     loading.value = false
   }
@@ -277,9 +298,9 @@ const markAsReviewed = async (item) => {
   try {
     await jottingService.markAsReviewed(authStore.user.id, item.id)
     item.reviewed = 1
-    success('标记成功')
+    showMessage('标记成功', 'success')
   } catch (err) {
-    error('标记失败: ' + err.message)
+    showMessage('标记失败：' + (err?.message || '请稍后重试'), 'error')
   }
 }
 
@@ -291,9 +312,9 @@ const batchMarkAsReviewed = async () => {
       if (selectedItems.value.includes(item.id)) item.reviewed = 1
     })
     clearSelection()
-    success('批量标记成功')
+    showMessage('批量标记成功', 'success')
   } catch (err) {
-    error('批量标记失败: ' + err.message)
+    showMessage('批量标记失败：' + (err?.message || '请稍后重试'), 'error')
   }
 }
 
@@ -302,9 +323,9 @@ const deleteItem = async (item) => {
   try {
     await jottingService.deleteJotting({ id: item.id, userId: authStore.user.id })
     await fetchJottings() // Re-fetch to update total count and pagination
-    success('删除成功')
+    showMessage('删除成功', 'success')
   } catch (err) {
-    error('删除失败: ' + err.message)
+    showMessage('删除失败：' + (err?.message || '请稍后重试'), 'error')
   }
 }
 
@@ -315,9 +336,9 @@ const batchDelete = async () => {
     await jottingService.batchDeleteJotting(deleteData)
     clearSelection()
     await fetchJottings()
-    success('批量删除成功')
+    showMessage('批量删除成功', 'success')
   } catch (err) {
-    error('批量删除失败: ' + err.message)
+    showMessage('批量删除失败：' + (err?.message || '请稍后重试'), 'error')
   }
 }
 
@@ -371,9 +392,9 @@ const submitForm = async () => {
     
     closeModal()
     await fetchJottings()
-    success(modalMode.value === 'add' ? '添加成功' : '更新成功')
+    showMessage(modalMode.value === 'add' ? '添加成功' : '更新成功', 'success')
   } catch (err) {
-    error(modalMode.value === 'add' ? '添加失败: ' : '更新失败: ' + err.message)
+    showMessage((modalMode.value === 'add' ? '添加失败：' : '更新失败：') + (err?.message || '请稍后重试'), 'error')
   } finally {
     submitLoading.value = false
   }

@@ -293,6 +293,38 @@
       </div>
     </main>
 
+    <!-- 首次复习提示弹窗 -->
+    <div v-if="firstReviewDialog" class="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+      <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">首次复习提示</h3>
+            <p class="text-sm text-slate-500 mt-1">当前课本还未学习，请前往学习中心学习。</p>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            @click="cancelFirstReview"
+            class="flex-1 px-5 py-3 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+          >
+            取消
+          </button>
+          <button
+            @click="confirmFirstReview"
+            class="flex-1 px-5 py-3 rounded-xl font-bold text-white bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/30 transition-colors"
+          >
+            确定开始
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 范围设置模态框 -->
     <div v-if="showRangeModal" class="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="cancelRangeSelection"></div>
@@ -343,6 +375,8 @@ import { useBookStore } from '@/stores/book'
 import { useWordStudyStore } from '@/stores/wordStudy'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import StudyTimer from '@/components/learning/StudyTimer.vue'
+import axios from 'axios'
 
 const router = useRouter()
 const wordStore = useWordStore()
@@ -364,6 +398,8 @@ const rangeForm = ref({
   start: 1,
   end: 50
 })
+const firstReviewDialog = ref(false)
+const firstReviewRange = ref({ start: 1, end: 10 })
 
 const currentStudyRange = computed(() => {
   return `${wordStore.learningRange.start}-${wordStore.learningRange.end}`
@@ -391,6 +427,16 @@ const goBack = () => {
   } else {
     router.push('/')
   }
+}
+
+const confirmFirstReview = () => {
+  firstReviewDialog.value = false
+  router.push('/word/learning')
+}
+
+const cancelFirstReview = () => {
+  firstReviewDialog.value = false
+  goBack()
 }
 
 const ensureBookSelected = async (bookId) => {
@@ -430,29 +476,23 @@ const initializeFromLatestRecord = async () => {
   }
   try {
     initializing.value = true
-    const record = await wordStudyStore.getLatestRecord(authStore.user.id, bookStore.currentBook?.id)
-    
+    if (!bookStore.currentBook?.id) {
+      error('请先选择课本')
+      router.push('/books')
+      initializing.value = false
+      return
+    }
+
+    const record = await fetchLatestRecordSafe(authStore.user.id, bookStore.currentBook?.id)
     if (!record) {
-      // 无学习记录时，弹窗提示用户
-      if (!bookStore.currentBook?.id) {
-        confirm('未找到学习记录且未选择课本，请先选择课本后开始学习。')
-        initializing.value = false
-        return
-      }
-      const confirmed = confirm('当前课本还未学习，请先学习把~')
-      if (!confirmed) {
-        initializing.value = false
-        return
-      }
       const bookWordCount = bookStore.currentBook?.wordCount || 0
       const defaultEnd = Math.min(10, bookWordCount || 10)
       const range = { start: 1, end: defaultEnd }
-      wordStore.setLearningRange(range)
-      rangeForm.value = { ...range }
-      await loadWords(range)
+      firstReviewRange.value = range
+      firstReviewDialog.value = true
+      initializing.value = false
       return
     }
-    
     latestRecord.value = record
     await ensureBookSelected(record.bookId)
     const range = {
@@ -464,9 +504,62 @@ const initializeFromLatestRecord = async () => {
     await loadWords(range)
   } catch (err) {
     console.error('初始化复习数据失败:', err)
-    error('初始化复习数据失败：' + (err.message || '请稍后重试'))
+    // 静默处理，使用默认范围兜底
+    const fallbackRange = { start: 1, end: 10 }
+    wordStore.setLearningRange(fallbackRange)
+    rangeForm.value = { ...fallbackRange }
   } finally {
     initializing.value = false
+  }
+}
+
+const fetchLatestRecordSafe = async (userId, bookId) => {
+  const authHeader = authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {}
+  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.106:8080'
+  try {
+    const res = await axios.get(`${baseURL}/api/word-study/latest-record/${userId}`, {
+      params: bookId ? { bookId } : {},
+      headers: authHeader,
+      validateStatus: (status) => status >= 200 && status < 500
+    })
+    const { code, data } = res.data || {}
+    if (code === 1) return data
+    if (code === 0 && res.data?.msg?.includes('未找到学习记录')) return null
+    throw new Error(res.data?.msg || '获取学习记录失败')
+  } catch (err) {
+    const msg = err?.message || ''
+    if (msg.includes('未找到学习记录')) return null
+    throw err
+  }
+}
+
+const loadLatestRecord = async () => {
+  const userId = authStore.user?.id
+  const bookId = bookStore.currentBook?.id
+  if (!userId || !bookId) return
+
+  try {
+    const record = await fetchLatestRecordSafe(userId, bookId)
+    if (record) {
+      latestRecord.value = record
+      const range = {
+        start: record.startId || 1,
+        end: record.endId || 10
+      }
+      wordStore.setLearningRange(range)
+      rangeForm.value = { ...range }
+    } else {
+      // 无记录，弹出首次复习提示
+      const defaultRange = { start: 1, end: 10 }
+      firstReviewRange.value = defaultRange
+      firstReviewDialog.value = true
+      return
+    }
+  } catch (err) {
+    console.error('加载最新记录失败:', err)
+    const fallbackRange = { start: 1, end: 10 }
+    wordStore.setLearningRange(fallbackRange)
+    rangeForm.value = { ...fallbackRange }
   }
 }
 

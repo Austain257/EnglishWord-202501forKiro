@@ -226,9 +226,9 @@
     </div>
 
     <!-- 编辑信息弹窗 -->
-    <div v-if="showProfileModal" class="fixed inset-0 bg黑/40 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-white rounded-3xl shadow-xl w-full max-w-2xl p-6 space-y-5">
-        <div class="flex items-center justify-between">
+    <div v-if="showProfileModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-3 sm:px-4">
+      <div class="bg-white rounded-3xl shadow-xl w-full max-w-xl sm:max-w-2xl p-4 sm:p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between sticky top-0 bg-white pb-3 mb-2">
           <div>
             <h3 class="text-xl font-bold text-slate-900">编辑个人信息</h3>
             <p class="text-sm text-slate-500 mt-1">更新昵称、头像、学习目标等内容</p>
@@ -270,8 +270,19 @@
                 v-model="profileStore.settings.avatar"
                 class="form-input"
                 placeholder="https://..."
-                @input="previewError = false"
               />
+              <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
+                <input ref="fileInputRef" type="file" accept="image/*" class="hidden" @change="handleSelectAvatar" />
+                <button
+                  type="button"
+                  class="px-4 py-2 rounded-xl border border-indigo-200 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors text-sm font-semibold disabled:opacity-60"
+                  @click="triggerSelectAvatar"
+                  :disabled="uploadingAvatar"
+                >
+                  {{ uploadingAvatar ? '上传中...' : '更换头像' }}
+                </button>
+                <!-- <p class="text-xs text-slate-500">支持 jpg / png / webp，≤5MB</p>  -->
+              </div>
             </div>
           </label>
           <label class="flex flex-col gap-2 text-sm text-slate-600">
@@ -362,16 +373,22 @@ import { useRouter } from 'vue-router'
 import { useProfileStore } from '@/stores/profile'
 import { useAuthStore } from '@/stores/auth'
 import StudyTrendChart from '@/components/StudyTrendChart.vue'
+import { profileService } from '@/services/profile.service'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const profileStore = useProfileStore()
 const authStore = useAuthStore()
+const { success: toastSuccess, error: toastError } = useToast()
 const { summary, overview, checklist, achievements, quickActions, notifications, settings, trendData, trendCategories, studyMinutes, progress } =
   storeToRefs(profileStore)
 const avatarError = ref(false)
 const showProfileModal = ref(false)
 const showPasswordModal = ref(false)
 const previewError = ref(false)
+const uploadingAvatar = ref(false)
+const fileInputRef = ref(null)
+const selectedFileName = ref('')
 
 onMounted(async () => {
   await profileStore.loadProfile()
@@ -471,6 +488,41 @@ const confirmLogout = () => {
   closeLogoutConfirm()
   authStore.logout()
   router.push('/login')
+}
+
+const triggerSelectAvatar = () => {
+  fileInputRef.value?.click()
+}
+
+const handleSelectAvatar = async (event) => {
+  const file = event?.target?.files?.[0]
+  if (!file) return
+  if (file.size > 5 * 1024 * 1024) {
+    toastError('头像文件不能超过 5MB')
+    event.target.value = ''
+    return
+  }
+  uploadingAvatar.value = true
+  selectedFileName.value = file.name
+  try {
+    const { data } = await profileService.uploadAvatar(file)
+    profileStore.settings.avatar = data
+    // 同步首页头像所依赖的 authStore.user 与本地缓存
+    if (authStore.updateUser) {
+      authStore.updateUser({ avatar: data })
+    } else if (authStore.user) {
+      authStore.user = { ...authStore.user, avatar: data }
+      localStorage.setItem('user', JSON.stringify(authStore.user))
+    }
+    previewError.value = false
+    toastSuccess('头像上传成功')
+  } catch (err) {
+    console.error('上传头像失败', err)
+    toastError(err?.message || '上传头像失败，请稍后重试')
+  } finally {
+    uploadingAvatar.value = false
+    event.target.value = ''
+  }
 }
 
 watch(showProfileModal, (val) => {

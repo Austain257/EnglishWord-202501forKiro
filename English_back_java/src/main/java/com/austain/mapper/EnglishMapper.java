@@ -15,12 +15,12 @@ public interface EnglishMapper {
     List<Englishs> getEnglishListByBookCode(int userId, int bookId);
 
     // 获取错词列表（is_grasp=2的单词）
-    @Select("select * from english_word_01 where user_id = #{userId} and book_id = #{bookId} and is_grasp = 2")
+    @Select("select * from english_word_02 where user_id = #{userId} and book_id = #{bookId} and is_grasp = 2")
     List<Englishs> getErrorWordList(WordRequest request);
 
     // 获取单词总数
 //    @Select("SELECT COUNT(*) FROM english_word_01 WHERE user_id IN (#{userId},0,1,2,3,4,5)")
-    @Select("SELECT COUNT(*) FROM english_word_01 WHERE user_id = #{userId}")
+    @Select("SELECT COUNT(*) FROM english_word_02 WHERE user_id = #{userId}")
     int countTotalWords(@Param("userId") int userId);
 
     // 获取已掌握单词总数
@@ -44,7 +44,7 @@ public interface EnglishMapper {
     int isGrasp(int id);
 
     // 获取句子列表
-    @Select("select * from english_sentence01 where user_id = #{userId} and is_grasp != 1")
+    @Select("select * from english_sentence01 where user_id in (#{userId},0,1,2,3,4,5) and is_grasp != 1")
     List<Sentence> getSentenceList(@Param("userId") int userId);
 
     // 检查词库是否存在

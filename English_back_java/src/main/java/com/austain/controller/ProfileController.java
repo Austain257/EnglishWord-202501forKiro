@@ -6,6 +6,7 @@ import com.austain.domain.dto.profile.ProfileDashboardDTO.PasswordUpdate;
 import com.austain.service.ProfileService;
 import com.austain.service.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -53,6 +54,20 @@ public class ProfileController {
         try {
             profileService.updatePassword(userId, passwordUpdate);
             return Result.success("密码修改成功");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/avatar/upload")
+    public Result uploadAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+        Long userId = resolveUserId(request);
+        if (userId == null) {
+            return Result.error("用户未登录或Token无效");
+        }
+        try {
+            String url = profileService.uploadAvatar(userId, file);
+            return Result.success(url);
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }

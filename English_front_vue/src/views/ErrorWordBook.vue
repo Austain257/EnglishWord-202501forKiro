@@ -153,7 +153,7 @@
         </div>
 
         <!-- 控制按钮 -->
-        <div class="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-6">
+        <div class="mt-8 grid grid-cols-2 gap-3 sm:gap-6 sm:flex sm:flex-row items-stretch sm:items-center justify-center">
           <button
             @click="prevWord"
             :disabled="!hasPrev"

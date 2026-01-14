@@ -148,7 +148,7 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   const bookStore = useBookStore()
 
-  document.title = to.meta.title ? `${to.meta.title} - 英语学习平台` : '英语学习平台'
+  document.title = to.meta.title ? `${to.meta.title} - 轻风智语` : '轻风智语'
 
   // 1. 认证检查
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {

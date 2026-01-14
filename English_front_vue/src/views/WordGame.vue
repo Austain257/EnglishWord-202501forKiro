@@ -305,6 +305,38 @@
         </div>
       </div>
     </transition>
+
+    <!-- 首次学习提示弹窗 -->
+    <div v-if="firstLearnDialog" class="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+      <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">首次学习提示</h3>
+            <p class="text-sm text-slate-500 mt-1">{{ firstLearnDialogMessage }}</p>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            @click="cancelFirstLearn"
+            class="flex-1 px-5 py-3 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+          >
+            取消
+          </button>
+          <button
+            @click="confirmFirstLearn"
+            class="flex-1 px-5 py-3 rounded-xl font-bold text-white bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/30 transition-colors"
+          >
+            前往学习
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -317,6 +349,7 @@ import { useBookStore } from '@/stores/book'
 import { useAuthStore } from '@/stores/auth'
 import { useWordStudyStore } from '@/stores/wordStudy'
 import { useToast } from '@/composables/useToast'
+import axios from 'axios'
 
 const router = useRouter()
 const wordStore = useWordStore()
@@ -373,12 +406,14 @@ const gameWords = ref([])
 const currentBookName = computed(() => bookStore.currentBook?.bookName || bookStore.currentBook?.name || '未选择课本')
 const initialWordCount = ref(0)
 const completedWordIds = ref(new Set())
+const firstLearnDialog = ref(false)
 const showTimeUpModal = ref(false)
 const motivationalLine = ref('')
 const confettiPieces = ref([])
 const markingRound2 = ref(false)
 const gameResultType = ref(null)
 const timerExpired = ref(false)
+const firstLearnDialogMessage = ref('当前课本还未学习，请前往学习中心学习。')
 
 const totalGameWords = computed(() => initialWordCount.value || words.value.length || 0)
 const progressCurrent = computed(() => completedWordIds.value.size || 0)
@@ -650,6 +685,26 @@ const ensureBookSelected = async (bookId) => {
   await bookStore.selectBook(targetBook)
 }
 
+const fetchLatestRecordSafe = async (userId, bookId) => {
+  const authHeader = authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {}
+  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.106:8080'
+  try {
+    const res = await axios.get(`${baseURL}/api/word-study/latest-record/${userId}`, {
+      params: bookId ? { bookId } : {},
+      headers: authHeader,
+      validateStatus: (status) => status >= 200 && status < 500
+    })
+    const { code, data } = res.data || {}
+    if (code === 1) return data
+    if (code === 0 && res.data?.msg?.includes('未找到学习记录')) return null
+    throw new Error(res.data?.msg || '获取学习记录失败')
+  } catch (err) {
+    const msg = err?.message || ''
+    if (msg.includes('未找到学习记录')) return null
+    throw err
+  }
+}
+
 const preloadLatestWords = async () => {
   if (!authStore.user?.id) {
     initializing.value = false
@@ -657,24 +712,18 @@ const preloadLatestWords = async () => {
   }
   try {
     initializing.value = true
-    const record = await wordStudyStore.getLatestRecord(authStore.user.id, bookStore.currentBook?.id)
-    
+
+    if (!bookStore.currentBook?.id) {
+      firstLearnDialogMessage.value = '请先选择课本后再开始挑战。'
+      firstLearnDialog.value = true
+      latestRecord.value = null
+      return
+    }
+
+    const record = await fetchLatestRecordSafe(authStore.user.id, bookStore.currentBook?.id)
     if (!record) {
-      // 无学习记录时，弹窗提示用户
-      if (!bookStore.currentBook?.id) {
-        confirm('未找到学习记录且未选择课本，请先选择课本后开始学习。')
-        router.push('/word/review')
-        return
-      }
-      const confirmed = confirm('当前课本还未学习，请先学习把~')
-      if (!confirmed) {
-        router.push('/word/learning')
-        return
-      }
-      const bookWordCount = bookStore.currentBook?.wordCount || 0
-      const defaultEnd = Math.min(10, bookWordCount || 10)
-      const range = { start: 1, end: defaultEnd }
-      await wordStore.fetchWords(range)
+      firstLearnDialogMessage.value = '当前课本还未学习，请前往学习中心学习。'
+      firstLearnDialog.value = true
       latestRecord.value = null
       return
     }
@@ -688,8 +737,9 @@ const preloadLatestWords = async () => {
     latestRecord.value = record
   } catch (e) {
     console.error('加载最新学习记录失败', e)
-    showError('加载复习数据失败：' + (e.message || '请稍后重试'))
-    router.push('/word/review')
+    firstLearnDialogMessage.value = '加载学习记录失败，请前往学习中心重新开始。'
+    firstLearnDialog.value = true
+    latestRecord.value = null
   } finally {
     initializing.value = false
   }
@@ -718,13 +768,13 @@ const resetRuntimeState = () => {
 
 const startGame = async () => {
   await initGameData()
+  if (firstLearnDialog.value) return
   if (initializing.value) {
     showError('数据加载中，请稍候')
     return
   }
   if (!latestRecord.value) {
-    showError('未找到最新学习记录，请先完成学习后再进入复习')
-    router.push('/word/review')
+    // 已在弹窗提示，无需重复 toast
     return
   }
   if (words.value.length < 1) {
@@ -909,6 +959,16 @@ const markSecondRoundComplete = async () => {
 
 const handleResize = () => {
   renderCurrentBubbles(true)
+}
+
+const confirmFirstLearn = () => {
+  firstLearnDialog.value = false
+  router.push('/word/learning')
+}
+
+const cancelFirstLearn = () => {
+  firstLearnDialog.value = false
+  goBack()
 }
 
 onMounted(() => {

@@ -1,8 +1,15 @@
 <template>
   <!-- 悬浮按钮 -->
-  <div class="fixed bottom-6 right-6 z-50">
+  <div
+    class="fixed z-50"
+    :class="isMobile ? '' : 'bottom-6 right-6'"
+    :style="isMobile ? fabStyle : undefined"
+    @touchstart.stop="onTouchStart"
+    @touchmove.stop.prevent="onTouchMove"
+    @touchend.stop="onTouchEnd"
+  >
     <button
-      @click="showModal = true"
+      @click="handleClick"
       class="w-14 h-14 rounded-full shadow-lg shadow-indigo-500/30 bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center"
     >
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,7 +132,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useToast } from '@/composables/useToast'
 import { jottingService } from '@/services/jotting.service'
 import { useAuthStore } from '@/stores/auth'
@@ -134,11 +141,94 @@ const showModal = ref(false)
 const loading = ref(false)
 const { success, error: showError } = useToast()
 const authStore = useAuthStore()
+const isMobile = ref(false)
+const position = reactive({ x: 0, y: 0 })
+const isDragging = ref(false)
+const dragMoved = ref(false)
+const suppressClick = ref(false)
+const start = reactive({ x: 0, y: 0, posX: 0, posY: 0 })
+const FAB_SIZE = 56
 
 const form = reactive({
   type: 1, // 1-单词, 0-句子
   content: '',
   chinese: ''
+})
+
+const fabStyle = computed(() => ({
+  left: `${position.x}px`,
+  top: `${position.y}px`
+}))
+
+const detectMobile = () => {
+  isMobile.value = window.innerWidth < 768
+  clampPosition()
+}
+
+const clampPosition = () => {
+  const padding = 12
+  const maxX = Math.max(padding, window.innerWidth - FAB_SIZE - padding)
+  const maxY = Math.max(padding, window.innerHeight - FAB_SIZE - padding)
+  position.x = Math.min(Math.max(position.x, padding), maxX)
+  position.y = Math.min(Math.max(position.y, padding), maxY)
+}
+
+const loadPosition = () => {
+  // 刷新后始终回到默认右下角
+  position.x = Math.max(12, window.innerWidth - FAB_SIZE - 24)
+  position.y = Math.max(12, window.innerHeight - FAB_SIZE - 24)
+  clampPosition()
+}
+
+const onTouchStart = (e) => {
+  if (!isMobile.value) return
+  if (e.touches.length !== 1) return
+  const touch = e.touches[0]
+  isDragging.value = true
+  dragMoved.value = false
+  start.x = touch.clientX
+  start.y = touch.clientY
+  start.posX = position.x
+  start.posY = position.y
+}
+
+const onTouchMove = (e) => {
+  if (!isMobile.value || !isDragging.value || e.touches.length !== 1) return
+  const touch = e.touches[0]
+  const dx = touch.clientX - start.x
+  const dy = touch.clientY - start.y
+  if (Math.abs(dx) + Math.abs(dy) > 6) {
+    dragMoved.value = true
+  }
+  position.x = start.posX + dx
+  position.y = start.posY + dy
+  clampPosition()
+}
+
+const onTouchEnd = () => {
+  if (!isMobile.value || !isDragging.value) return
+  isDragging.value = false
+  if (dragMoved.value) {
+    suppressClick.value = true
+    setTimeout(() => {
+      suppressClick.value = false
+    }, 200)
+  }
+}
+
+const handleClick = () => {
+  if (suppressClick.value) return
+  showModal.value = true
+}
+
+onMounted(() => {
+  detectMobile()
+  loadPosition()
+  window.addEventListener('resize', detectMobile)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', detectMobile)
 })
 
 const closeModal = () => {

@@ -14,6 +14,7 @@ import com.austain.domain.dto.profile.ProfileDashboardDTO.Settings;
 import com.austain.domain.dto.profile.ProfileDashboardDTO.StudyOverview;
 import com.austain.domain.dto.profile.ProfileDashboardDTO.Achievement;
 import com.austain.domain.dto.profile.ProfileDashboardDTO.TaskItem;
+import com.austain.config.OssProperties;
 import com.austain.domain.dto.RecordResult;
 import com.austain.domain.dto.StudyStatVO;
 import com.austain.domain.po.User;
@@ -25,17 +26,23 @@ import com.austain.mapper.UserMapper;
 import com.austain.mapper.WordStudyRecordMapper;
 import com.austain.service.ProfileService;
 import com.austain.service.StudySessionService;
+import com.aliyun.oss.ClientException;
+import com.aliyun.oss.OSS;
+import com.aliyun.oss.OSSClientBuilder;
+import com.aliyun.oss.OSSException;
+import com.aliyun.oss.model.ObjectMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import org.springframework.util.StringUtils;
 
 @Service
 public class ProfileServiceImpl implements ProfileService {
@@ -58,8 +65,13 @@ public class ProfileServiceImpl implements ProfileService {
     @Autowired
     private WordStudyRecordMapper wordStudyRecordMapper;
 
+    @Autowired
+    private OssProperties ossProperties;
+
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MM-dd");
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private static final long MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/jpg", "image/webp");
 
     @Override
     public ProfileDashboardDTO getProfile(Long userId) {
@@ -209,6 +221,75 @@ public class ProfileServiceImpl implements ProfileService {
         }
         String encoded = passwordEncoder.encode(passwordUpdate.getNewPassword());
         userMapper.updatePassword(userId, encoded);
+    }
+
+    @Override
+    public String uploadAvatar(Long userId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("请上传图片文件");
+        }
+        if (file.getSize() > MAX_AVATAR_SIZE) {
+            throw new RuntimeException("头像文件不能超过5MB");
+        }
+        User user = userMapper.findById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+            throw new RuntimeException("仅支持 jpg/png/webp 格式的图片");
+        }
+        String originalName = file.getOriginalFilename();
+        String suffix = ".jpg";
+        if (StringUtils.hasText(originalName) && originalName.contains(".")) {
+            suffix = originalName.substring(originalName.lastIndexOf("."));
+        }
+
+        String uploadDir = ensureDirSuffix(ossProperties.getUploadDir());
+        String username = StringUtils.hasText(user.getUsername()) ? user.getUsername().trim() : "user" + userId;
+        String safeUsername = username.replaceAll("[^a-zA-Z0-9_-]", "_");
+        String objectKey = uploadDir + safeUsername + System.currentTimeMillis() + suffix;
+
+        String endpoint = ossProperties.getEndpoint();
+        String bucket = ossProperties.getBucketName();
+        if (!StringUtils.hasText(endpoint) || !StringUtils.hasText(bucket)) {
+            throw new RuntimeException("OSS 配置缺失，请联系管理员");
+        }
+
+        OSS ossClient = new OSSClientBuilder().build("https://" + endpoint, ossProperties.getAccessKeyId(), ossProperties.getAccessKeySecret());
+        try {
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType(contentType);
+            metadata.setContentLength(file.getSize());
+            ossClient.putObject(bucket, objectKey, file.getInputStream(), metadata);
+        } catch (OSSException | ClientException | IOException e) {
+            throw new RuntimeException("头像上传失败，请稍后重试");
+        } finally {
+            if (ossClient != null) {
+                ossClient.shutdown();
+            }
+        }
+
+        String baseUrl = ossProperties.getBaseUrl();
+        if (!StringUtils.hasText(baseUrl)) {
+            baseUrl = "https://" + bucket + "." + endpoint;
+        }
+        String url = baseUrl.endsWith("/") ? baseUrl + objectKey : baseUrl + "/" + objectKey;
+
+        // 直接更新用户头像字段
+        User update = new User();
+        update.setId(userId);
+        update.setAvatar(url);
+        userMapper.updateProfile(update);
+
+        return url;
+    }
+
+    private String ensureDirSuffix(String dir) {
+        if (!StringUtils.hasText(dir)) {
+            return "avatars/";
+        }
+        return dir.endsWith("/") ? dir : dir + "/";
     }
 
     private ProfileSummary buildSummary(User user) {

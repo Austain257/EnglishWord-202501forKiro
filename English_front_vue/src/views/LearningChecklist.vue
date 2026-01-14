@@ -57,28 +57,61 @@
         </div>
       </nav>
 
+      <!-- 友好弹窗 -->
+      <div
+        v-if="message.popup"
+        class="fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-6"
+      >
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="message.popup = false"></div>
+        <div class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 space-y-4">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="text-slate-800 text-sm leading-relaxed">
+              {{ message.text }}
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <button
+              class="px-4 py-2 rounded-xl bg-emerald-500 text-white font-semibold shadow-sm hover:bg-emerald-600 transition-colors"
+              @click="message.popup = false"
+            >
+              好的
+            </button>
+          </div>
+        </div>
+      </div>
+
       <main class="flex-1 flex flex-col max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-10 space-y-6">
         <!-- 标签切换 -->
-        <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/70 shadow-sm p-2 flex gap-2">
-          <button
-            v-for="(tab, index) in tabs"
-            :key="tab.value"
-            @click="setActiveTab(index)"
-            :class="[
-              'flex-1 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all',
-              activeTab === index
-                ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg'
-                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-            ]"
-          >
-            <div class="flex items-center justify-center gap-2">
-              <span>{{ tab.name }}</span>
-              <span v-if="getTabCount(index)" class="text-xs font-bold px-2 py-0.5 rounded-full"
-                :class="activeTab === index ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-600'">
-                {{ getTabCount(index) }}
-              </span>
-            </div>
-          </button>
+        <div class="rounded-2xl bg-white/90 backdrop-blur shadow-xl border border-slate-100 overflow-hidden">
+          <div class="p-2 flex gap-2">
+            <button
+              v-for="(tab, index) in tabs"
+              :key="tab.value"
+              @click="setActiveTab(index)"
+              :class="[
+                'flex-1 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all',
+                activeTab === index
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+              ]"
+            >
+              <div class="flex items-center justify-center gap-2">
+                <span>{{ tab.name }}</span>
+                <span
+                  v-if="getTabCount(index)"
+                  class="text-xs font-bold px-2 py-0.5 rounded-full"
+                  :class="activeTab === index ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-600'"
+                >
+                  {{ getTabCount(index) }}
+                </span>
+              </div>
+            </button>
+          </div>
         </div>
 
         <!-- 主列表 -->
@@ -154,11 +187,11 @@
                           </button>
                         </div>
 
-                        <p :class="['text-lg font-semibold leading-relaxed', item.alreadyReviewed ? 'text-slate-400 line-through' : 'text-slate-900']">
+                        <p :class="['text-base sm:text-lg font-semibold leading-relaxed', item.alreadyReviewed ? 'text-slate-400 line-through' : 'text-slate-900']">
                           {{ item.learningRecord }}
                         </p>
 
-                        <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+                        <div class="flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm text-slate-500">
                           <div class="flex items-center gap-2 text-slate-500">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -213,8 +246,8 @@
 
     <!-- 新增/编辑模态框 -->
     <div v-if="showAddModal || editingItem" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-40 px-4">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in">
-        <header class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-4 flex items-center justify-between">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg sm:max-h-none max-h-[90vh] overflow-hidden animate-scale-in">
+        <header class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 sm:px-6 py-4 flex items-center justify-between">
           <div>
             <p class="text-sm uppercase tracking-[0.3em] text-white/70">Checklist</p>
             <h3 class="text-2xl font-bold">{{ editingItem ? '编辑清单' : '新增清单' }}</h3>
@@ -226,7 +259,7 @@
           </button>
         </header>
 
-        <form @submit.prevent="submitForm" class="p-6 space-y-6">
+        <form @submit.prevent="submitForm" class="p-5 sm:p-6 space-y-6 max-h-[75vh] sm:max-h-none overflow-y-auto">
           <div>
             <label class="block text-sm font-semibold text-slate-600 mb-2">学习内容</label>
             <textarea
@@ -347,14 +380,42 @@ import { useChecklistStore } from '@/stores/checklist'
 import { useBookStore } from '@/stores/book'
 import { useAuthStore } from '@/stores/auth'
 import { useWordStudyStore } from '@/stores/wordStudy'
-import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const checklistStore = useChecklistStore()
 const bookStore = useBookStore()
 const authStore = useAuthStore()
 const wordStudyStore = useWordStudyStore()
-const toast = useToast()
+const noChecklistHintShown = ref(false)
+const emptyFriendlyText = '太好了，今日没有待学习清单，可以好好休息一下，这段时间也累了吧，晚上跑跑步，吃些好吃的吧~'
+const message = reactive({
+  text: '',
+  type: 'info',
+  popup: false
+})
+
+const showMessage = (text, type = 'info') => {
+  message.text = text
+  message.type = type
+  message.popup = false
+  setTimeout(() => {
+    message.text = ''
+  }, 3200)
+}
+
+const showPopupMessage = (text) => {
+  message.text = text
+  message.type = 'info'
+  message.popup = true
+}
+
+const showEmptyPopupIfNeeded = () => {
+  const total = checklistStore.checklists?.length || 0
+  if (total === 0 && !noChecklistHintShown.value) {
+    showPopupMessage(emptyFriendlyText)
+    noChecklistHintShown.value = true
+  }
+}
 
 const tabs = [
   { name: '句子', value: 0 },
@@ -431,7 +492,7 @@ const setActiveTab = async (tab) => {
   try {
     await checklistStore.setActiveTab(tab)
   } catch (error) {
-    toast.error('切换失败：' + error.message)
+    showMessage('切换失败：' + (error?.message || '请稍后重试'), 'error')
   }
 }
 
@@ -441,11 +502,11 @@ const toggleSelection = (itemId) => {
 
 const goToWordReview = async (item) => {
   if (!authStore.user?.id) {
-    toast.error('请先登录后再开始复习')
+    showMessage('请先登录后再开始复习', 'error')
     return
   }
   if (!item.bookId || !item.startId || !item.endId) {
-    toast.error('该清单缺少完整的课本范围，无法跳转')
+    showMessage('该清单缺少完整的课本范围，无法跳转', 'error')
     return
   }
   if (isNavigatingToReview.value) return
@@ -463,7 +524,7 @@ const goToWordReview = async (item) => {
       }
     })
   } catch (error) {
-    toast.error('跳转复习页面失败：' + (error?.message || '请稍后重试'))
+    showMessage('跳转复习页面失败：' + (error?.message || '请稍后重试'), 'error')
   } finally {
     setTimeout(() => {
       isNavigatingToReview.value = false
@@ -486,9 +547,9 @@ const clearSelection = () => {
 const markSelectedAsCompleted = async () => {
   try {
     await checklistStore.markSelectedAsCompleted()
-    toast.success('已标记为复习完成')
+    showMessage('已标记为复习完成', 'success')
   } catch (error) {
-    toast.error('标记失败：' + error.message)
+    showMessage('标记失败：' + (error?.message || '请稍后重试'), 'error')
   }
 }
 
@@ -497,9 +558,9 @@ const batchDelete = async () => {
   if (!confirm('确定要删除选中的清单吗？')) return
   try {
     await checklistStore.batchDeleteChecklists(selectedItems.value.map(id => id.toString()))
-    toast.success('删除成功')
+    showMessage('删除成功', 'success')
   } catch (error) {
-    toast.error('删除失败：' + error.message)
+    showMessage('删除失败：' + (error?.message || '请稍后重试'), 'error')
   }
 }
 
@@ -530,12 +591,12 @@ const submitForm = async () => {
     formLoading.value = true
     if (isWordType.value) {
       if (!form.bookId) {
-        toast.error('请先选择关联课本')
+        showMessage('请先选择关联课本', 'error')
         formLoading.value = false
         return
       }
       if (form.startId <= 0 || form.endId <= 0 || form.startId >= form.endId) {
-        toast.error('请输入正确的单词范围（起始需小于结束）')
+        showMessage('请输入正确的单词范围（起始需小于结束）', 'error')
         formLoading.value = false
         return
       }
@@ -554,14 +615,14 @@ const submitForm = async () => {
     }
     if (editingItem.value) {
       await checklistStore.updateChecklist({ ...editingItem.value, ...data })
-      toast.success('更新成功')
+      showMessage('更新成功', 'success')
     } else {
       await checklistStore.addChecklist(data)
-      toast.success('添加成功')
+      showMessage('添加成功', 'success')
     }
     closeModal()
   } catch (error) {
-    toast.error('保存失败：' + error.message)
+    showMessage('保存失败：' + (error?.message || '请稍后重试'), 'error')
   } finally {
     formLoading.value = false
   }
@@ -607,10 +668,11 @@ const refreshList = async () => {
   try {
     await checklistStore.resetSelected()
     await checklistStore.fetchChecklists()
-    await autoSelectReviewedByRecordIds()
-    toast.success('学习清单已刷新')
+    await autoMarkReviewedByRecordIds()
+    showMessage('学习清单已刷新', 'success')
+    showEmptyPopupIfNeeded()
   } catch (error) {
-    toast.error('刷新失败：' + error.message)
+    showMessage('刷新失败：' + (error?.message || '请稍后重试'), 'error')
   }
 }
 
@@ -621,9 +683,10 @@ onMounted(async () => {
     }
     form.bookId = bookStore.currentBook?.id || books.value[0]?.id || null
     await checklistStore.fetchChecklists()
-    await autoSelectReviewedByRecordIds()
+    await autoMarkReviewedByRecordIds()
+    showEmptyPopupIfNeeded()
   } catch (error) {
-    toast.error('加载清单失败：' + error.message)
+    showMessage('加载清单失败：' + (error?.message || '请稍后重试'), 'error')
   }
 })
 
@@ -646,7 +709,7 @@ const isRoundCompleted = (record, round) => {
   return Boolean(record[field])
 }
 
-const autoSelectReviewedByRecordIds = async () => {
+const autoMarkReviewedByRecordIds = async () => {
   if (!authStore.user?.id) return
   const list = filteredChecklists.value || []
   const wordItems = list.filter((item) => item.type === 1 && item.recordIds)
@@ -654,10 +717,11 @@ const autoSelectReviewedByRecordIds = async () => {
 
   try {
     autoSelectLoading.value = true
+    const doneIds = []
     for (const item of wordItems) {
       const recordIds = parseRecordIds(item.recordIds)
       const targetRound = getTargetRoundNumber(item)
-      if (!recordIds.length || !targetRound) continue
+      if (!recordIds.length || !targetRound || item.alreadyReviewed) continue
 
       try {
         const records = await wordStudyStore.getRecordsByIds({
@@ -669,13 +733,17 @@ const autoSelectReviewedByRecordIds = async () => {
             const rec = records.find((r) => Number(r.id) === Number(id))
             return isRoundCompleted(rec, targetRound)
           })
-          if (allDone && !selectedItems.value.includes(item.id)) {
-            checklistStore.toggleSelection(item.id)
+          if (allDone) {
+            doneIds.push(item.id)
           }
         }
       } catch (err) {
         console.error('自动检测复习轮次失败：', err)
       }
+    }
+    if (doneIds.length) {
+      await checklistStore.setReview(doneIds)
+      checklistStore.clearSelection()
     }
   } finally {
     autoSelectLoading.value = false

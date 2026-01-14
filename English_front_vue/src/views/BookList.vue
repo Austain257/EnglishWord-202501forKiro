@@ -11,6 +11,10 @@
           </p>
         </div>
         
+        <div v-if="message.text" :class="['mb-4 px-4 py-3 rounded-lg text-sm font-medium text-left', message.type === 'error' ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100']">
+          {{ message.text }}
+        </div>
+
         <div v-if="loading" class="flex justify-center">
           <Loading size="lg" text="加载课本中..." />
         </div>
@@ -62,16 +66,26 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBookStore } from '@/stores/book'
-import { useToast } from '@/composables/useToast'
 import Card from '@/components/common/Card.vue'
 import Loading from '@/components/common/Loading.vue'
 
 const router = useRouter()
 const bookStore = useBookStore()
-const { success, error } = useToast()
+const message = reactive({
+  text: '',
+  type: 'info'
+})
+
+const showMessage = (text, type = 'info') => {
+  message.text = text
+  message.type = type
+  setTimeout(() => {
+    message.text = ''
+  }, 3200)
+}
 
 // 使用store中的状态
 const loading = computed(() => bookStore.loading)
@@ -80,10 +94,10 @@ const books = computed(() => bookStore.books)
 const selectBook = async (book) => {
   try {
     await bookStore.selectBook(book)
-    success(`已选择课本：${book.bookName}`)
+    showMessage(`已选择课本：${book.bookName}`, 'success')
     router.push('/')
   } catch (err) {
-    error('选择课本失败：' + err.message)
+    showMessage('选择课本失败：' + (err?.message || '请稍后重试'), 'error')
   }
 }
 
@@ -91,7 +105,7 @@ onMounted(async () => {
   try {
     await bookStore.fetchBooks()
   } catch (err) {
-    error('加载课本失败：' + err.message)
+    showMessage('加载课本失败：' + (err?.message || '请稍后重试'), 'error')
   }
 })
 </script>

@@ -100,6 +100,16 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.removeItem('currentBookId')
     }
   }
+
+  // 更新用户信息（并持久化），用于头像等信息变更后即时刷新
+  const updateUser = (partial) => {
+    if (!user.value) {
+      user.value = partial
+    } else {
+      user.value = { ...user.value, ...partial }
+    }
+    localStorage.setItem('user', JSON.stringify(user.value))
+  }
   
   // 初始化时恢复用户信息
   const initializeAuth = () => {
@@ -140,6 +150,7 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken,
     validateToken,
     setCurrentBook,
+    updateUser,
     initializeAuth
   }
 })

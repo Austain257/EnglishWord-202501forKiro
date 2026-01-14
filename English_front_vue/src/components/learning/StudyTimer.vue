@@ -115,7 +115,57 @@
       v-else
       class="rounded-2xl bg-white/90 border border-slate-100 shadow-sm p-4 sm:p-5"
     >
-      <div class="flex flex-col gap-4">
+      <!-- 收起态 -->
+      <div
+        v-if="isCollapsed"
+        class="flex items-center justify-between gap-3 cursor-pointer select-none"
+        style="touch-action: manipulation;"
+        @click.stop="toggleCollapsed(false)"
+      >
+        <div class="flex-1">
+          <p class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold mb-1">
+            今日学习
+          </p>
+          <h3 class="text-base sm:text-xl font-bold text-slate-900">
+            {{ timerLabel }}
+          </h3>
+          <p class="text-xs text-slate-500">
+            {{ currentRange }}
+          </p>
+          <div class="mt-3 space-y-1">
+            <div class="flex justify-between text-xs text-slate-400">
+              <span>进度</span>
+              <span>{{ Math.round(progress) }}%</span>
+            </div>
+            <div class="h-2 rounded-full overflow-hidden bg-slate-100">
+              <div
+                class="h-full rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all duration-500"
+                :style="{ width: `${Math.min(progress, 100)}%` }"
+              ></div>
+            </div>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-[11px] text-slate-400 mb-1">剩余</p>
+          <div class="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums">
+            {{ formatTime(remainingTime) }}
+          </div>
+          <div class="mt-2 inline-flex items-center text-xs text-blue-600 font-semibold">
+            展开
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- 展开态 -->
+      <div
+        v-else
+        class="flex flex-col gap-4 cursor-pointer select-none"
+        style="touch-action: manipulation;"
+        @click.stop="toggleCollapsed(true)"
+      >
         <div class="flex items-start justify-between">
           <div>
             <p class="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">
@@ -128,10 +178,12 @@
               {{ currentRange }}
             </p>
           </div>
-          <div class="text-right">
-            <p class="text-xs text-slate-400 mb-1">剩余</p>
-            <div class="text-2xl font-bold text-slate-900 tabular-nums">
-              {{ formatTime(remainingTime) }}
+          <div class="text-right flex items-start gap-2">
+            <div>
+              <p class="text-xs text-slate-400 mb-1">剩余</p>
+              <div class="text-2xl font-bold text-slate-900 tabular-nums">
+                {{ formatTime(remainingTime) }}
+              </div>
             </div>
           </div>
         </div>
@@ -149,7 +201,7 @@
           </div>
         </div>
 
-        <div class="flex gap-3 flex-wrap">
+        <div class="flex gap-3 flex-wrap" @click.stop>
           <button
             v-if="timerStatus === 'idle'"
             @click="startTimer"
@@ -257,6 +309,8 @@ const startTime = ref(null)
 const sessionId = ref(null)
 const showEndConfirm = ref(false)
 const timerInterval = ref(null)
+const isCollapsed = ref(true)
+const collapseGuardUntil = ref(0)
 
 // 计算属性
 const circumference = 2 * Math.PI * 90
@@ -293,6 +347,15 @@ const formatTime = (seconds) => {
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+}
+
+const toggleCollapsed = (next) => {
+  const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
+  if (next && now < collapseGuardUntil.value) return
+  isCollapsed.value = next
+  if (!next) {
+    collapseGuardUntil.value = now + 220 // 防抖，避免同一次点击触发收起
+  }
 }
 
 const startTimer = async () => {

@@ -1,18 +1,22 @@
 <template>
-  <div class="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans selection:bg-blue-100 selection:text-blue-900">
+  <div class="min-h-screen bg-gradient-to-br from-[#F8FAFC] via-[#F0FBF7] to-[#E6F2FF] text-slate-800 font-sans selection:bg-blue-100 selection:text-blue-900">
     <!-- 顶部导航栏 -->
-    <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header class="sticky top-0 z-40 bg-gradient-to-r from-[#0F766E]/85 via-[#14B8A6]/85 to-[#0EA5E9]/85 backdrop-blur-xl border-b border-teal-200/50">
+      <div class="w-full mx-auto px-4 sm:px-6 lg:px-10 xl:px-14 2xl:px-16">
         <div class="flex justify-between items-center h-16 sm:h-20">
           <!-- Logo区域 -->
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 text-white">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253z" />
-              </svg>
-            </div>
+            <img
+              src="https://austain-java-ai-web.oss-cn-beijing.aliyuncs.com/BreezeWise_LOGO.png"
+              alt="轻风智语 Logo"
+              class="w-10 h-10 rounded-xl object-cover shadow-lg shadow-blue-500/20 bg-white"
+            />
             <div class="hidden sm:block">
               <h1 class="text-xl font-bold text-slate-900 tracking-tight">轻风智语</h1>
+              <p class="text-[10px] font-medium text-slate-400 uppercase tracking-widest">BreezeWise</p>
+            </div>
+            <div class="flex flex-col sm:hidden">
+              <h1 class="text-base font-bold text-slate-900 leading-tight">轻风智语</h1>
               <p class="text-[10px] font-medium text-slate-400 uppercase tracking-widest">BreezeWise</p>
             </div>
           </div>
@@ -20,9 +24,9 @@
           <!-- 右侧功能区 -->
           <div class="flex items-center gap-3 sm:gap-6">
             <!-- 学习天数 (PC端显示) -->
-            <div class="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full border border-slate-100">
+            <div class="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-slate-50 rounded-full border border-slate-100">
               <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-              <span class="text-sm text-slate-600">已坚持学习 <span class="font-bold text-slate-900">{{ stats.studyDays || 0 }}</span> 天</span>
+              <span class="text-xs md:text-sm text-slate-600">已坚持学习 <span class="font-bold text-slate-900">{{ stats.studyDays || 0 }}</span> 天</span>
             </div>
 
             <!-- 用户头像 -->
@@ -72,13 +76,13 @@
     </header>
 
     <!-- 主要内容区域 -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <main class="w-full mx-auto px-4 sm:px-6 lg:px-10 xl:px-14 2xl:px-16 py-8 space-y-8">
       
       <!-- 第一部分：欢迎与核心状态 (Bento Grid) -->
       <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         <!-- 欢迎卡片 -->
-        <div class="lg:col-span-8 relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-600 via-blue-600 to-blue-700 text-white shadow-xl shadow-indigo-500/20 p-8 sm:p-10 flex flex-col gap-8 min-h-[240px]">
+        <div class="lg:col-span-8 relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#0B7A6F] via-[#0FAF94] to-[#0B8A73] text-white shadow-xl shadow-emerald-400/25 p-8 sm:p-10 flex flex-col gap-8 min-h-[240px]">
           <!-- 装饰背景 -->
           <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
           <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-purple-500/20 rounded-full blur-2xl"></div>
@@ -88,40 +92,40 @@
               今日激励
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
             </p>
-            <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight">
+            <h2 class="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight">
               {{ getWelcomeMessage() }}
             </h2>
-            <p class="text-indigo-100 text-base sm:text-lg max-w-2xl font-medium opacity-90">
-              保持热爱，奔赴山海。今天的目标完成了吗？
+            <p class="text-indigo-100 text-sm sm:text-lg max-w-2xl font-medium opacity-90">
+              保持热爱，奔赴山海。今天的目标完成了吗？  
             </p>
           </div>
 
-          <div class="relative z-10 flex flex-wrap gap-3 sm:gap-4 w-full">
-             <button 
+          <div class="relative z-10 flex flex-nowrap gap-2 sm:gap-4 w-full">
+            <button 
               @click="currentBook ? goToWordLearning() : goToBooks()"
-              class="px-8 py-3.5 bg-white text-indigo-600 rounded-xl font-bold text-base sm:text-lg shadow-lg hover:shadow-xl hover:bg-indigo-50 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center gap-2"
+              class="flex-1 px-4 py-3 sm:px-8 sm:py-3.5 bg-white text-indigo-600 rounded-xl font-bold text-sm sm:text-base sm:text-lg shadow-lg hover:shadow-xl hover:bg-indigo-50 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 1 1-18 0a9 9 0 0 1 18 0z" />
               </svg>
               {{ currentBook ? '开始学习' : '选择课本' }}
             </button>
             <button 
               @click="goToChecklist"
-              class="px-8 py-3 bg-indigo-800/40 backdrop-blur-md border border-white/20 text-white rounded-xl font-semibold text-base sm:text-lg hover:bg-indigo-800/60 transition-all duration-300 flex items-center gap-2"
+              class="flex-1 px-4 py-3 sm:px-8 sm:py-3 bg-indigo-800/40 backdrop-blur-md border border-white/20 text-white rounded-xl font-semibold text-sm sm:text-base sm:text-lg hover:bg-indigo-800/60 transition-all duration-300 flex items-center justify-center gap-2"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
-              查看计划
+              今日计划
             </button>
           </div>
 
           <!-- 学习时长卡片 -->
-          <div class="relative z-10 w-full grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div class="flex flex-col justify-between rounded-2xl border border-white/20 bg-white/15 backdrop-blur-lg p-4 sm:p-5 shadow-lg shadow-indigo-900/20 hover:shadow-xl transition-all duration-300">
-              <div class="flex items-center justify-between text-white/80 text-xs uppercase tracking-[0.3em]">
+          <div class="relative z-10 w-full grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-4">
+            <div class="flex flex-col justify-between rounded-2xl border border-white/20 bg-white/15 backdrop-blur-lg p-3 sm:p-5 shadow-lg shadow-indigo-900/20 hover:shadow-xl transition-all duration-300 min-w-0">
+              <div class="flex items-center justify-between text-white/80 text-[11px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em]">
                 今日学习
                 <button 
                   class="text-white/70 hover:text-white transition-colors"
@@ -133,26 +137,26 @@
                   </svg>
                 </button>
               </div>
-              <div class="mt-6">
-                <p class="text-4xl font-bold text-white drop-shadow-sm">{{ studyStatStore.todayDisplay }}</p>
-                <p class="mt-2 text-sm text-white/80 flex items-center gap-1">
+              <div class="mt-4 sm:mt-6">
+                <p class="text-xl sm:text-4xl font-bold text-white drop-shadow-sm leading-tight break-words">{{ studyStatStore.todayDisplay }}</p>
+                <p class="mt-2 text-[11px] sm:text-sm text-white/80 flex items-center gap-1">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
                   持续保持节奏
                 </p>
               </div>
             </div>
-            <div class="flex flex-col justify-between rounded-2xl border border-white/20 bg-gradient-to-br from-white/30 via-white/10 to-transparent backdrop-blur-lg p-4 sm:p-5 shadow-lg shadow-indigo-900/10 hover:shadow-xl transition-all duration-300">
-              <div class="text-xs uppercase tracking-[0.3em] text-slate-900/70 flex items-center gap-2">
+            <div class="flex flex-col justify-between rounded-2xl border border-white/20 bg-gradient-to-br from-white/30 via-white/10 to-transparent backdrop-blur-lg p-3 sm:p-5 shadow-lg shadow-indigo-900/10 hover:shadow-xl transition-all duration-300 min-w-0">
+              <div class="text-[11px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] text-slate-900/70 flex items-center gap-2">
                 累计学习
-                <span class="px-2 py-0.5 rounded-full bg-white/60 text-[10px] font-semibold text-slate-700">终身</span>
+                <!-- <span class="px-2 py-0.5 rounded-full bg-white/60 text-[10px] font-semibold text-slate-700">终身</span> -->
               </div>
-              <div class="mt-6">
-                <p class="text-4xl font-bold text-slate-900">{{ studyStatStore.totalDisplay }}</p>
-                <p class="mt-2 text-sm text-slate-600 flex items-center gap-2">
-                  <span class="inline-flex items-center text-[10px] font-semibold text-indigo-600 bg-white/70 px-2 py-0.5 rounded-full">
+              <div class="mt-4 sm:mt-6">
+                <p class="text-xl sm:text-4xl font-bold text-slate-900 leading-tight break-words">{{ studyStatStore.totalDisplay }}</p>
+                <p class="mt-2 text-[11px] sm:text-sm text-slate-600 flex items-center gap-2">
+                  <span class="inline-flex items-center text-[10px] font-semibold text-indigo-600 bg-white/70 px-2 py-0.5 rounded-full sm:text-[10px] whitespace-nowrap">
                     {{ stats.studyDays || 0 }} 天坚持
                   </span>
-                  <span v-if="studyStatStore.lastUpdateTime" class="text-slate-500 text-xs">
+                  <span v-if="studyStatStore.lastUpdateTime" class="text-emerald-700 text-[10px] sm:text-xs whitespace-nowrap font-semibold">
                     更新：{{ formatUpdateTime(studyStatStore.lastUpdateTime) }}
                   </span>
                 </p>
@@ -162,12 +166,12 @@
         </div>
 
         <!-- 课本状态卡片 (重新设计 - 紧凑信息) -->
-        <div class="lg:col-span-4 bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col justify-between gap-6 hover:shadow-lg transition-shadow duration-300 min-h-[500px]">
+        <div class="lg:col-span-4 bg-gradient-to-br from-emerald-50 via-[#E3F6EE] to-[#CFF0E3] rounded-[2rem] p-6 shadow-sm border border-emerald-100 flex flex-col justify-between gap-6 hover:shadow-lg transition-shadow duration-300 min-h-[500px]">
           
           <!-- 头部：标题与切换 -->
           <div class="flex justify-between items-start">
             <div class="flex-1 mr-4 cursor-pointer space-y-1" @click="showBookSelector = true">
-              <div class="text-xs font-bold text-slate-400 tracking-wider uppercase">Current Book</div>
+              <div class="text-xs font-bold text-emerald-600 tracking-wider uppercase bg-emerald-50 px-2 py-1 rounded-lg w-max">Current Book</div>
               <h3 class="text-lg sm:text-xl font-bold text-slate-800 line-clamp-2 leading-snug" :title="currentBook ? (currentBook.bookName || currentBook.name) : ''">
                 {{ currentBook ? (currentBook.bookName || currentBook.name) : '未选择课本' }}
               </h3>
@@ -195,16 +199,16 @@
               <div class="flex items-end gap-2">
                 <span class="text-4xl font-bold text-slate-900 leading-none">{{ progressPercent }}</span>
                 <span class="text-sm font-medium text-slate-400">%</span>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-semibold">学习进度</span>
+                <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold">学习进度</span>
               </div>
               
               <!-- 进度条 -->
               <div class="space-y-2">
-                <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div 
-                  class="h-full bg-blue-600 rounded-full transition-all duration-1000 ease-out" 
-                  :style="{ width: `${progressPercent}%` }"
-                ></div>
+                <div class="h-2 w-full bg-emerald-100 rounded-full overflow-hidden shadow-inner shadow-emerald-200/50">
+                  <div 
+                    class="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-full transition-all duration-1000 ease-out" 
+                    :style="{ width: `${progressPercent}%` }"
+                  ></div>
                 </div>
                 <div class="flex justify-between text-xs text-slate-400 font-medium">
                   <span>已完成 {{ masteredCount }} 项</span>
@@ -214,13 +218,13 @@
 
               <!-- 今日单词表现 -->
               <div class="grid grid-cols-2 gap-2">
-                <div class="rounded-xl border border-slate-100 bg-gradient-to-br from-sky-50 to-white p-3 flex flex-col gap-1 shadow-sm">
-                  <div class="text-xs font-semibold text-sky-600 uppercase tracking-wider">
+                <div class="rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-100 via-emerald-50 to-emerald-200 p-3 flex flex-col gap-1 shadow-sm">
+                  <div class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
                     今日掌握
                   </div>
                   <p class="text-2xl font-bold text-slate-900">{{ globalStats.todayMasteredWords || 0 }}</p>
                 </div>
-                <div class="rounded-xl border border-slate-100 bg-gradient-to-br from-rose-50 to-white p-3 flex flex-col gap-1 shadow-sm">
+                <div class="rounded-xl border border-rose-200 bg-gradient-to-br from-rose-100 via-rose-50 to-rose-200 p-3 flex flex-col gap-1 shadow-sm">
                   <div class="text-xs font-semibold text-rose-600 uppercase tracking-wider">
                     今日错词
                   </div>
@@ -230,10 +234,10 @@
             </div>
 
             <!-- 中间部分：课本词汇概览 -->
-            <div class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 shadow-inner">
+            <div class="rounded-2xl border border-emerald-100 bg-gradient-to-br from-[#DFF8EF] via-[#F4FBF8] to-white p-4 shadow-inner">
               <div class="flex items-center justify-between mb-3">
                 <p class="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                   课本词汇概览
                 </p>
               </div>
@@ -292,7 +296,7 @@
 
         <div class="space-y-8">
           <!-- 创建课本入口 -->
-          <section class="bg-white rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100">
+          <section class="bg-gradient-to-br from-emerald-50 via-[#E6F7F1] to-[#D4E8FF] rounded-[2rem] p-6 sm:p-8 shadow-sm border border-emerald-100">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div class="flex-1">
                 <h3 class="text-xl font-bold text-slate-900 mb-2">创建专属课本</h3>
@@ -318,22 +322,24 @@
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
               单词训练
             </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               <!-- 单词学习 -->
               <div 
                 @click="currentBook ? goToWordLearning() : goToBooks()"
-                class="group cursor-pointer bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+                class="group cursor-pointer rounded-3xl p-4 sm:p-6 border border-emerald-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex bg-gradient-to-br from-emerald-100 via-emerald-50 to-emerald-200"
               >
-                <div class="relative z-10">
-                  <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="relative z-10 flex flex-col justify-between w-full h-full">
+                  <div class="w-12 h-12 sm:w-12 sm:h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253z" />
                     </svg>
                   </div>
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">单词学习</h3>
-                  <p class="text-xs text-slate-500 mb-3">核心词汇记忆</p>
-                  <div class="inline-flex items-center text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md">
-                    {{ stats.masteredWords || 0 }} 已掌握
+                  <div class="space-y-1 sm:space-y-1.5">
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">单词学习</h3>
+                    <p class="text-[11px] sm:text-xs text-slate-500">核心词汇记忆</p>
+                    <div class="inline-flex items-center text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md w-max">
+                      {{ stats.masteredWords || 0 }} 已掌握
+                    </div>
                   </div>
                 </div>
               </div>
@@ -341,18 +347,20 @@
               <!-- 单词复习 -->
               <div 
                 @click="currentBook ? goToWordReview() : goToBooks()"
-                class="group cursor-pointer bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+                class="group cursor-pointer rounded-3xl p-4 sm:p-6 border border-blue-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex bg-gradient-to-br from-blue-100 via-blue-50 to-blue-200"
               >
-                <div class="relative z-10">
-                  <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="relative z-10 flex flex-col justify-between w-full h-full">
+                  <div class="w-12 h-12 sm:w-12 sm:h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                   </div>
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">单词复习</h3>
-                  <p class="text-xs text-slate-500 mb-3">巩固记忆曲线</p>
-                  <div class="inline-flex items-center text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-1 rounded-md">
-                    智能复习
+                  <div class="space-y-1 sm:space-y-1.5">
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">单词复习</h3>
+                    <p class="text-[11px] sm:text-xs text-slate-500">巩固记忆曲线</p>
+                    <div class="inline-flex items-center text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-1 rounded-md w-max">
+                      智能复习
+                    </div>
                   </div>
                 </div>
               </div>
@@ -360,18 +368,20 @@
               <!-- 单词听写 -->
               <div 
                 @click="currentBook ? goToWordDictation() : goToBooks()"
-                class="group cursor-pointer bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+                class="group cursor-pointer rounded-3xl p-4 sm:p-6 border border-purple-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex bg-gradient-to-br from-purple-100 via-purple-50 to-purple-200"
               >
-                <div class="relative z-10">
-                  <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="relative z-10 flex flex-col justify-between w-full h-full">
+                  <div class="w-12 h-12 sm:w-12 sm:h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                     </svg>
                   </div>
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">单词听写</h3>
-                  <p class="text-xs text-slate-500 mb-3">听音辨义拼写</p>
-                  <div class="inline-flex items-center text-[10px] font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded-md">
-                    强化听力
+                  <div class="space-y-1 sm:space-y-1.5">
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">单词听写</h3>
+                    <p class="text-[11px] sm:text-xs text-slate-500">听音辨义拼写</p>
+                    <div class="inline-flex items-center text-[10px] font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded-md w-max">
+                      强化听力
+                    </div>
                   </div>
                 </div>
               </div>
@@ -379,18 +389,20 @@
               <!-- 错词本 -->
               <div 
                 @click="currentBook ? goToErrorWordBook() : goToBooks()"
-                class="group cursor-pointer bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+                class="group cursor-pointer rounded-3xl p-4 sm:p-6 border border-rose-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex bg-gradient-to-br from-rose-100 via-rose-50 to-rose-200"
               >
-                <div class="relative z-10">
-                  <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="relative z-10 flex flex-col justify-between w-full h-full">
+                  <div class="w-12 h-12 sm:w-12 sm:h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                   </div>
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">错词本</h3>
-                  <p class="text-xs text-slate-500 mb-3">攻克薄弱环节</p>
-                  <div class="inline-flex items-center text-[10px] font-semibold text-rose-700 bg-rose-50 px-2 py-1 rounded-md">
-                    {{ stats.errorWords || 0 }} 个错词
+                  <div class="space-y-1 sm:space-y-1.5">
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">错词本</h3>
+                    <p class="text-[11px] sm:text-xs text-slate-500">攻克薄弱环节</p>
+                    <div class="inline-flex items-center text-[10px] font-semibold text-rose-700 bg-rose-50 px-2 py-1 rounded-md w-max">
+                      {{ stats.errorWords || 0 }} 个错词
+                    </div>
                   </div>
                 </div>
               </div>
@@ -403,22 +415,24 @@
               <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
               句子训练
             </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               <!-- 句子学习 -->
               <div 
                 @click="goToSentenceLearning"
-                class="group cursor-pointer bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+                class="group cursor-pointer rounded-3xl p-4 sm:p-6 border border-indigo-300 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex bg-gradient-to-br from-indigo-200 via-indigo-100 to-indigo-300"
               >
-                <div class="relative z-10">
-                  <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="relative z-10 flex flex-col justify-between w-full h-full">
+                  <div class="w-12 h-12 sm:w-12 sm:h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                     </svg>
                   </div>
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">句子学习</h3>
-                  <p class="text-xs text-slate-500 mb-3">场景例句掌握</p>
-                  <div class="inline-flex items-center text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-md">
-                    {{ stats.masteredSentences || 0 }} 已掌握
+                  <div class="space-y-1 sm:space-y-1.5">
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">句子学习</h3>
+                    <p class="text-[11px] sm:text-xs text-slate-500">场景例句掌握</p>
+                    <div class="inline-flex items-center text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-md w-max">
+                      {{ stats.masteredSentences || 0 }} 已掌握
+                    </div>
                   </div>
                 </div>
               </div>
@@ -426,37 +440,42 @@
               <!-- 句子听写 -->
               <div 
                 @click="goToSentenceDictation"
-                class="group cursor-pointer bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+                class="group cursor-pointer rounded-3xl p-4 sm:p-6 border border-violet-300 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex bg-gradient-to-br from-violet-200 via-violet-100 to-violet-300"
               >
-                <div class="relative z-10">
-                  <div class="w-12 h-12 rounded-2xl bg-violet-100 text-violet-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                <div class="relative z-10 flex flex-col justify-between w-full h-full">
+                  <div class="w-12 h-12 sm:w-12 sm:h-12 rounded-2xl bg-violet-100 text-violet-600 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19c0 1.105.895 2 2 2s2-.895 2-2m-4 0a2 2 0 114 0m-4 0V5a2 2 0 114 0v14m-7-8h10" />
                     </svg>
                   </div>
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">句子听写</h3>
-                  <p class="text-xs text-slate-500 mb-3">整句听力训练</p>
-                  <div class="inline-flex items-center text-[10px] font-semibold text-violet-700 bg-violet-50 px-2 py-1 rounded-md">
-                    进阶提升
+                  <div class="space-y-1 sm:space-y-1.5">
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">句子听写</h3>
+                    <p class="text-[11px] sm:text-xs text-slate-500">听音练习表达</p>
+                    <div class="inline-flex items-center text-[10px] font-semibold text-violet-700 bg-violet-50 px-2 py-1 rounded-md w-max">
+                      拼写巩固
+                    </div>
                   </div>
                 </div>
               </div>
 
+
               <!-- 错句本 -->
               <div 
                 @click="goToErrorSentenceBook"
-                class="group cursor-pointer bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+                class="group cursor-pointer rounded-3xl p-4 sm:p-6 border border-orange-300 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex bg-gradient-to-br from-orange-200 via-orange-100 to-orange-300"
               >
-                <div class="relative z-10">
-                  <div class="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="relative z-10 flex flex-col justify-between w-full h-full">
+                  <div class="w-12 h-12 sm:w-12 sm:h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">错句本</h3>
-                  <p class="text-xs text-slate-500 mb-3">句子查漏补缺</p>
-                  <div class="inline-flex items-center text-[10px] font-semibold text-orange-700 bg-orange-50 px-2 py-1 rounded-md">
-                    {{ stats.errorSentences || 0 }} 个错句
+                  <div class="space-y-1 sm:space-y-1.5">
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">错句本</h3>
+                    <p class="text-[11px] sm:text-xs text-slate-500">句子查漏补缺</p>
+                    <div class="inline-flex items-center text-[10px] font-semibold text-orange-700 bg-orange-50 px-2 py-1 rounded-md w-max">
+                      {{ stats.errorSentences || 0 }} 个错句
+                    </div>
                   </div>
                 </div>
               </div>
@@ -464,18 +483,20 @@
               <!-- 积累本 -->
               <div 
                 @click="goToJottings"
-                class="group cursor-pointer bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+                class="group cursor-pointer rounded-3xl p-4 sm:p-6 border border-teal-300 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex bg-gradient-to-br from-teal-200 via-teal-100 to-teal-300"
               >
-                <div class="relative z-10">
-                  <div class="w-12 h-12 rounded-2xl bg-teal-100 text-teal-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="relative z-10 flex flex-col justify-between w-full h-full">
+                  <div class="w-12 h-12 sm:w-12 sm:h-12 rounded-2xl bg-teal-100 text-teal-600 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </div>
-                  <h3 class="text-lg font-bold text-slate-900 mb-1">积累本</h3>
-                  <p class="text-xs text-slate-500 mb-3">个人知识库</p>
-                  <div class="inline-flex items-center text-[10px] font-semibold text-teal-700 bg-teal-50 px-2 py-1 rounded-md">
-                    随手记
+                  <div class="space-y-1 sm:space-y-1.5">
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">积累本</h3>
+                    <p class="text-[11px] sm:text-xs text-slate-500">个人知识库</p>
+                    <div class="inline-flex items-center text-[10px] font-semibold text-teal-700 bg-teal-50 px-2 py-1 rounded-md w-max">
+                      随手记
+                    </div>
                   </div>
                 </div>
               </div>
@@ -488,7 +509,7 @@
       <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         <!-- 数据概览 -->
-        <div class="lg:col-span-2 bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 sm:p-8">
+        <div class="lg:col-span-2 bg-gradient-to-br from-white via-[#F5FCF9] to-[#EEF5FF] rounded-[2rem] border border-slate-100 shadow-sm p-6 sm:p-8">
           <div class="flex items-center justify-between mb-8">
             <h3 class="text-xl font-bold text-slate-900">数据概览</h3>
             <button @click="refreshStats" class="text-slate-400 hover:text-blue-500 transition-colors">
@@ -538,14 +559,14 @@
             </div>
 
             <!-- 图表/进度圆环 (简单CSS实现) -->
-            <div class="col-span-2 md:col-span-1 flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl">
+            <div class="col-span-2 md:col-span-1 flex flex-col items-center justify-center p-4 bg-gradient-to-br from-emerald-50 via-white to-white rounded-2xl border border-emerald-100">
               <div class="relative w-24 h-24 mb-3">
                 <svg class="w-full h-full transform -rotate-90">
                   <circle cx="48" cy="48" r="40" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-200" />
                   <circle cx="48" cy="48" r="40" stroke="currentColor" stroke-width="8" fill="transparent" 
                     :stroke-dasharray="251.2"
                     :stroke-dashoffset="251.2 * (1 - progressPercent / 100)"
-                    class="text-blue-500 transition-all duration-1000 ease-out"
+                    class="text-emerald-500 transition-all duration-1000 ease-out"
                     stroke-linecap="round"
                   />
                 </svg>
@@ -553,15 +574,15 @@
                   <span class="text-xl font-bold text-slate-900">{{ progressPercent }}%</span>
                 </div>
               </div>
-              <p class="text-xs text-slate-500 font-medium">总体进度</p>
+              <p class="text-xs text-emerald-700 font-medium">总体进度</p>
             </div>
           </div>
         </div>
 
         <!-- 激励语卡片 -->
-        <div class="lg:col-span-1 bg-slate-900 text-white rounded-[2rem] shadow-xl p-8 flex flex-col justify-between relative overflow-hidden min-h-[260px]">
-           <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/30 rounded-full blur-2xl -mt-8 -mr-8"></div>
-           <div class="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/30 rounded-full blur-2xl -mb-4 -ml-4"></div>
+        <div class="lg:col-span-1 bg-gradient-to-br from-[#0B3B2E] via-[#0F5135] to-[#0B3B2E] text-white rounded-[2rem] shadow-xl p-8 flex flex-col justify-between relative overflow-hidden min-h-[260px]">
+           <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-400/30 rounded-full blur-2xl -mt-8 -mr-8"></div>
+           <div class="absolute bottom-0 left-0 w-24 h-24 bg-teal-400/25 rounded-full blur-2xl -mb-4 -ml-4"></div>
            
            <div class="relative z-10">
              <div class="flex justify-between items-center mb-6">
@@ -934,10 +955,8 @@ const displayName = computed(() => user.value?.nickname || user.value?.username 
 
 const userAvatar = computed(() => {
   const avatar = user.value?.avatar
-  if (avatar && avatar.startsWith('http')) {
-    return avatar
-  }
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.43.106:8080'
+  if (avatar && avatar.startsWith('http')) return avatar
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.106:8080'
   return avatar ? `${baseUrl}${avatar}` : ''
 })
 
