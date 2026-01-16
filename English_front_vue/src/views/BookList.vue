@@ -95,7 +95,11 @@ const selectBook = async (book) => {
   try {
     await bookStore.selectBook(book)
     showMessage(`已选择课本：${book.bookName}`, 'success')
+    if (window.history.length > 1) {
+    router.back()
+  } else {
     router.push('/')
+  }
   } catch (err) {
     showMessage('选择课本失败：' + (err?.message || '请稍后重试'), 'error')
   }

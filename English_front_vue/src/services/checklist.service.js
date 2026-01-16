@@ -35,5 +35,19 @@ export const checklistService = {
     return api.post('/api/studyRecord/resetSelected', null, {
       params: { userId }
     })
+  },
+
+  // 生成今日学习清单
+  async generateChecklistForToday(userId, bookId) {
+    return api.post(`/api/studyRecord/generateRecordByUserId/${userId}`, null, {
+      params: { book_id: bookId }
+    })
+  },
+
+  // 获取最新的单词学习清单
+  async getLatestChecklist(userId, bookId) {
+    return api.get('/api/studyRecord/latestChecklist', {
+      params: { userId, bookId }
+    })
   }
 }

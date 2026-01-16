@@ -36,4 +36,12 @@ public interface StudyRecordService {
     int setReview(int userId, List< Integer> ids);
 
     int resetSelected(int userId);
+
+    // 为用户生成今日学习记录
+    int generateRecordByUserId(int userId, int bookId);
+
+    /**
+     * 获取指定用户在某课本下最新的单词学习清单
+     */
+    RecordResult getLatestChecklistByUserAndBook(int userId, Long bookId);
 }

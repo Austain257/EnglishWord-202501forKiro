@@ -88,7 +88,7 @@
       </div>
 
       <template v-if="studyStarted">
-        <div class="sm:hidden mb-6 px-1">
+        <div class="sm:hidden mb-6 px-1 cursor-pointer active:scale-[0.99] transition-transform" @click="reloadCurrentRange" title="点击重新加载当前范围单词">
           <div class="flex justify-between text-xs font-medium text-slate-500 mb-2">
             <span>当前进度</span>
             <span>{{ Math.round(((currentIndex + 1) / totalWords) * 100) }}%</span>
@@ -127,9 +127,9 @@
             <div 
               class="relative bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden transition-all duration-500"
             >
-              <div class="absolute top-6 right-6 z-10">
+              <div class="absolute top-2 right-4 sm:top-3 sm:right-6 z-10">
                 <span 
-                  class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border"
+                  class="px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wide border shadow-sm"
                   :class="{
                     'bg-emerald-50 text-emerald-600 border-emerald-100': currentWord.isGrasp === 1,
                     'bg-rose-50 text-rose-600 border-rose-100': currentWord.isGrasp === 2,
@@ -161,8 +161,42 @@
                 </div>
 
                 <div class="w-full max-w-lg mx-auto mt-6">
-                  <div class="text-xl sm:text-2xl text-slate-600 font-medium leading-relaxed px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100/50">
-                    {{ currentWord.chinese || '暂无释义' }}
+                  <div
+                    v-if="!isEditingChinese"
+                    class="text-xl sm:text-2xl text-slate-600 font-medium leading-relaxed px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100/50 cursor-pointer select-none"
+                    @dblclick="enterChineseEdit"
+                    title="双击修改中文释义"
+                  >
+                    {{ currentWord.chinese || '暂无释义（双击添加）' }}
+                  </div>
+                  <div
+                    v-else
+                    class="w-full bg-white border border-blue-200 rounded-2xl shadow-sm px-4 py-3 space-y-3"
+                  >
+                    <textarea
+                      v-model="editChineseValue"
+                      rows="3"
+                      class="w-full text-base sm:text-lg text-slate-700 leading-relaxed px-4 py-3 rounded-xl border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-blue-50/50"
+                      placeholder="请输入新的中文释义"
+                    />
+                    <div class="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                        @click="cancelChineseEdit"
+                        :disabled="editChineseLoading"
+                      >
+                        取消
+                      </button>
+                      <button
+                        type="button"
+                        class="px-5 py-2 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-colors disabled:opacity-60"
+                        @click="submitChineseEdit"
+                        :disabled="editChineseLoading"
+                      >
+                        {{ editChineseLoading ? '提交中...' : '确定' }}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -244,22 +278,48 @@
       </div>
     </div>
 
-    <!-- 范围设置模态框 (UI升级) -->
-      <div v-if="showRangeModal" class="fixed inset-0 z-50 flex items-center justify-center px-4">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="cancelRangeSelection"></div>
-        <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 sm:p-8 animate-scale-in">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-bold text-slate-900">学习范围</h3>
-            <button @click="cancelRangeSelection" class="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
+    <!-- 范围设置模态框：与 WordDictation 对齐 -->
+    <div v-if="showRangeModal" class="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="cancelRangeSelection"></div>
+      <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 sm:p-8 animate-scale-in">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-2xl font-bold text-slate-900">学习范围</h3>
+          <button @click="cancelRangeSelection" class="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-5">
+          <button
+            v-for="range in quickRanges"
+            :key="range.label"
+            @click="setQuickRange(range.start, range.end)"
+            class="px-3 py-2 text-xs font-medium rounded-lg border hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors text-slate-600 border-slate-200"
+          >
+            {{ range.label }}
+          </button>
+        </div>
+
+        <div class="flex gap-4 mb-6">
+          <div class="flex-1">
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Start</label>
+            <input 
+              v-model.number="rangeForm.start"
+              type="number" 
+              class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-white transition-all font-semibold text-slate-900 text-center"
+            />
           </div>
-            <button @click="setQuickRange(range.start, range.end)"
-                class="px-2 py-2 text-xs font-medium rounded-lg border hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors text-slate-600 border-slate-200"
-             >
-               {{ range.label }}
-            </button>
-           <!-- </div> -->
+          <div class="flex items-end pb-4 text-slate-300">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+          </div>
+          <div class="flex-1">
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">End</label>
+            <input 
+              v-model.number="rangeForm.end"
+              type="number" 
+              class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-white transition-all font-semibold text-slate-900 text-center"
+            />
+          </div>
         </div>
 
         <div class="flex gap-3">
@@ -267,7 +327,7 @@
           <button @click="applyRange" class="flex-1 px-6 py-3.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-colors">确认应用</button>
         </div>
       </div>
-    <!-- </div> -->
+    </div>
   </div>
 </template>
 
@@ -280,6 +340,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useWordStudyStore } from '@/stores/wordStudy'
 import { useToast } from '@/composables/useToast'
 import StudyTimer from '@/components/learning/StudyTimer.vue'
+import { wordService } from '@/services/word.service'
 import axios from 'axios'
 
 const router = useRouter()
@@ -302,6 +363,13 @@ const studyStarted = ref(false)
 const wordsLoaded = ref(false)
 const firstLearnDialog = ref(false)
 const firstLearnRange = ref({ start: 1, end: 10 })
+const isEditingChinese = ref(false)
+const editChineseValue = ref('')
+const editChineseLoading = ref(false)
+const isSpeaking = ref(false)
+let pronunciationLoopEnabled = false
+let currentUtterance = null
+let pronunciationTimer = null
 
 // 计算属性
 const loading = computed(() => wordStore.loading)
@@ -344,23 +412,57 @@ const getGraspText = (status) => {
   }
 }
 
-// 播放发音
+// 发音相关
+const stopPronunciation = () => {
+  pronunciationLoopEnabled = false
+  if (pronunciationTimer) {
+    clearTimeout(pronunciationTimer)
+    pronunciationTimer = null
+  }
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel()
+  }
+  currentUtterance = null
+  isSpeaking.value = false
+}
+
+const speakOnce = (wordText) => {
+  if (!('speechSynthesis' in window)) {
+    error('您的浏览器不支持语音播放')
+    return
+  }
+  const utterance = new SpeechSynthesisUtterance(wordText)
+  utterance.lang = 'en-US'
+  utterance.rate = 0.8
+  currentUtterance = utterance
+  utterance.onend = () => {
+    if (pronunciationLoopEnabled && currentWord.value && currentWord.value.word === wordText) {
+      pronunciationTimer = setTimeout(() => {
+        speakOnce(wordText)
+      }, 500)
+    } else {
+      isSpeaking.value = false
+    }
+  }
+  window.speechSynthesis.cancel()
+  window.speechSynthesis.speak(utterance)
+  isSpeaking.value = true
+}
+
+const startPronunciationLoop = () => {
+  stopPronunciation()
+  if (!currentWord.value?.word) return
+  pronunciationLoopEnabled = true
+  speakOnce(currentWord.value.word)
+}
+
+// 播放发音（点击按钮时：播放/停止切换）
 const playPronunciation = () => {
   if (!currentWord.value) return
-  
-  // 优先尝试使用 word.audioUrl (如果存在)
-  // 这里假设使用 Web Speech API 作为兜底
-  const text = currentWord.value.word
-  if ('speechSynthesis' in window) {
-    // 取消之前的发音
-    window.speechSynthesis.cancel()
-    
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'en-US' // 默认美式英语
-    utterance.rate = 0.8 // 稍慢一点更清晰
-    window.speechSynthesis.speak(utterance)
+  if (isSpeaking.value) {
+    stopPronunciation()
   } else {
-    error('您的浏览器不支持语音播放')
+    startPronunciationLoop()
   }
 }
 
@@ -398,7 +500,7 @@ const calculateInitialRange = (record) => {
 
 const fetchLatestRecordSafe = async (userId, bookId) => {
   const authHeader = authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {}
-  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.106:8080'
+  const baseURL = import.meta.env.VITE_API_BASE_URL || 'https://119.91.203.83:8080'
   try {
     const res = await axios.get(`${baseURL}/api/word-study/latest-record/${userId}`, {
       params: bookId ? { bookId } : {},
@@ -489,12 +591,12 @@ const loadWords = async (range = null, { allowWithoutStudy = false } = {}) => {
   try {
     await wordStore.fetchWords(targetRange)
     if (wordStore.totalWords === 0) {
-      error('当前范围内没有可学习的单词')
+      error('恭喜你，该课本已学习完，保持复习哦~')
     } else {
       wordsLoaded.value = true
     }
   } catch (err) {
-    error('加载单词失败：' + err.message)
+    error(err.message || '加载单词失败')
     throw err
   }
 }
@@ -508,6 +610,43 @@ const nextWord = () => {
 const prevWord = () => {
   if (hasPrev.value) {
     wordStore.prevWord()
+  }
+}
+
+const reloadCurrentRange = () => {
+  // 仅打乱当前已加载的单词顺序
+  wordStore.shuffleCurrentWords()
+  success('当前范围单词已打乱')
+}
+
+// 中文释义编辑
+const enterChineseEdit = () => {
+  if (!currentWord.value) return
+  editChineseValue.value = currentWord.value.chinese || ''
+  isEditingChinese.value = true
+}
+
+const cancelChineseEdit = () => {
+  isEditingChinese.value = false
+  editChineseValue.value = ''
+}
+
+const submitChineseEdit = async () => {
+  if (!currentWord.value) return
+  const value = (editChineseValue.value || '').trim()
+  if (!value) {
+    return error('中文释义不能为空')
+  }
+  try {
+    editChineseLoading.value = true
+    await wordService.updateChineseMeaning(currentWord.value.id, value)
+    currentWord.value.chinese = value
+    success('中文释义已更新')
+    cancelChineseEdit()
+  } catch (err) {
+    error(err.message || '更新中文释义失败')
+  } finally {
+    editChineseLoading.value = false
   }
 }
 
@@ -619,6 +758,7 @@ const onStudyEnded = () => {
   wordsLoaded.value = false
   wordStore.resetState()
   initializeFromLatestRecord()
+  stopPronunciation()
   success('学习会话已结束，请开始复习！')
 }
 
@@ -640,12 +780,13 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
-  window.speechSynthesis.cancel() // 离开页面停止发音
+  stopPronunciation() // 离开页面停止发音
 })
 
 // 监听当前单词变化，可以做一些重置操作
 watch(currentWord, () => {
-  // 可以在这里做一些动画触发
+  // 单词切换时自动播放并循环
+  startPronunciationLoop()
 })
 </script>
 

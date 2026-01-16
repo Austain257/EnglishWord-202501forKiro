@@ -22,5 +22,24 @@ export const sentenceService = {
   async getErrorSentences(userId) {
 
     return api.get(`/api/english/errorSentence/${userId}`)
+  },
+
+  // 根据ID列表获取句子学习记录
+  async getRecordsByIds(payload) {
+    return api.post('/api/sentence-study/records/batch', payload)
+  },
+
+  // 标记句子复习轮次完成
+  async markReviewComplete(payload) {
+    return api.post('/api/sentence-study/review/complete', payload)
+  },
+
+  // 获取最新完成的句子学习记录
+  async getLatestRecord(userId, bookId) {
+    const config = {}
+    if (bookId) {
+      config.params = { bookId }
+    }
+    return api.get(`/api/sentence-study/latest-record/${userId}`, config)
   }
 }

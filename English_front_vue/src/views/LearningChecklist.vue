@@ -171,7 +171,10 @@
                             >
                               {{ item.alreadyReviewed ? '已复习' : '待复习' }}
                             </span>
-                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-indigo-50 text-indigo-600">
+                            <span
+                              v-if="showRoundBadge(item)"
+                              class="px-3 py-1 text-xs font-semibold rounded-full bg-indigo-50 text-indigo-600"
+                            >
                               {{ getReviewRound(item) }}
                             </span>
                           </div>
@@ -380,6 +383,7 @@ import { useChecklistStore } from '@/stores/checklist'
 import { useBookStore } from '@/stores/book'
 import { useAuthStore } from '@/stores/auth'
 import { useWordStudyStore } from '@/stores/wordStudy'
+import { sentenceService } from '@/services/sentence.service'
 
 const router = useRouter()
 const checklistStore = useChecklistStore()
@@ -462,6 +466,7 @@ const tabAccentClass = computed(() => {
 
 const books = computed(() => bookStore.books || [])
 const isWordType = computed(() => form.type === 1)
+const isSentenceType = computed(() => form.type === 0)
 const isNavigatingToReview = ref(false)
 
 const goBack = () => {
@@ -489,11 +494,11 @@ const getTabCount = (index) => {
 }
 
 const setActiveTab = async (tab) => {
-  try {
-    await checklistStore.setActiveTab(tab)
-  } catch (error) {
-    showMessage('切换失败：' + (error?.message || '请稍后重试'), 'error')
-  }
+  await checklistStore.setActiveTab(tab)
+  clearSelection()
+  // 切换后重新做自动标记（单词/句子）
+  await autoMarkReviewedByRecordIds()
+  await autoMarkSentenceByRecordIds()
 }
 
 const toggleSelection = (itemId) => {
@@ -532,9 +537,46 @@ const goToWordReview = async (item) => {
   }
 }
 
+const goToSentenceDictation = async (item) => {
+  if (!authStore.user?.id) {
+    showMessage('请先登录后再开始句子听写', 'error')
+    return
+  }
+  if (!item.startId || !item.endId) {
+    showMessage('该清单缺少完整的句子范围，无法跳转', 'error')
+    return
+  }
+  if (isNavigatingToReview.value) return
+  isNavigatingToReview.value = true
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 180))
+    await router.push({
+      name: 'SentenceDictation',
+      query: {
+        userId: authStore.user.id,
+        start_id: item.startId,
+        end_id: item.endId,
+        recordIds: item.recordIds || ''
+      }
+    })
+  } catch (error) {
+    showMessage('跳转句子听写失败：' + (error?.message || '请稍后重试'), 'error')
+  } finally {
+    setTimeout(() => {
+      isNavigatingToReview.value = false
+    }, 320)
+  }
+}
+
 const handleCardClick = (item) => {
+  if (item.alreadyReviewed) {
+    showMessage('该清单已标记完成', 'info')
+    return
+  }
   if (item.type === 1) {
     goToWordReview(item)
+  } else if (item.type === 0) {
+    goToSentenceDictation(item)
   } else {
     toggleSelection(item.id)
   }
@@ -634,9 +676,10 @@ const getBookName = (bookId) => {
   return match?.bookName || match?.name || `课本 #${bookId}`
 }
 
-const getReviewRound = (item) => {
-  if (!item?.createTime) return `第${DISPLAY_ROUND_OFFSET}轮`
-  const createDate = new Date(item.createTime)
+const computeRoundFromCreateTime = (createTime) => {
+  if (!createTime) return DISPLAY_ROUND_OFFSET
+  const maxRound = 9
+  const createDate = new Date(createTime)
   const now = new Date()
   createDate.setHours(0, 0, 0, 0)
   now.setHours(0, 0, 0, 0)
@@ -646,7 +689,18 @@ const getReviewRound = (item) => {
     stageIndex === -1
       ? DISPLAY_ROUND_OFFSET + reviewIntervals.length
       : DISPLAY_ROUND_OFFSET + stageIndex
-  return `第${round}轮`
+  return Math.min(maxRound, Math.max(1, round))
+}
+
+const getReviewRound = (item) => {
+  if (!item) return ''
+  // 单词、句子统一按时间推算当前轮次
+  if (item.type === 1 || item.type === 0) {
+    const round = computeRoundFromCreateTime(item.createTime)
+    return `第${round}轮`
+  }
+  // 听力：不显示
+  return ''
 }
 
 const getDaysFromNow = (createTime) => {
@@ -669,6 +723,7 @@ const refreshList = async () => {
     await checklistStore.resetSelected()
     await checklistStore.fetchChecklists()
     await autoMarkReviewedByRecordIds()
+    await autoMarkSentenceByRecordIds()
     showMessage('学习清单已刷新', 'success')
     showEmptyPopupIfNeeded()
   } catch (error) {
@@ -684,6 +739,7 @@ onMounted(async () => {
     form.bookId = bookStore.currentBook?.id || books.value[0]?.id || null
     await checklistStore.fetchChecklists()
     await autoMarkReviewedByRecordIds()
+    await loadSentenceRounds()
     showEmptyPopupIfNeeded()
   } catch (error) {
     showMessage('加载清单失败：' + (error?.message || '请稍后重试'), 'error')
@@ -705,8 +761,9 @@ const getTargetRoundNumber = (item) => {
 
 const isRoundCompleted = (record, round) => {
   if (!record || !round) return false
-  const field = `round${round}ReviewTime`
-  return Boolean(record[field])
+  const camel = `round${round}ReviewTime`
+  const snake = `round_${round}_review_time`
+  return Boolean(record[camel] || record[snake])
 }
 
 const autoMarkReviewedByRecordIds = async () => {
@@ -718,37 +775,127 @@ const autoMarkReviewedByRecordIds = async () => {
   try {
     autoSelectLoading.value = true
     const doneIds = []
+    const undoIds = []
     for (const item of wordItems) {
       const recordIds = parseRecordIds(item.recordIds)
       const targetRound = getTargetRoundNumber(item)
-      if (!recordIds.length || !targetRound || item.alreadyReviewed) continue
+      if (!recordIds.length || !targetRound) continue
 
       try {
-        const records = await wordStudyStore.getRecordsByIds({
-          userId: authStore.user.id,
-          recordIds
-        })
-        if (Array.isArray(records) && records.length) {
-          const allDone = recordIds.every((id) => {
-            const rec = records.find((r) => Number(r.id) === Number(id))
-            return isRoundCompleted(rec, targetRound)
-          })
-          if (allDone) {
-            doneIds.push(item.id)
+        const res = await wordStudyStore.getRecordsByIds({ userId: authStore.user.id, recordIds })
+        const records = Array.isArray(res) ? res : res?.data || []
+        if (!records.length) {
+          if (item.alreadyReviewed) {
+            undoIds.push(item.id)
           }
+          continue
         }
-      } catch (err) {
-        console.error('自动检测复习轮次失败：', err)
+        const finished = records.every((record) => isRoundCompleted(record, targetRound))
+        if (finished) {
+          doneIds.push(item.id)
+        } else if (item.alreadyReviewed) {
+          undoIds.push(item.id)
+        }
+      } catch (error) {
+        console.warn('自动标记复习状态失败', error)
       }
     }
-    if (doneIds.length) {
-      await checklistStore.setReview(doneIds)
-      checklistStore.clearSelection()
+
+    const doneIdStrings = doneIds.map((i) => i?.toString()).filter(Boolean)
+    const undoIdStrings = undoIds.map((i) => i?.toString()).filter(Boolean)
+
+    if (doneIdStrings.length) {
+      await checklistStore.setReview(doneIdStrings)
     }
+    if (undoIdStrings.length) {
+      for (const id of undoIdStrings) {
+        try {
+          const original = checklistStore.checklists.find((c) => String(c.id) === String(id))
+          if (original) {
+            await checklistStore.updateChecklist({ ...original, alreadyReviewed: 0 })
+          }
+        } catch (error) {
+          console.warn('取消复习标记失败', error)
+        }
+      }
+    }
+    if (doneIds.length || undoIds.length) {
+      await checklistStore.fetchChecklists()
+    }
+  } catch (error) {
+    console.error('自动标记失败', error)
   } finally {
     autoSelectLoading.value = false
   }
 }
+
+const showRoundBadge = (item) => {
+  if (!item) return false
+  if (item.type === 1) {
+    const round = getTargetRoundNumber(item)
+    return round !== null && round >= 3
+  }
+  if (item.type === 0) {
+    return true
+  }
+  return false
+}
+
+const autoMarkSentenceByRecordIds = async () => {
+  if (!authStore.user?.id) return
+  const list = checklistStore.checklists || []
+  const sentenceItems = list.filter((item) => item.type === 0 && item.recordIds)
+  if (!sentenceItems.length) return
+
+  try {
+    const doneIds = []
+    const undoIds = []
+    for (const item of sentenceItems) {
+      const recordIds = parseRecordIds(item.recordIds)
+      const targetRound = getTargetRoundNumber(item)
+      if (!recordIds.length || !targetRound) continue
+      try {
+        const res = await sentenceService.getRecordsByIds({
+          userId: authStore.user.id,
+          recordIds
+        })
+        const records = Array.isArray(res?.data) ? res.data : res?.data?.data || []
+        if (!records.length) {
+          if (item.alreadyReviewed) undoIds.push(item.id)
+          continue
+        }
+        const finished = records.every((record) => isRoundCompleted(record, targetRound))
+        if (finished) {
+          doneIds.push(item.id)
+        } else if (item.alreadyReviewed) {
+          undoIds.push(item.id)
+        }
+      } catch (error) {
+        console.warn('加载句子复习状态失败', error)
+      }
+    }
+
+    if (doneIds.length) {
+      await checklistStore.setReview(doneIds)
+    }
+    if (undoIds.length) {
+      for (const id of undoIds) {
+        try {
+          const original = checklistStore.checklists.find((c) => c.id === id)
+          await checklistStore.updateChecklist({ ...original, alreadyReviewed: 0 })
+        } catch (error) {
+          console.warn('取消句子复习标记失败', error)
+        }
+      }
+    }
+    if (doneIds.length || undoIds.length) {
+      await checklistStore.fetchChecklists()
+    }
+  } catch (error) {
+    console.error('句子自动标记失败', error)
+  }
+}
+
 </script>
 
 <style scoped>

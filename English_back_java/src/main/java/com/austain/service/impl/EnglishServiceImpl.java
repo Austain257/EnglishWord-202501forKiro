@@ -1,6 +1,7 @@
 package com.austain.service.impl;
 
 import com.austain.domain.po.*;
+import com.austain.exception.InvalidWordRangeException;
 import com.austain.mapper.EnglishMapper;
 import com.austain.service.EnglishService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,12 +36,15 @@ public class EnglishServiceImpl implements EnglishService {
         List<Englishs> wordList = new ArrayList<>();
                 // 直接从数据库获取分页数据
         List<Englishs> allWordList = englishMapper.getEnglishListByBookCode(request.getUserId(),request.getBookId());
-        if (allWordList.size() <= request.getEnd()) {  // 小于前端请求的结尾，为后面加1做兼容
-            wordList = allWordList.subList(request.getStart(),allWordList.size());
+        if (request.getEnd() > allWordList.size() || request.getStart() < 0 || request.getStart() > allWordList.size()) {  // 小于前端请求的结尾，为后面加1做兼容
+            throw new InvalidWordRangeException("请求的参数有误, 最大词汇量 " + allWordList.size());
+        }
+        else if (request.getStart() == 0){
+            wordList = allWordList.subList(0,request.getEnd());
         }
         else
             // TODO 数据库查到数据为0
-            wordList = allWordList.subList(request.getStart(),request.getEnd() + 1);
+            wordList = allWordList.subList(request.getStart() - 1,request.getEnd());   // 列表下标是从零开始 [a,b)
 
         System.out.println("从后端获取到的单词数量：" + allWordList.size());
 
@@ -94,6 +98,12 @@ public class EnglishServiceImpl implements EnglishService {
     @Override
     public boolean sentenceIsGrasp(int id) {
         int result = englishMapper.sentenceIsGrasp(id);
+        return result > 0;
+    }
+
+    @Override
+    public boolean updateChineseMeaning(Long id, String chinese) {
+        int result = englishMapper.updateChineseMeaning(id, chinese);
         return result > 0;
     }
 }

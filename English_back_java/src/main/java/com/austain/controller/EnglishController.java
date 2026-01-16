@@ -5,6 +5,7 @@ import com.austain.domain.po.Englishs;
 import com.austain.domain.po.Sentence;
 import com.austain.domain.po.WordBook;
 import com.austain.domain.po.WordRequest;
+import com.austain.exception.InvalidWordRangeException;
 import com.austain.mapper.EnglishMapper;
 import com.austain.mapper.StudyStatMapper;
 import com.austain.service.EnglishService;
@@ -68,11 +69,15 @@ public class EnglishController {
     @PostMapping("/wordList")
     public Result getWordsByBookCode(@RequestBody WordRequest request) {
         System.out.println("根据词课本id获取单词列表已触发");
-        List<Englishs> englishs = englishService.getEnglishListByBookId(request);
-        if (englishs == null || englishs.isEmpty()) {
-            return Result.success("暂时还没有单词了");
+        try {
+            List<Englishs> englishs = englishService.getEnglishListByBookId(request);
+            if (englishs == null || englishs.isEmpty()) {
+                return Result.success("暂时还没有单词了");
+            }
+            return Result.success(englishs);
+        } catch (InvalidWordRangeException e) {
+            return Result.error(e.getMessage());
         }
-        return Result.success(englishs);
     }
 
     /**
@@ -196,5 +201,18 @@ public class EnglishController {
         System.out.println("触发标记句子已掌握");
         boolean result = englishService.sentenceIsGrasp(id);
         return result ? Result.success() : Result.error("删除失败");
+    }
+
+    /**
+     * 更新单词中文释义
+     */
+    @PostMapping("/word/{id}/chinese")
+    public Result updateChineseMeaning(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String chinese = body.get("chinese");
+        if (chinese == null || chinese.trim().isEmpty()) {
+            return Result.error("中文释义不能为空");
+        }
+        boolean updated = englishService.updateChineseMeaning(id, chinese.trim());
+        return updated ? Result.success("更新成功") : Result.error("更新失败");
     }
 }

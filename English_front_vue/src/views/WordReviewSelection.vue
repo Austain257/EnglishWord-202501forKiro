@@ -155,7 +155,7 @@
               其他轮次复习
             </h3>
             <p class="text-slate-500 text-lg mb-6 leading-relaxed">
-              支持从听写、游戏等场景跳转，按记录的 <span class="text-amber-600 font-semibold">用户/课本/范围</span> 直接复习。
+              完成三~九轮次的复习，从 <span class="text-amber-600 font-semibold">学习清单</span> 进入直接复习。
             </p>
 
             <!-- 特点标签 -->
@@ -175,10 +175,10 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </div>
-
+<!-- 
             <p class="text-xs text-slate-400 mt-5">
               默认情况下使用当前账号 + 课本7 的 1-10 范围，可根据需要在跳转前拼接参数。
-            </p>
+            </p> -->
           </div>
         </div>
       </div>
@@ -213,9 +213,13 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { useBookStore } from '@/stores/book'
 
 const router = useRouter()
 const isNavigating = ref(false)
+const authStore = useAuthStore()
+const bookStore = useBookStore()
 
 // 返回首页
 const goBack = () => {
@@ -247,7 +251,21 @@ const goToSecondReview = () => {
 
 // 其他轮次复习 - 跳转到参数复习页面
 const goToOtherReview = () => {
-  navigateWithSilkyTransition('/word/review/other')
+  if (!authStore.user?.id) {
+    goBack()
+    return
+  }
+  const target = {
+    name: 'WordReviewOther',
+    query: {
+      source: 'selection',
+      userId: authStore.user.id
+    }
+  }
+  if (bookStore.currentBook?.id) {
+    target.query.bookId = bookStore.currentBook.id
+  }
+  navigateWithSilkyTransition(target)
 }
 </script>
 

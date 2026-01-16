@@ -72,6 +72,9 @@
             #{id}
         </foreach>
     </update>
+    <update id="MergeStudyRecordsForSentence" statementType="CALLABLE">
+        CALL GenerateDailyLearningChecklistForSentence();
+    </update>
 
 
     <!-- 批量删除学习记录 -->
@@ -82,8 +85,14 @@
         </foreach>
     </delete>
 
-    <select id="MergeStudyRecords" statementType="CALLABLE">
+    <select id="MergeStudyRecordsForWord" statementType="CALLABLE">
          CALL GenerateDailyLearningChecklist();
+    </select>
+    <select id="generateRecordByUserId" resultType="java.lang.Integer">
+        {CALL GenerateDailyLearningChecklistWordByUserId(
+            #{userId, mode=IN, jdbcType=BIGINT},
+            #{bookId, mode=IN, jdbcType=BIGINT}
+        )}
     </select>
 
 </mapper>

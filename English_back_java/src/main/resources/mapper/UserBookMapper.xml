@@ -9,7 +9,7 @@
     </insert>
 
     <insert id="insertBatch">
-        INSERT INTO english_word_02 (user_id, book_id, word, chinese, pronounce, times, is_grasp, error_times) VALUES
+        INSERT INTO english_word_01 (user_id, book_id, word, chinese, pronounce, times, is_grasp, error_times) VALUES
         <foreach collection='list' item='item' separator=','>
             (#{item.userId}, #{item.bookId}, #{item.word}, #{item.chinese}, #{item.pronounce}, #{item.times}, #{item.isGrasp}, #{item.errorTimes})
         </foreach>

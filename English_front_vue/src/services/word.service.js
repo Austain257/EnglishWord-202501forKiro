@@ -32,5 +32,10 @@ export const wordService = {
   // 兼容错词本页面“标记未掌握”调用
   async markAsError(wordId) {
     return this.markAsNotGrasped(wordId)
+  },
+
+  // 更新中文释义
+  async updateChineseMeaning(wordId, chinese) {
+    return api.post(`/api/english/word/${wordId}/chinese`, { chinese })
   }
 }

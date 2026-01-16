@@ -449,10 +449,10 @@
                     </svg>
                   </div>
                   <div class="space-y-1 sm:space-y-1.5">
-                    <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">句子听写</h3>
-                    <p class="text-[11px] sm:text-xs text-slate-500">听音练习表达</p>
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">句子复习</h3>
+                    <p class="text-[11px] sm:text-xs text-slate-500">英汉双版随心切</p>
                     <div class="inline-flex items-center text-[10px] font-semibold text-violet-700 bg-violet-50 px-2 py-1 rounded-md w-max">
-                      拼写巩固
+                      拼写-复习-巩固
                     </div>
                   </div>
                 </div>
@@ -956,7 +956,7 @@ const displayName = computed(() => user.value?.nickname || user.value?.username 
 const userAvatar = computed(() => {
   const avatar = user.value?.avatar
   if (avatar && avatar.startsWith('http')) return avatar
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.106:8080'
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://119.91.203.83:8080'
   return avatar ? `${baseUrl}${avatar}` : ''
 })
 
@@ -1229,7 +1229,7 @@ const mapStatsResponse = (statsData = {}) => ({
 })
 
 const fetchStats = async (bookId = null) => {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.106:8080'
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://119.91.203.83:8080'
   let url = `${baseUrl}/api/english/stats/${authStore.user.id}`
   if (bookId) {
     url += `?bookId=${bookId}`

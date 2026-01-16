@@ -72,8 +72,23 @@ public interface StudyRecordMapper {
     @Update("update learning_checklist set already_reviewed = 0 where user_id = #{userId}")
     void resetReviewed(int userId);
 
-    void MergeStudyRecords();
+    // 合并学习记录 - 单词
+    void MergeStudyRecordsForWord();
 
+    // 合并学习记录 - 句子
+    void MergeStudyRecordsForSentence();
+
+
+    // 重置指定用户的已标记的记录
     @Update("update learning_checklist set selected = 0, already_reviewed = 0 where user_id = #{userId}")
     int resetSelectByUserId(int userId);
+
+    // 根据用户ID生成学习记录
+    int generateRecordByUserId(@Param("userId") int userId, @Param("bookId") int bookId);
+
+    /**
+     * 获取指定用户在某个课本下最新的一条单词学习清单
+     */
+    @Select("select * from learning_checklist where user_id = #{userId} and book_id = #{bookId} and type = 1 order by create_time desc limit 1")
+    RecordResult getLatestChecklistByUserAndBook(@Param("userId") int userId, @Param("bookId") Long bookId);
 }

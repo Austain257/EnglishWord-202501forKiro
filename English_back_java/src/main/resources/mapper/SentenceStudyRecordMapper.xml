@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.austain.mapper.SentenceStudyRecordMapper">
+
+    <insert id="insertRecord" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO sentence_study_record (
+            user_id,
+            book_id,
+            start_time,
+            start_id,
+            end_time,
+            end_id,
+            status,
+            create_time,
+            update_time
+        ) VALUES (
+            #{userId},
+            #{bookId},
+            #{startTime},
+            #{startId},
+            #{endTime},
+            #{endId},
+            #{status},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <select id="selectLatestFinishedRecord" resultType="com.austain.domain.po.SentenceStudyRecord">
+        SELECT *
+        FROM sentence_study_record
+        WHERE user_id = #{userId}
+          AND status = 0
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectLatestFinishedRecordByBook" resultType="com.austain.domain.po.SentenceStudyRecord">
+        SELECT *
+        FROM sentence_study_record
+        WHERE user_id = #{userId}
+          AND book_id = #{bookId}
+          AND status = 0
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <update id="updateReviewTime">
+        UPDATE sentence_study_record
+        <set>
+            <if test='reviewRound == 1'>round_1_review_time = #{completedTime},</if>
+            <if test='reviewRound == 2'>round_2_review_time = #{completedTime},</if>
+            <if test='reviewRound == 3'>round_3_review_time = #{completedTime},</if>
+            <if test='reviewRound == 4'>round_4_review_time = #{completedTime},</if>
+            <if test='reviewRound == 5'>round_5_review_time = #{completedTime},</if>
+            <if test='reviewRound == 6'>round_6_review_time = #{completedTime},</if>
+            <if test='reviewRound == 7'>round_7_review_time = #{completedTime},</if>
+            <if test='reviewRound == 8'>round_8_review_time = #{completedTime},</if>
+            <if test='reviewRound == 9'>round_9_review_time = #{completedTime},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{sessionId}
+    </update>
+
+    <select id="selectByIds" resultType="com.austain.domain.po.SentenceStudyRecord">
+        SELECT *
+        FROM sentence_study_record
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+</mapper>

@@ -18,7 +18,7 @@
 
 ## ⚙️ 环境与约束
 - 后端端口固定：`8080`（Java Spring）。
-- 前端访问后端基础路径：`http://192.168.0.106/api`（全局统一）。
+- 前端访问后端基础路径：`http://austain.top/api`（全局统一）。
 - 环境变量文件（Vite）：
   - `.env`：通用配置（被其他环境叠加）。
   - `.env.development`：仅 `npm run dev` 时加载。
@@ -58,6 +58,23 @@ npm run build # 打包
 - 数据面板：今日/累计时长、坚持天数、进度条与可视化。
 - AI 场景：释义生成、内容推荐、错误分析（OpenAI/通义千问）。
 
+## 🧠 学习流程 & 复习规律
+1. **开启 30 分钟学习**：在 WordLearning 页选择课本与范围（≤50 词）后启动计时器，自动创建 `word_study_record` 并锁定其他功能。
+2. **完成学习并锁定**：学习结束/强制结束都会触发状态锁定，用户仅能进入复习与错题中心。
+3. **多轮复习**：WordReview、WordOption、WordGame 等页面会自动读取最近一次 `word_study_record` 的 `bookId/startId/endId`，提示学习范围并调用 `wordStore.fetchWords`。
+4. **解锁条件**：完成至少两轮复习后系统自动解锁；若中途离开可重新进入继续复习。
+
+**复习节奏（艾宾浩斯曲线）**
+
+| 轮次 | 触发时间（相对学习结束） |
+| --- | --- |
+| 第 1 轮 | 当天学习后 30 分钟 |
+| 第 2 轮 | 第 1 轮结束后 1 小时内 |
+| 第 3 轮 | 当天睡前 |
+| 第 4~9 轮 | 分别为学习后第 1/2/4/7/15/30 天 |
+
+系统会在待办提醒与复习页面提示当前轮次与范围，帮助用户坚持计划。
+
 ## 🎨 设计与体验
 - 品牌：轻风智语 / BreezeWise，Logo 见上方链接。
 - 配色：低亮度青绿/湖蓝渐变，护眼；导航/卡片采用柔和透明与毛玻璃。
@@ -78,6 +95,16 @@ EnglishWord-202501forKiro/
 - MyBatis + PageHelper，SQL 放对应 mapper.xml；事务保障一致性。
 - 前端路由 `meta.title` 自动写入浏览器标题，未登录跳转登录。
 - 环境变量通过 `import.meta.env` 读取，必须 `VITE_` 前缀。
+
+## 🔁 前后端联调自检
+1. **数据库**：按 `new-database-add-sentence-record.sql` 初始化，确认 `english_for_kiro` 可连接。
+2. **后端**：IDE 运行 `EnglishAndWordApplication`，确保 `http://localhost:8080/actuator/health` 返回 `UP`。
+3. **前端**：`.env.*` 中统一设置 `VITE_API_BASE_URL=http://192.168.0.106/api`，并在浏览器 Network 中确认请求走该前缀。
+4. **功能验证**：
+   - 登录后进入 WordLearning，能正常锁定会话。
+   - 跳转 WordReview/WordOption/WordGame 时自动带出最新学习范围。
+   - 完成两轮复习后，学习按钮重新可用，首页统计可刷新。
+5. **移动端适配**：通过浏览器设备模式检查卡片排版与弹窗高度，确认无溢出与可点击区域过小问题。
 
 ## 🧪 测试
 - 后端：`cd English_back_java && ./mvnw test`

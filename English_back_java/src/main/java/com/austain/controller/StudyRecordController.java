@@ -122,10 +122,47 @@ public class StudyRecordController {
         return result > 0 ? Result.success() : Result.error("删除失败");
     }
 
+    /**
+     * 重置已选择
+     * @param userId 用户ID
+     * @return 重置成功返回成功，失败返回失败
+     */
     @PostMapping("/resetSelected")
     public Result resetSelected(@RequestParam int userId){
         System.out.println("重置已选择");
         int result = studyRecordService.resetSelected(userId);
         return result > 0 ? Result.success("刷新成功") : Result.error("刷新数据失败/今日暂无学习数据，可以休息一下~");
+    }
+
+    /**
+     * 为用户生成今日学习记录
+     * @param userId 用户ID
+     * @param book_id 课本ID
+     * @return 生成成功返回成功，失败返回失败
+     */
+    @PostMapping("/generateRecordByUserId/{userId}")
+    public Result generateRecordByUserId(@PathVariable int userId, @RequestParam int book_id){
+        System.out.println("为用户"+ userId + "生成今日学习记录");
+        int result = studyRecordService.generateRecordByUserId(userId, book_id);
+        if (result == 0)
+            return Result.error("今天已经生成过学习记录了哦~");
+        else if (result == -1)
+            return Result.error(-1,"没有找到有效记录，今天还没有学习呢");
+        return Result.success("生成成功"    );
+    }
+
+    /**
+     * 获取最新的单词学习清单
+     */
+    @GetMapping("/latestChecklist")
+    public Result getLatestChecklist(@RequestParam int userId, @RequestParam Long bookId) {
+        if (userId <= 0 || bookId == null) {
+            return Result.error("缺少用户或课本信息");
+        }
+        RecordResult latest = studyRecordService.getLatestChecklistByUserAndBook(userId, bookId);
+        if (latest == null) {
+            return Result.error("未找到学习清单，请先生成学习任务");
+        }
+        return Result.success(latest);
     }
 }

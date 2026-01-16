@@ -33,6 +33,12 @@ export const useStudyTrackerStore = defineStore('studyTracker', () => {
     try {
       const authStore = useAuthStore()
       
+      // 已有同场景会话且计时器在跑，直接复用
+      if (sessionId.value && studyScene.value === scene && timerId.value) {
+        paused.value = false
+        return
+      }
+
       if (!authStore.currentBookId) {
         console.error('没有选择课本，无法开始学习会话')
         return
@@ -127,7 +133,7 @@ export const useStudyTrackerStore = defineStore('studyTracker', () => {
   
   const sendFinishKeepAlive = (finishData) => {
     const authStore = useAuthStore()
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.106:8080'
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://119.91.203.83:8080'
     const url = `${baseUrl}/api/study/session/finish?userId=${authStore.user?.id}`
     let success = false
 

@@ -136,4 +136,18 @@ public class StudyRecordServiceImpl implements StudyRecordService {
     public int resetSelected(int userId) {
         return studyRecordMapper.resetSelectByUserId(userId);
     }
+
+
+    @Override
+    public int generateRecordByUserId(int userId, int bookId) {
+        return studyRecordMapper.generateRecordByUserId(userId, bookId);
+    }
+
+    @Override
+    public RecordResult getLatestChecklistByUserAndBook(int userId, Long bookId) {
+        if (userId <= 0 || bookId == null) {
+            return null;
+        }
+        return studyRecordMapper.getLatestChecklistByUserAndBook(userId, bookId);
+    }
 }

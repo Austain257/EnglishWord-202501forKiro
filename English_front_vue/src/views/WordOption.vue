@@ -304,9 +304,9 @@ const { error: showError, success: showSuccess } = useToast()
 const { words } = storeToRefs(wordStore)
 
 const difficulties = [
-  { label: '简单', value: 'easy', time: 180, optionCount: 4 },
-  { label: '普通', value: 'normal', time: 120, optionCount: 5 },
-  { label: '困难', value: 'hard', time: 100, optionCount: 6 }
+  { label: '简单180s', value: 'easy', time: 180, optionCount: 4 },
+  { label: '普通120s', value: 'normal', time: 120, optionCount: 5 },
+  { label: '困难100s', value: 'hard', time: 100, optionCount: 6 }
 ]
 
 const modes = [
@@ -429,7 +429,7 @@ const ensureBookSelected = async (bookId) => {
 
 const fetchLatestRecordSafe = async (userId, bookId) => {
   const authHeader = authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {}
-  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.106:8080'
+  const baseURL = import.meta.env.VITE_API_BASE_URL || 'https://119.91.203.83:8080'
   try {
     const res = await axios.get(`${baseURL}/api/word-study/latest-record/${userId}`, {
       params: bookId ? { bookId } : {},

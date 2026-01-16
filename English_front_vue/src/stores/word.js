@@ -148,7 +148,20 @@ export const useWordStore = defineStore('word', () => {
     showChinese.value = true
     learningRange.value = { start: 1, end: 50 }
   }
-  
+
+  const shuffleCurrentWords = () => {
+    if (!words.value.length) return
+    // Fisher-Yates 洗牌
+    const arr = [...words.value]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    words.value = arr
+    currentIndex.value = 0
+    showChinese.value = true
+  }
+
   return {
     // 状态
     words,
@@ -175,6 +188,7 @@ export const useWordStore = defineStore('word', () => {
     markCurrentAsError,
     markAsNotGrasped,
     setLearningRange,
-    resetState
+    resetState,
+    shuffleCurrentWords
   }
 })

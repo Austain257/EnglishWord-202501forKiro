@@ -142,7 +142,7 @@
             v-for="bubble in bubbles" 
             :key="bubble.id"
             @click="handleBubbleClick(bubble)"
-            class="absolute rounded-full flex items-center justify-center text-center cursor-pointer select-none shadow-lg border border-white/60 backdrop-blur-md transition-all duration-200 animate-floating"
+            class="absolute rounded-full flex items-center justify-center text-center cursor-pointer select-none shadow-lg border border-white/60 backdrop-blur-md transition-all duration-200"
             :class="[
               bubble.status === 'correct' ? 'bg-emerald-400 text-white z-50 ring-4 ring-emerald-200 scale-110 shadow-emerald-500/30' : 
               bubble.status === 'wrong' ? 'bg-rose-400 text-white animate-shake ring-4 ring-rose-200 shadow-rose-500/30' : 
@@ -152,21 +152,10 @@
               top: `${bubble.y}px`,
               left: `${bubble.x}px`,
               width: `${bubble.radius * 2}px`,
-              height: `${bubble.radius * 2}px`,
-              '--driftX': `${bubble.driftX}px`,
-              '--driftY': `${bubble.driftY}px`,
-              '--floatTilt': bubble.floatTilt,
-              animationDelay: `${bubble.floatDelay}s`,
-              animationDuration: `${bubble.floatDuration}s`,
-              willChange: 'transform'
+              height: `${bubble.radius * 2}px`
             }"
           >
-            <div class="relative z-10 w-full px-2 break-words" 
-                 :style="{ 
-                   fontSize: `${Math.max(12, bubble.radius / 2.8)}px`,
-                   fontWeight: '700',
-                   lineHeight: '1.2'
-                 }">
+            <div class="relative z-10 w-full px-2 break-words leading-snug" :style="bubbleTextStyle(bubble)">
               {{ bubble.text }}
             </div>
             
@@ -219,15 +208,15 @@
               
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 <div class="bg-indigo-50 border border-indigo-100 p-4 sm:p-6 rounded-3xl">
-                  <div class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Total Score</div>
+                  <div class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">总 分</div>
                   <div class="text-3xl sm:text-4xl font-black text-indigo-600">{{ score }}</div>
                 </div>
                 <div class="bg-amber-50 border border-amber-100 p-4 sm:p-6 rounded-3xl">
-                  <div class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">Best Streak</div>
+                  <div class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">最大 连胜</div>
                   <div class="text-3xl sm:text-4xl font-black text-amber-600">{{ bestStreak }}</div>
                 </div>
                 <div class="bg-emerald-50 border border-emerald-100 p-4 sm:p-6 rounded-3xl">
-                  <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Accuracy</div>
+                  <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">准确率</div>
                   <div class="text-3xl sm:text-4xl font-black text-emerald-600">{{ accuracy }}%</div>
                 </div>
               </div>
@@ -361,9 +350,9 @@ const { words } = storeToRefs(wordStore)
 
 // 游戏配置
 const difficulties = [
-  { label: '简单', value: 'easy', time: 240 },
-  { label: '普通', value: 'normal', time: 180 },
-  { label: '困难', value: 'hard', time: 140 }
+  { label: '简单240s', value: 'easy', time: 240 },
+  { label: '普通180s', value: 'normal', time: 180 },
+  { label: '困难140s', value: 'hard', time: 140 }
 ]
 const defaultTime = difficulties.find(d => d.value === 'normal')?.time || 180
 const BUBBLE_COUNT = 5
@@ -403,6 +392,8 @@ const cardBottomLimit = ref(0)
 const initializing = ref(true)
 const latestRecord = ref(null)
 const gameWords = ref([])
+const isMobileViewport = computed(() => (containerSize.value.width || window.innerWidth) < 640)
+const getBubblePadding = () => (isMobileViewport.value ? 12 : BUBBLE_PADDING)
 const currentBookName = computed(() => bookStore.currentBook?.bookName || bookStore.currentBook?.name || '未选择课本')
 const initialWordCount = ref(0)
 const completedWordIds = ref(new Set())
@@ -472,9 +463,21 @@ const switchMode = (mode) => {
 
 const formatBubbleText = (word) => {
   const text = gameMode.value === 'word-to-chinese' ? word.chinese : word.word
-  const isMobile = (containerSize.value.width || window.innerWidth) < 640
-  const maxLen = isMobile ? 6 : 10
-  return text.length > maxLen ? `${text.slice(0, maxLen)}…` : text
+  return text || ''
+}
+
+const bubbleTextStyle = (bubble) => {
+  const length = bubble.text?.length || 0
+  const baseSize = isMobileViewport.value ? 16 : 18
+  let fontSize = baseSize
+  if (length > 8) fontSize -= 2
+  if (length > 12) fontSize -= 2
+  if (length > 18) fontSize -= 2
+  return {
+    fontSize: `${Math.max(12, fontSize)}px`,
+    fontWeight: 700,
+    lineHeight: '1.3'
+  }
 }
 
 const updateLayoutMetrics = () => {
@@ -499,9 +502,10 @@ const updateLayoutMetrics = () => {
 const clampBubblePosition = (bubble) => {
   const width = containerSize.value.width || window.innerWidth
   const height = containerSize.value.height || window.innerHeight
-  bubble.centerX = Math.min(Math.max(bubble.centerX, bubble.radius + BUBBLE_PADDING), width - bubble.radius - BUBBLE_PADDING)
-  const maxY = Math.min(cardBottomLimit.value - bubble.radius - 6, height - bubble.radius - BUBBLE_PADDING)
-  const minY = bubble.radius + BUBBLE_PADDING
+  const padding = getBubblePadding()
+  bubble.centerX = Math.min(Math.max(bubble.centerX, bubble.radius + padding), width - bubble.radius - padding)
+  const maxY = Math.min(cardBottomLimit.value - bubble.radius - 6, height - bubble.radius - padding)
+  const minY = bubble.radius + padding
   bubble.centerY = Math.min(Math.max(bubble.centerY, minY), maxY)
   bubble.x = bubble.centerX - bubble.radius
   bubble.y = bubble.centerY - bubble.radius
@@ -540,10 +544,11 @@ const layoutBubbles = (optionsArray) => {
   if (!gameContainer.value || !optionsArray.length) return []
   const width = containerSize.value.width || gameContainer.value.clientWidth || window.innerWidth
   const height = containerSize.value.height || gameContainer.value.clientHeight || window.innerHeight
-  const isMobile = width < 640
-  const minRadius = isMobile ? 30 : 44
-  const maxRadius = isMobile ? 42 : 60
-  const baseDistance = centerZoneRadius.value + maxRadius + 24
+  const isMobile = isMobileViewport.value
+  const minRadius = isMobile ? 28 : 44
+  const maxRadius = isMobile ? 38 : 60
+  const baseDistance = centerZoneRadius.value + maxRadius + (isMobile ? 12 : 24)
+  const padding = getBubblePadding()
 
   const isInsideCenterZone = (cx, cy, radius) => {
     const dx = cx - width / 2
@@ -577,12 +582,7 @@ const layoutBubbles = (optionsArray) => {
       radius,
       centerX,
       centerY,
-      status: null,
-      floatX: +(Math.random() * (isMobile ? 6 : 10) * (Math.random() > 0.5 ? 1 : -1)).toFixed(1),
-      floatY: +(Math.random() * (isMobile ? 6 : 12) * (Math.random() > 0.5 ? 1 : -1)).toFixed(1),
-      floatDelay: +(Math.random() * 1.5).toFixed(2),
-      floatDuration: +(4.5 + Math.random() * 3.5).toFixed(2),
-      floatTilt: +(Math.random() * 1.6 - 0.8).toFixed(2)
+      status: null
     }
     clampBubblePosition(bubble)
     return bubble
@@ -591,37 +591,6 @@ const layoutBubbles = (optionsArray) => {
   resolveOverlaps(bubbleList)
   bubbleList.forEach(clampBubblePosition)
 
-  const computeDriftLimit = (bubble, idx) => {
-    let clearance = Infinity
-    for (let i = 0; i < bubbleList.length; i++) {
-      if (i === idx) continue
-      const other = bubbleList[i]
-      const dx = bubble.centerX - other.centerX
-      const dy = bubble.centerY - other.centerY
-      const dist = Math.sqrt(dx * dx + dy * dy) - bubble.radius - other.radius - 6
-      clearance = Math.min(clearance, dist)
-    }
-    const dxCenter = bubble.centerX - width / 2
-    const dyCenter = bubble.centerY - height / 2
-    const distCenter = Math.sqrt(dxCenter * dxCenter + dyCenter * dyCenter) - centerZoneRadius.value - bubble.radius - 8
-    clearance = Math.min(clearance, distCenter)
-    const leftMargin = bubble.centerX - bubble.radius - BUBBLE_PADDING
-    const rightMargin = width - (bubble.centerX + bubble.radius) - BUBBLE_PADDING
-    const topMargin = bubble.centerY - bubble.radius - BUBBLE_PADDING
-    const bottomMargin = (cardBottomLimit.value - bubble.radius - 6) - bubble.centerY
-    clearance = Math.min(clearance, leftMargin, rightMargin, topMargin, bottomMargin)
-    const maxDrift = Math.max(0, Math.min(clearance, isMobile ? 6 : 12))
-    return maxDrift
-  }
-
-  bubbleList.forEach((bubble, idx) => {
-    const driftLimit = computeDriftLimit(bubble, idx)
-    const driftX = +(Math.random() * driftLimit).toFixed(1)
-    const driftY = +(Math.random() * driftLimit).toFixed(1)
-    bubble.driftX = driftX
-    bubble.driftY = driftY
-  })
-
   return bubbleList.map((bubble) => ({
     id: bubble.id,
     word: bubble.word,
@@ -629,12 +598,7 @@ const layoutBubbles = (optionsArray) => {
     radius: bubble.radius,
     status: bubble.status,
     x: bubble.x,
-    y: bubble.y,
-    driftX: bubble.driftX,
-    driftY: bubble.driftY,
-    floatDelay: bubble.floatDelay,
-    floatDuration: bubble.floatDuration,
-    floatTilt: bubble.floatTilt
+    y: bubble.y
   }))
 }
 
@@ -687,7 +651,7 @@ const ensureBookSelected = async (bookId) => {
 
 const fetchLatestRecordSafe = async (userId, bookId) => {
   const authHeader = authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {}
-  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.106:8080'
+  const baseURL = import.meta.env.VITE_API_BASE_URL || 'https://119.91.203.83:8080'
   try {
     const res = await axios.get(`${baseURL}/api/word-study/latest-record/${userId}`, {
       params: bookId ? { bookId } : {},

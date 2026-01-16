@@ -134,7 +134,7 @@
           </p>
           <div class="mt-3 space-y-1">
             <div class="flex justify-between text-xs text-slate-400">
-              <span>进度</span>
+              <span>时间流逝</span>
               <span>{{ Math.round(progress) }}%</span>
             </div>
             <div class="h-2 rounded-full overflow-hidden bg-slate-100">
@@ -434,7 +434,7 @@ const confirmEndStudy = async () => {
     // 调用后端API结束学习会话
     await wordStudyStore.endStudySession(sessionId.value, {
       bookId: bookStore.currentBook?.id,
-      endId: wordStore.learningRange.start + wordStore.currentIndex,
+      endId: wordStore.learningRange.end,
       actualEndTime: new Date()
     })
     

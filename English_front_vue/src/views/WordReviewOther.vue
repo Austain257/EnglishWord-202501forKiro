@@ -118,7 +118,7 @@
         class="flex-1 flex flex-col justify-center py-6 sm:py-10"
       >
         <!-- 进度条 (移动端) -->
-        <div class="sm:hidden mb-6 px-1">
+        <div class="sm:hidden mb-6 px-1 cursor-pointer active:scale-[0.99] transition-transform" @click="reloadCurrentRange" title="点击打乱当前范围单词">
           <div class="flex justify-between text-xs font-medium text-slate-500 mb-2">
             <span>当前进度</span>
             <span>{{ progressPercent }}%</span>
@@ -133,18 +133,16 @@
 
         <div class="relative group w-full max-w-2xl mx-auto">
           <div class="relative bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden transition-all duration-500">
-            <div class="absolute top-6 right-6 z-10 flex gap-2">
+            <div class="absolute top-2 right-4 sm:top-3 sm:right-6 z-10">
               <span
-                v-if="currentWord.isGrasp === 1"
-                class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border bg-emerald-50 text-emerald-600 border-emerald-100"
+                class="px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wide border shadow-sm"
+                :class="{
+                  'bg-emerald-50 text-emerald-600 border-emerald-100': currentWord.isGrasp === 1,
+                  'bg-rose-50 text-rose-600 border-rose-100': currentWord.isGrasp === 2,
+                  'bg-slate-50 text-slate-500 border-slate-100': !currentWord.isGrasp || currentWord.isGrasp === 0
+                }"
               >
-                已掌握
-              </span>
-              <span
-                v-if="currentWord.isGrasp === 2"
-                class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border bg-rose-50 text-rose-600 border-rose-100"
-              >
-                易错词
+                {{ getGraspText(currentWord.isGrasp) }}
               </span>
             </div>
 
@@ -275,95 +273,35 @@
           </div>
         </div>
 
-        <!-- 复习记录与轮次操作（移动到单词列表下方） -->
-        <div class="mt-6">
-          <div
-            v-if="studyRecords.length"
-            class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-5"
-          >
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <!-- <div class="flex-1">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">关联记录</p>
-                <select
-                  v-model.number="selectedRecordId"
-                  class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm font-medium text-slate-700"
-                >
-                  <option
-                    v-for="option in recordSelectOptions"
-                    :key="option.value"
-                    :value="option.value"
-                  >
-                    {{ option.label }}
-                  </option>
-                </select>
-              </div>
-              <div class="flex-1">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">复习轮次</p>
-                <select
-                  v-model.number="selectedRound"
-                  class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm font-medium text-slate-700"
-                >
-                  <option
-                    v-for="option in roundOptions"
-                    :key="option.value"
-                    :value="option.value"
-                    :disabled="option.disabled"
-                  >
-                    第{{ option.value }}轮{{ option.disabled ? '（待上一轮完成）' : '' }}
-                  </option>
-                </select>
-              </div> -->
-              <div class="flex-1 w-full">
-                <!-- <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">操作</p> -->
-                <button
-                  @click="markReviewRoundComplete"
-                  :disabled="!canMarkRound || markingReviewRound"
-                  class="w-full px-4 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-lime-500 shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span v-if="markingReviewRound">标记中...</span>
-                  <span v-else>标记第 {{ selectedRound }} 轮已完成</span>
-                </button>
-              </div>
+        <div
+          v-if="showThirdRoundAction"
+          class="mt-6 bg-white border border-emerald-100 rounded-2xl p-6 shadow-sm space-y-3"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
             </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div
-                v-for="item in displayRoundStatus"
-                :key="item.key"
-                class="px-4 py-3 rounded-2xl border"
-                :class="item.completed ? 'border-emerald-100 bg-emerald-50' : 'border-slate-200 bg-slate-50'"
-              >
-                <p class="text-xs font-semibold text-slate-500 mb-1">{{ item.title }}</p>
-                <template v-if="item.detail?.length">
-                  <p
-                    v-for="sub in item.detail"
-                    :key="sub.label"
-                    class="text-sm font-semibold"
-                    :class="sub.completed ? 'text-emerald-600' : 'text-slate-500'"
-                  >
-                    {{ sub.label }}：{{ sub.completed ? formatDateTime(sub.completedTime) : '未完成' }}
-                  </p>
-                </template>
-                <p
-                  v-else
-                  class="text-sm font-semibold"
-                  :class="item.completed ? 'text-emerald-600' : 'text-slate-500'"
-                >
-                  {{ item.completed ? formatDateTime(item.completedTime) : '未完成' }}
-                </p>
-              </div>
+            <div>
+              <p class="text-sm font-semibold text-slate-500">第三轮·巩固复习</p>
+              <p class="text-base font-bold text-slate-900">
+                {{ thirdRoundCompleted ? '当前记录第三轮次复习已完成~' : '完成第三轮巩固复习后记得点击完成哦' }}
+              </p>
             </div>
           </div>
-          <div
-            v-else
-            class="px-4 py-3 rounded-2xl border border-dashed border-amber-200 bg-amber-50 text-sm text-amber-700"
+          <button
+            class="w-full px-4 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-lime-500 shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            :disabled="thirdRoundCompleted || markingReviewRound"
+            @click="markThirdRoundComplete"
           >
-            <p>
-              暂未找到关联的学习记录。若来自学习清单，请确保清单的
-              <span class="font-semibold">record_ids</span>
-              已正确填写。
-            </p>
-          </div>
+            <span v-if="markingReviewRound">标记中...</span>
+            <span v-else-if="thirdRoundCompleted">当前记录第三轮次复习已完成~</span>
+            <span v-else>标记第三轮次复习完成</span>
+          </button>
+          <p class="text-xs text-slate-500">
+            * 第一、二轮必须完成后才能开启第三轮。每条记录的第三轮只能标记一次。
+          </p>
         </div>
       </div>
     </main>
@@ -423,7 +361,10 @@
     </div>
 
     <!-- 默认参数提示 -->
-    <div v-if="showFallbackDialog" class="fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div
+      v-if="showFallbackDialog"
+      class="fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-6"
+    >
       <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
       <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5">
         <div class="flex items-center gap-3">
@@ -462,6 +403,73 @@
         </div>
       </div>
     </div>
+
+    <div
+      v-if="prerequisiteBlocked"
+      class="fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-6"
+    >
+      <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+      <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5 text-center">
+        <div class="w-16 h-16 mx-auto rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 9a9 9 0 100 18 9 9 0 000-18z" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">还差一点点~</h3>
+          <p class="text-slate-600 leading-relaxed">
+            {{ prerequisiteMessage || '请先完成第一、二轮次的复习，再来开启我吧~' }}
+          </p>
+        </div>
+        <button
+          class="w-full px-5 py-3 rounded-2xl font-semibold text-white bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/30 transition-colors"
+          @click="goBack"
+        >
+          返回学习清单
+        </button>
+      </div>
+    </div>
+
+    <div
+      v-if="showChecklistConfirm"
+      class="fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-6"
+    >
+      <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" @click="cancelChecklistGeneration"></div>
+      <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl p-8 space-y-6">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-xl font-bold text-slate-900 mb-2">今天是否不再新增学习？</h3>
+            <p class="text-slate-600 leading-relaxed">
+              点击「生成学习清单并进入学习」将自动整理今日学习记录并进入复习。若暂不复习，可点击取消返回上一页。
+            </p>
+            <div class="mt-4 text-sm text-slate-500 space-y-1">
+              <p>用户：<span class="font-semibold text-slate-800">{{ selectionContext?.userId }}</span></p>
+              <p>课本：<span class="font-semibold text-slate-800">{{ selectionContext?.bookId || '待确认' }}</span></p>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            class="flex-1 px-5 py-3 rounded-2xl font-semibold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors"
+            @click="cancelChecklistGeneration"
+          >
+            取消
+          </button>
+          <button
+            class="flex-1 px-5 py-3 rounded-2xl font-bold text-white bg-amber-500 hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/30 disabled:opacity-60"
+            :disabled="generatingChecklist"
+            @click="confirmChecklistGeneration"
+          >
+            {{ generatingChecklist ? '生成中...' : '生成学习清单并进入学习' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -469,6 +477,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { wordService } from '@/services/word.service'
+import { checklistService } from '@/services/checklist.service'
 import { useAuthStore } from '@/stores/auth'
 import { useBookStore } from '@/stores/book'
 import { useToast } from '@/composables/useToast'
@@ -485,6 +494,10 @@ const studyTracker = useStudyTrackerStore()
 const STUDY_SCENE = 'word_review_other'
 
 const showRangeModal = ref(false)
+const prerequisiteBlocked = ref(false)
+const prerequisiteMessage = ref('')
+const thirdRoundCompleted = ref(false)
+const showThirdRoundAction = ref(false)
 const reviewParams = ref({
   userId: null,
   bookId: null,
@@ -514,12 +527,20 @@ const selectedRecordId = ref(null)
 const selectedRound = ref(1)
 const markingReviewRound = ref(false)
 const ROUND_TOTAL = 9
+const showChecklistConfirm = ref(false)
+const generatingChecklist = ref(false)
+const selectionContext = ref(null)
+const hasRecordIds = computed(() => Boolean(reviewParams.value.recordIds && String(reviewParams.value.recordIds).trim()))
 
 const totalWords = computed(() => words.value.length)
 const currentWord = computed(() => words.value[currentIndex.value] || null)
 const hasNext = computed(() => currentIndex.value < totalWords.value - 1)
 const hasPrev = computed(() => currentIndex.value > 0)
 const progressPercent = computed(() => (totalWords.value ? Math.round(((currentIndex.value + 1) / totalWords.value) * 100) : 0))
+const isSpeaking = ref(false)
+let pronunciationLoopEnabled = false
+let pronunciationTimer = null
+let currentUtterance = null
 const rangeText = computed(() => {
   if (!reviewParams.value.startId || !reviewParams.value.endId) return '未设置'
   return `${reviewParams.value.startId}-${reviewParams.value.endId}`
@@ -662,7 +683,8 @@ const extractParamsFromRoute = () => {
     bookId: parsePositiveNumber(route.query.bookId),
     startId: parsePositiveNumber(route.query.startId),
     endId: parsePositiveNumber(route.query.endId),
-    recordIds: typeof route.query.recordIds === 'string' ? route.query.recordIds.trim() : ''
+    recordIds: typeof route.query.recordIds === 'string' ? route.query.recordIds.trim() : '',
+    source: typeof route.query.source === 'string' ? route.query.source : ''
   }
 }
 
@@ -671,11 +693,35 @@ const validateParamsRange = (params) => {
   return params.startId <= params.endId
 }
 
+const evaluatePrerequisites = () => {
+  const record = selectedRecord.value
+  if (!record) {
+    prerequisiteBlocked.value = false
+    showThirdRoundAction.value = false
+    thirdRoundCompleted.value = false
+    return
+  }
+
+  const firstRoundDone = Boolean(record.round1ReviewTime)
+  const secondRoundDone = Boolean(record.round2ReviewTime)
+  thirdRoundCompleted.value = Boolean(record.round3ReviewTime)
+  showThirdRoundAction.value = firstRoundDone && secondRoundDone
+
+  if (!firstRoundDone || !secondRoundDone) {
+    prerequisiteBlocked.value = true
+    words.value = []
+    queryError.value = ''
+  } else {
+    prerequisiteBlocked.value = false
+  }
+}
+
 const loadStudyRecords = async () => {
-  if (!reviewParams.value.userId) {
+  if (!reviewParams.value.userId || !hasRecordIds.value) {
     studyRecords.value = []
     selectedRecordId.value = null
     latestRecord.value = null
+    evaluatePrerequisites()
     return
   }
 
@@ -704,10 +750,14 @@ const loadStudyRecords = async () => {
   } finally {
     latestRecord.value = selectedRecord.value || null
     updateSuggestedRound()
+    evaluatePrerequisites()
   }
 }
 
 const loadWords = async () => {
+  if (prerequisiteBlocked.value) {
+    return
+  }
   if (!validateParamsRange(reviewParams.value)) {
     queryError.value = '复习参数不完整或范围不正确'
     return
@@ -746,6 +796,28 @@ const initializeFromRoute = async () => {
   initializing.value = true
   const params = extractParamsFromRoute()
 
+  const isSelectionSource = params.source === 'selection'
+  if (isSelectionSource) {
+    await ensureBooksReady()
+    const resolvedUserId = params.userId || authStore.user?.id
+    const resolvedBookId = params.bookId || bookStore.currentBook?.id || defaultBook.value?.id
+    if (!resolvedUserId || !resolvedBookId) {
+      queryError.value = '缺少用户或课本信息，无法生成学习清单'
+      initializing.value = false
+      return
+    }
+    selectionContext.value = {
+      userId: resolvedUserId,
+      bookId: resolvedBookId
+    }
+    showChecklistConfirm.value = true
+    showFallbackDialog.value = false
+    initializing.value = false
+    words.value = []
+    currentIndex.value = 0
+    return
+  }
+
   if (!hasCompleteParams(params)) {
     await ensureBooksReady()
     showFallbackDialog.value = true
@@ -771,7 +843,11 @@ const initializeFromRoute = async () => {
   await ensureBooksReady()
   await ensureTargetBookSelected(reviewParams.value.bookId)
   await loadStudyRecords()
-  await loadWords()
+  if (!prerequisiteBlocked.value) {
+    await loadWords()
+  } else {
+    initializing.value = false
+  }
 }
 
 const updateSuggestedRound = () => {
@@ -781,11 +857,20 @@ const updateSuggestedRound = () => {
   }
   for (let i = 1; i <= ROUND_TOTAL; i++) {
     if (!selectedRecord.value[`round${i}ReviewTime`]) {
+      const progressPercent = computed(() => totalWords.value ? Math.round(((currentIndex.value + 1) / totalWords.value) * 100) : 0)
       selectedRound.value = i
       return
     }
   }
   selectedRound.value = ROUND_TOTAL
+}
+
+const getGraspText = (status) => {
+  switch (status) {
+    case 1: return '已掌握'
+    case 2: return '易错词'
+    default: return '学习中'
+  }
 }
 
 const toggleMode = () => {
@@ -807,19 +892,73 @@ const prevWord = () => {
   }
 }
 
+const reloadCurrentRange = () => {
+  if (!words.value.length) return
+  const arr = [...words.value]
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  words.value = arr
+  currentIndex.value = 0
+  showAnswer.value = false
+  success('当前范围单词已打乱')
+}
+
 const toggleAnswer = () => {
   showAnswer.value = !showAnswer.value
 }
 
+// 发音相关，与学习页一致
+const stopPronunciation = () => {
+  pronunciationLoopEnabled = false
+  if (pronunciationTimer) {
+    clearTimeout(pronunciationTimer)
+    pronunciationTimer = null
+  }
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel()
+  }
+  currentUtterance = null
+  isSpeaking.value = false
+}
+
+const speakOnce = (wordText) => {
+  if (!('speechSynthesis' in window)) {
+    error('您的浏览器不支持语音播放')
+    return
+  }
+  const utterance = new SpeechSynthesisUtterance(wordText)
+  utterance.lang = 'en-US'
+  utterance.rate = 0.8
+  currentUtterance = utterance
+  utterance.onend = () => {
+    if (pronunciationLoopEnabled && currentWord.value && currentWord.value.word === wordText) {
+      pronunciationTimer = setTimeout(() => {
+        speakOnce(wordText)
+      }, 500)
+    } else {
+      isSpeaking.value = false
+    }
+  }
+  window.speechSynthesis.cancel()
+  window.speechSynthesis.speak(utterance)
+  isSpeaking.value = true
+}
+
+const startPronunciationLoop = () => {
+  stopPronunciation()
+  if (!currentWord.value?.word) return
+  pronunciationLoopEnabled = true
+  speakOnce(currentWord.value.word)
+}
+
 const playPronunciation = () => {
-  if (!currentWord.value) return
-  try {
-    window.speechSynthesis?.cancel()
-    const utterance = new SpeechSynthesisUtterance(currentWord.value.word)
-    utterance.lang = 'en-US'
-    window.speechSynthesis?.speak(utterance)
-  } catch (err) {
-    console.error('播放发音失败：', err)
+  if (!currentWord.value?.word) return
+  if (isSpeaking.value) {
+    stopPronunciation()
+  } else {
+    startPronunciationLoop()
   }
 }
 
@@ -866,13 +1005,18 @@ const canMarkRound = computed(() => {
   return !option.disabled
 })
 
-const markReviewRoundComplete = async () => {
+const markReviewRoundComplete = async (roundOverride = null) => {
+  const targetRound = roundOverride ?? selectedRound.value
+  if (!studyRecords.value.length) {
+    error('当前无关联记录，无法标记复习轮次')
+    return
+  }
   if (!authStore.user?.id) {
     error('请先登录后再标记复习完成')
     router.push('/login')
     return
   }
-  const selectedOption = roundOptions.value.find((opt) => opt.value === selectedRound.value)
+  const selectedOption = roundOptions.value.find((opt) => opt.value === targetRound)
   if (selectedOption?.disabled) {
     error('请先完成上一轮复习')
     return
@@ -888,9 +1032,9 @@ const markReviewRoundComplete = async () => {
       userId: reviewParams.value.userId || authStore.user.id,
       sessionIds,
       recordIdsText: reviewParams.value.recordIds || '',
-      reviewRound: selectedRound.value
+      reviewRound: targetRound
     })
-    success(`第${selectedRound.value}轮复习已完成`)
+    success(`第${targetRound}轮复习已完成`)
     await loadStudyRecords()
   } catch (err) {
     console.error('标记复习完成失败：', err)
@@ -900,12 +1044,30 @@ const markReviewRoundComplete = async () => {
   }
 }
 
+const markThirdRoundComplete = async () => {
+  if (thirdRoundCompleted.value) {
+    error('当前记录第三轮次复习已完成~')
+    return
+  }
+  await markReviewRoundComplete(3)
+}
+
 const maybeStartStudySession = async () => {
   if (studySessionStarted.value || startingSession.value) return
   if (!reviewParams.value.userId || !reviewParams.value.bookId) return
 
+  // 若全局计时器已在本场景运行，直接复用
+  if (studyTracker.isActive && studyTracker.studyScene === STUDY_SCENE) {
+    studySessionStarted.value = true
+    return
+  }
+
   try {
     startingSession.value = true
+    // 若有其他场景在运行，先结束
+    if (studyTracker.isActive && studyTracker.studyScene !== STUDY_SCENE) {
+      await studyTracker.finish('switchScene')
+    }
     await studyTracker.start(STUDY_SCENE)
     studySessionStarted.value = true
   } catch (err) {
@@ -972,6 +1134,75 @@ const openRangeModal = () => {
     endId: reviewParams.value.endId
   }
   showRangeModal.value = true
+}
+
+const applyChecklistRangeToRoute = async (latestChecklist) => {
+  if (!latestChecklist?.startId || !latestChecklist?.endId) {
+    throw new Error('最新学习清单缺少范围')
+  }
+  const nextQuery = {
+    ...route.query,
+    userId: latestChecklist.userId || selectionContext.value?.userId,
+    bookId: latestChecklist.bookId || selectionContext.value?.bookId,
+    startId: latestChecklist.startId,
+    endId: latestChecklist.endId
+  }
+  if (latestChecklist.recordIds) {
+    nextQuery.recordIds = latestChecklist.recordIds
+  } else {
+    delete nextQuery.recordIds
+  }
+  delete nextQuery.source
+  await router.replace({
+    name: route.name || 'WordReviewOther',
+    query: nextQuery
+  })
+}
+
+const fetchLatestChecklist = async () => {
+  if (!selectionContext.value) {
+    throw new Error('缺少学习清单上下文')
+  }
+  const { userId, bookId } = selectionContext.value
+  const response = await checklistService.getLatestChecklist(userId, bookId)
+  const data = response?.data || response
+  if (!data) {
+    throw new Error('未找到学习清单，请先生成学习任务')
+  }
+  await applyChecklistRangeToRoute(data)
+}
+
+const confirmChecklistGeneration = async () => {
+  if (!selectionContext.value) return
+  const { userId, bookId } = selectionContext.value
+  generatingChecklist.value = true
+  try {
+    try {
+      await checklistService.generateChecklistForToday(userId, bookId)
+      success('今日学习清单已生成')
+    } catch (err) {
+      const message = err?.message || ''
+      if (message.includes('已经生成过学习记录')) {
+        success('今天已经生成过学习清单，直接进入复习')
+      } else {
+        throw err
+      }
+    }
+    await fetchLatestChecklist()
+    showChecklistConfirm.value = false
+    selectionContext.value = null
+  } catch (err) {
+    const message = err?.message || '生成学习清单失败，请稍后重试'
+    error(message)
+  } finally {
+    generatingChecklist.value = false
+  }
+}
+
+const cancelChecklistGeneration = () => {
+  showChecklistConfirm.value = false
+  selectionContext.value = null
+  goBack()
 }
 
 const cancelRangeSelection = () => {
@@ -1065,8 +1296,16 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
-  window.speechSynthesis?.cancel()
+  stopPronunciation()
   stopStudySession('componentUnmount')
+})
+
+watch(currentWord, () => {
+  if (!currentWord.value?.word) {
+    stopPronunciation()
+    return
+  }
+  startPronunciationLoop()
 })
 </script>
 

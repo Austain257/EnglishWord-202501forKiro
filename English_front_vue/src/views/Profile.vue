@@ -538,7 +538,7 @@ const refreshData = async () => {
 const formatAvatar = (avatar) => {
   if (!avatar) return ''
   if (avatar.startsWith('http')) return avatar
-  return `${import.meta.env.VITE_API_BASE_URL || 'http://192.168.43.106:8080'}${avatar}`
+  return `${import.meta.env.VITE_API_BASE_URL || 'https://119.91.203.83:8080'}${avatar}`
 }
 </script>
 

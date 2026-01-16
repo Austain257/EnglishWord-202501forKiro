@@ -29,6 +29,7 @@
              </svg>
           </button>
         </div>
+
       </div>
 
       <div class="flex items-center gap-3">
@@ -186,53 +187,86 @@
       </div>
 
       <!-- 底部控制栏 -->
-      <div class="mt-auto pt-6 flex items-center justify-center gap-3 sm:gap-4 flex-wrap px-4">
-         <!-- 上一个按钮 -->
-         <button 
-           @click="prevSentence"
-           :disabled="!hasPrev"
-           class="px-6 py-3 rounded-xl font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-         >
-           上一个
-         </button>
+      <div class="mt-auto pt-6 w-full px-4">
+        <div v-if="!showResult" class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <button 
+            @click="prevSentence"
+            :disabled="!hasPrev"
+            class="w-full px-6 py-3 rounded-xl font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            上一个
+          </button>
+          <button 
+            @click="markDontKnow"
+            class="w-full px-6 py-3 rounded-xl font-semibold text-rose-600 bg-white border border-rose-200 hover:bg-rose-50 transition-all active:scale-95"
+          >
+            还不会
+          </button>
+          <button 
+            @click="showAnswer"
+            class="w-full px-6 py-3 rounded-xl font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all active:scale-95"
+          >
+            查看答案
+          </button>
+          <button 
+            @click="submitAnswer"
+            :disabled="!userAnswer.trim()"
+            class="w-full px-8 py-3 rounded-xl font-bold text-white bg-indigo-600 shadow-lg shadow-indigo-500/30 hover:bg-indigo-500 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            提交答案
+          </button>
+        </div>
+        <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <button 
+            v-if="!isCorrect"
+            @click="retry"
+            class="w-full px-6 py-3 rounded-xl font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all active:scale-95"
+          >
+            重试
+          </button>
+          <button 
+            @click="nextSentence"
+            class="w-full px-8 py-3 rounded-xl font-bold text-white bg-indigo-600 shadow-lg shadow-indigo-500/30 hover:bg-indigo-500 hover:-translate-y-0.5 transition-all active:scale-95"
+          >
+            {{ hasNext ? '下一个' : '完成' }}
+          </button>
+        </div>
+      </div>
 
-         <template v-if="!showResult">
-            <!-- 还不会 -->
-            <button 
-               @click="markDontKnow"
-               class="px-6 py-3 rounded-xl font-semibold text-rose-600 bg-white border border-rose-200 hover:bg-rose-50 transition-all active:scale-95"
+      <!-- 复习轮次标记 -->
+      <div class="mt-6 w-full px-4" v-if="showRoundSection">
+        <div class="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6 space-y-4">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-wrap gap-2 text-sm text-slate-600">
+              <span class="px-3 py-1 rounded-full bg-slate-50 border border-slate-100 font-medium">用户：{{ initParams.userId || authStore.user?.id || '未指定' }}</span>
+              <span class="px-3 py-1 rounded-full bg-slate-50 border border-slate-100 font-medium">范围：{{ tempRange.start }} - {{ tempRange.end }}</span>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+              <button
+                @click="markRoundComplete"
+                :disabled="markingRound"
+                class="px-4 py-2 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span v-if="markingRound">标记中...</span>
+                <span v-else>标记第 {{ nextRound }} 轮完成</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div
+              v-for="item in displayRoundStatus"
+              :key="item.round"
+              class="px-3 py-3 rounded-xl border"
+              :class="item.completed ? 'border-emerald-100 bg-emerald-50' : 'border-slate-200 bg-slate-50'"
             >
-               还不会
-            </button>
-            <button 
-               @click="showAnswer"
-               class="px-6 py-3 rounded-xl font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all active:scale-95"
-            >
-               查看答案
-            </button>
-            <button 
-               @click="submitAnswer"
-               :disabled="!userAnswer.trim()"
-               class="px-8 py-3 rounded-xl font-bold text-white bg-indigo-600 shadow-lg shadow-indigo-500/30 hover:bg-indigo-500 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-               提交答案
-            </button>
-         </template>
-         <template v-else>
-            <button 
-               v-if="!isCorrect"
-               @click="retry"
-               class="px-6 py-3 rounded-xl font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all active:scale-95"
-            >
-               重试
-            </button>
-            <button 
-               @click="nextSentence"
-               class="px-8 py-3 rounded-xl font-bold text-white bg-indigo-600 shadow-lg shadow-indigo-500/30 hover:bg-indigo-500 hover:-translate-y-0.5 transition-all active:scale-95"
-            >
-               {{ hasNext ? '下一个' : '完成' }}
-            </button>
-         </template>
+              <p class="text-xs font-semibold text-slate-500 mb-1">第{{ item.round }}轮</p>
+              <p class="text-sm font-semibold" :class="item.completed ? 'text-emerald-600' : 'text-slate-600'">
+                {{ item.completed ? (item.completedTime ? new Date(item.completedTime).toLocaleString() : '已完成') : '未完成' }}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
 
@@ -276,6 +310,66 @@
       </div>
     </div>
 
+    <!-- 非清单跳转：前三轮标记 -->
+    <div class="mt-6 w-full px-4" v-else-if="latestRecordInfo">
+      <div class="bg-white border border-slate-100 rounded-2xl shadow-sm p-4 sm:p-6 space-y-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex flex-wrap gap-2 text-sm text-slate-600">
+            <span class="px-3 py-1 rounded-full bg-slate-50 border border-slate-100 font-medium">用户：{{ initParams.userId || authStore.user?.id || '未指定' }}</span>
+            <span class="px-3 py-1 rounded-full bg-slate-50 border border-slate-100 font-medium">范围：{{ tempRange.start }} - {{ tempRange.end }}</span>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+            <button
+              @click="markBasicRoundComplete"
+              :disabled="markingBasicRound || !nextBasicRound"
+              class="px-4 py-2 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span v-if="markingBasicRound">标记中...</span>
+              <span v-else-if="!nextBasicRound">今天已复习完~</span>
+              <span v-else>标记第 {{ nextBasicRound }} 轮完成</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div
+            v-for="item in basicRoundStatus"
+            :key="item.round"
+            class="px-3 py-3 rounded-xl border"
+            :class="item.completed ? 'border-emerald-100 bg-emerald-50' : 'border-slate-200 bg-slate-50'"
+          >
+            <p class="text-xs font-semibold text-slate-500 mb-1">第{{ item.round }}轮</p>
+            <p class="text-sm font-semibold" :class="item.completed ? 'text-emerald-600' : 'text-slate-600'">
+              {{ item.completed ? (item.completedTime ? new Date(item.completedTime).toLocaleString() : '已完成') : '未完成' }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 入口弹窗：未带 recordIds 时提示 -->
+    <div v-if="showEntryModal" class="fixed inset-0 z-[9999] flex items-center justify-center px-4">
+      <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" @click="cancelEntry"></div>
+      <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-7 animate-scale-in">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+          </div>
+          <div>
+            <p class="text-sm uppercase tracking-[0.25em] text-slate-400">Continue</p>
+            <h3 class="text-xl font-bold text-slate-900">点击继续开始复习最近学习的内容</h3>
+          </div>
+        </div>
+        <p class="text-slate-600 text-sm leading-relaxed mb-5">
+          我们已为你加载最近一次完成的句子学习范围（{{ tempRange.start }} - {{ tempRange.end }}）。点击继续进入复习，或取消返回上一页。
+        </p>
+        <div class="flex gap-3">
+          <button @click="cancelEntry" class="flex-1 px-4 py-3 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">取消</button>
+          <button @click="confirmEntry" class="flex-1 px-4 py-3 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 transition-colors">继续</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 庆祝彩带 -->
     <div v-if="showConfetti" class="fixed inset-0 pointer-events-none z-50 overflow-hidden">
        <div v-for="n in 30" :key="n" class="confetti" :style="getConfettiStyle(n)"></div>
@@ -284,13 +378,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, nextTick, onUnmounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useSentenceStore } from '@/stores/sentence'
+import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import { sentenceService } from '@/services/sentence.service'
 
 const router = useRouter()
+const route = useRoute()
 const sentenceStore = useSentenceStore()
+const authStore = useAuthStore()
 const { success, error, showToast } = useToast()
 
 // 状态
@@ -301,7 +399,14 @@ const showResult = ref(false)
 const isCorrect = ref(false)
 const showConfetti = ref(false)
 const answerInput = ref(null)
-const tempRange = ref({ start: 1, end: 30 })
+const tempRange = ref({ start: 1, end: 10 })
+const initParams = ref({ userId: null, startId: null, endId: null, recordIds: '' })
+const roundStatus = ref([])
+const loadingRounds = ref(false)
+const markingRound = ref(false)
+const latestRecordInfo = ref(null)
+const markingBasicRound = ref(false)
+const showEntryModal = ref(false)
 
 // 计算属性
 const loading = computed(() => sentenceStore.loading)
@@ -310,6 +415,26 @@ const currentIndex = computed(() => sentenceStore.currentIndex)
 const totalSentences = computed(() => sentenceStore.totalSentences)
 const hasNext = computed(() => sentenceStore.hasNext)
 const hasPrev = computed(() => sentenceStore.hasPrev)
+const hasRecordIds = computed(() => Boolean(initParams.value.recordIds && String(initParams.value.recordIds).trim()))
+const showRoundSection = computed(() => hasRecordIds.value)
+const nextRound = computed(() => {
+  if (!roundStatus.value.length) return 1
+  const pending = roundStatus.value.find((r) => !r.completed)
+  return pending ? pending.round : 9
+})
+// 无 recordIds 时使用最新记录的前三轮复习状态
+const basicRoundStatus = computed(() => {
+  const record = latestRecordInfo.value
+  return [1, 2, 3].map((round) => {
+    const val = record ? record[`round${round}ReviewTime`] : null
+    return { round, completed: Boolean(val), completedTime: val || null }
+  })
+})
+const nextBasicRound = computed(() => {
+  if (hasRecordIds.value) return null
+  const pending = basicRoundStatus.value.find((r) => !r.completed)
+  return pending ? pending.round : null
+})
 
 // 方法
 const goBack = () => {
@@ -464,6 +589,108 @@ const cancelRangeSelection = () => {
   tempRange.value = { ...sentenceStore.learningRange }
 }
 
+const parseRecordIdsToArray = (text) => {
+  if (!text) return []
+  const ids = []
+  const matcher = String(text).match(/\d+/g)
+  if (matcher) {
+    matcher.forEach((m) => {
+      const n = Number(m)
+      if (Number.isFinite(n) && n > 0) ids.push(n)
+    })
+  }
+  return ids
+}
+
+const buildEmptyRoundStatus = () =>
+  Array.from({ length: 9 }).map((_, idx) => ({
+    round: idx + 1,
+    completed: false,
+    completedTime: null
+  }))
+
+const mapRecordsToRoundStatus = (records = []) => {
+  const empty = buildEmptyRoundStatus()
+  if (!records.length) return empty
+  // 多条记录合并，若任一记录某轮已完成则视为已完成，时间取最早非空时间
+  for (let round = 1; round <= 9; round++) {
+    const times = records
+      .map((r) => r[`round${round}ReviewTime`])
+      .filter(Boolean)
+      .sort()
+    if (times.length) {
+      empty[round - 1] = {
+        round,
+        completed: true,
+        completedTime: times[0]
+      }
+    }
+  }
+  return empty
+}
+
+const loadRoundStatus = async () => {
+  if (!showRoundSection.value) {
+    roundStatus.value = []
+    return
+  }
+  const ids = parseRecordIdsToArray(initParams.value.recordIds)
+  if (!ids.length) {
+    roundStatus.value = buildEmptyRoundStatus()
+    return
+  }
+  loadingRounds.value = true
+  try {
+    const res = await sentenceService.getRecordsByIds({
+      userId: initParams.value.userId || authStore.user?.id,
+      recordIds: ids
+    })
+    const records = Array.isArray(res?.data) ? res.data : res?.data?.data || []
+    roundStatus.value = mapRecordsToRoundStatus(records)
+  } catch (err) {
+    console.warn('加载复习轮次失败，将使用默认空状态', err)
+    roundStatus.value = buildEmptyRoundStatus()
+  } finally {
+    loadingRounds.value = false
+  }
+}
+
+const markRoundComplete = async () => {
+  if (!showRoundSection.value) {
+    return showToast('当前无关联记录，无法标记复习完成', 'error')
+  }
+  if (!initParams.value.userId) {
+    return showToast('缺少用户信息，无法标记复习完成', 'error')
+  }
+
+  const targetRound = nextRound.value || 1
+  if (targetRound > 1) {
+    const prev = roundStatus.value[targetRound - 2]
+    if (!prev?.completed) {
+      return showToast(`请先完成第${targetRound - 1}轮`, 'warning')
+    }
+  }
+  try {
+    markingRound.value = true
+    const alreadyDone = roundStatus.value[targetRound - 1]?.completed
+    if (alreadyDone) {
+      return showToast(`第${targetRound}轮已完成，无需重复标记`, 'info')
+    }
+    const now = new Date().toISOString()
+    await sentenceService.markReviewComplete({
+      userId: initParams.value.userId || authStore.user?.id,
+      recordIdsText: initParams.value.recordIds || '',
+      reviewRound: targetRound
+    })
+    await loadRoundStatus()
+    success(`第${targetRound}轮复习已标记完成`)
+  } finally {
+    markingRound.value = false
+  }
+}
+
+const displayRoundStatus = computed(() => roundStatus.value || [])
+
 const triggerConfetti = () => {
    showConfetti.value = true
    setTimeout(() => { showConfetti.value = false }, 2000)
@@ -489,14 +716,100 @@ const handleKeydown = (e) => {
    if (e.key === 'Escape') goBack()
 }
 
+const parsePositiveNumber = (value) => {
+  if (value === null || value === undefined || value === '') return null
+  const num = Number(value)
+  return Number.isFinite(num) && num > 0 ? num : null
+}
+
+const initializeFromRoute = async () => {
+  const userIdParam = parsePositiveNumber(route.query.userId)
+  const startIdParam = parsePositiveNumber(route.query.start_id || route.query.startId)
+  const endIdParam = parsePositiveNumber(route.query.end_id || route.query.endId)
+  const recordIdsParam = typeof route.query.recordIds === 'string' ? route.query.recordIds.trim() : ''
+
+  if (userIdParam && authStore.user?.id && Number(authStore.user.id) !== userIdParam) {
+    showToast('当前登录用户与参数用户不一致，请确认账号', 'warning')
+  }
+
+  const finalUserId = userIdParam || authStore.user?.id || null
+
+  if (!recordIdsParam && finalUserId) {
+    showEntryModal.value = true
+    // 无 recordIds 时，优先尝试后端获取最新完成的学习记录
+    try {
+      const res = await sentenceService.getLatestRecord(finalUserId)
+      const record = res?.data || res?.data?.data
+      if (record && record.startId && record.endId) {
+        latestRecordInfo.value = record
+        initParams.value = { userId: finalUserId, startId: record.startId, endId: record.endId, recordIds: '' }
+        sentenceStore.setLearningRange({ start: record.startId, end: record.endId })
+        tempRange.value = { start: record.startId, end: record.endId }
+        await loadSentences({ start: record.startId, end: record.endId })
+        return
+      } else {
+        showToast('未检测到有效的起止范围，使用默认范围 1-10', 'info')
+        initParams.value = { userId: finalUserId, startId: 1, endId: 10, recordIds: '' }
+      }
+    } catch (err) {
+      console.warn('获取最新句子记录失败', err)
+      showToast('未检测到有效的起止范围，使用默认范围 1-10', 'info')
+      initParams.value = { userId: finalUserId, startId: 1, endId: 10, recordIds: '' }
+    }
+  } else if (!startIdParam || !endIdParam || startIdParam > endIdParam) {
+    showToast('未检测到有效的起止范围，使用默认范围 1-10', 'info')
+    initParams.value = { userId: finalUserId, startId: 1, endId: 10, recordIds: recordIdsParam }
+  } else {
+    initParams.value = { userId: finalUserId, startId: startIdParam, endId: endIdParam, recordIds: recordIdsParam }
+  }
+
+  const range = { start: initParams.value.startId || 1, end: initParams.value.endId || 10 }
+  sentenceStore.setLearningRange(range)
+  tempRange.value = { ...range }
+  await loadSentences(range)
+  loadRoundStatus()
+}
+
+const confirmEntry = () => {
+  showEntryModal.value = false
+}
+
+const cancelEntry = () => {
+  showEntryModal.value = false
+  router.back()
+}
+
+const markBasicRoundComplete = async () => {
+  const targetRound = nextBasicRound.value
+  if (!targetRound) {
+    return showToast('今天已复习完~', 'info')
+  }
+  if (!latestRecordInfo.value?.id) {
+    return showToast('未找到可标记的学习记录', 'error')
+  }
+  try {
+    markingBasicRound.value = true
+    await sentenceService.markReviewComplete({
+      userId: initParams.value.userId || authStore.user?.id,
+      sessionIds: [latestRecordInfo.value.id],
+      reviewRound: targetRound
+    })
+    const now = new Date().toISOString()
+    latestRecordInfo.value = {
+      ...latestRecordInfo.value,
+      [`round${targetRound}ReviewTime`]: now
+    }
+    success(`第${targetRound}轮复习已标记完成`)
+  } catch (err) {
+    showToast('标记失败：' + (err?.message || '请稍后重试'), 'error')
+  } finally {
+    markingBasicRound.value = false
+  }
+}
+
 onMounted(async () => {
   window.addEventListener('keydown', handleKeydown)
-  tempRange.value = { ...sentenceStore.learningRange }
-  
-  if (sentenceStore.totalSentences === 0) {
-    await loadSentences()
-  }
-  
+  await initializeFromRoute()
   nextTick(() => answerInput.value?.focus())
 })
 

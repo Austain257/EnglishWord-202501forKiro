@@ -68,6 +68,14 @@
     <!-- 主体内容 -->
     <main class="flex-1 relative z-10 flex flex-col max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-6">
       
+      <div
+        v-if="trackerActive"
+        class="sm:hidden mb-3 px-4 py-3 rounded-2xl border border-amber-100 bg-white/80 flex items-center justify-between text-xs font-semibold text-amber-600"
+      >
+        <span>计时中</span>
+        <span class="font-mono text-base text-slate-900">{{ trackerElapsed }}</span>
+      </div>
+
       <!-- 复习完成标记区域 -->
       <div class="mb-5">
         <div class="rounded-xl border border-amber-100 bg-white px-4 py-3 text-sm text-slate-600">
@@ -96,7 +104,7 @@
       </div>
       
       <!-- 进度条 (移动端) -->
-      <div class="sm:hidden mb-6 px-1">
+      <div class="sm:hidden mb-6 px-1 cursor-pointer active:scale-[0.99] transition-transform" @click="reloadCurrentRange" title="点击打乱当前范围单词">
         <div class="flex justify-between text-xs font-medium text-slate-500 mb-2">
           <span>当前进度</span>
           <span>{{ Math.round(((currentIndex + 1) / totalWords) * 100) }}%</span>
@@ -139,19 +147,17 @@
           <div 
             class="relative bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden transition-all duration-500"
           >
-            <!-- 状态标签 -->
-            <div class="absolute top-6 right-6 z-10 flex gap-2">
+            <!-- 状态标签，与学习页一致 -->
+            <div class="absolute top-2 right-4 sm:top-3 sm:right-6 z-10">
               <span 
-                v-if="currentWord.isGrasp === 1"
-                class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border bg-emerald-50 text-emerald-600 border-emerald-100"
+                class="px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wide border shadow-sm"
+                :class="{
+                  'bg-emerald-50 text-emerald-600 border-emerald-100': currentWord.isGrasp === 1,
+                  'bg-rose-50 text-rose-600 border-rose-100': currentWord.isGrasp === 2,
+                  'bg-slate-50 text-slate-500 border-slate-100': !currentWord.isGrasp || currentWord.isGrasp === 0
+                }"
               >
-                已掌握
-              </span>
-              <span 
-                v-if="currentWord.isGrasp === 2"
-                class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border bg-rose-50 text-rose-600 border-rose-100"
-              >
-                易错词
+                {{ getGraspText(currentWord.isGrasp) }}
               </span>
             </div>
 
@@ -368,7 +374,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWordStore } from '@/stores/word'
 import { useBookStore } from '@/stores/book'
@@ -394,6 +400,8 @@ const reviewMode = ref('en2cn') // 'en2cn' | 'cn2en'
 const showAnswer = ref(false)
 const initializing = ref(true)
 const latestRecord = ref(null)
+const stayTimerActive = ref(false)
+const stayElapsedSeconds = ref(0)
 const rangeForm = ref({
   start: 1,
   end: 50
@@ -419,6 +427,23 @@ const hasNext = computed(() => wordStore.hasNext)
 const hasPrev = computed(() => wordStore.hasPrev)
 const currentBook = computed(() => bookStore.currentBook)
 const currentBookName = computed(() => currentBook.value?.bookName || currentBook.value?.name || '未选择课本')
+const progressPercent = computed(() => totalWords.value ? Math.round(((currentIndex.value + 1) / totalWords.value) * 100) : 0)
+const isSpeaking = ref(false)
+const trackerActive = computed(() => stayTimerActive.value)
+const trackerElapsed = computed(() => formatElapsedTime(stayElapsedSeconds.value))
+let pronunciationLoopEnabled = false
+let currentUtterance = null
+let pronunciationTimer = null
+let stayTimerId = null
+
+// 与学习页一致的掌握状态标签文案
+const getGraspText = (status) => {
+  switch (status) {
+    case 1: return '已掌握'
+    case 2: return '易错词'
+    default: return '学习中'
+  }
+}
 
 // 方法
 const goBack = () => {
@@ -515,7 +540,7 @@ const initializeFromLatestRecord = async () => {
 
 const fetchLatestRecordSafe = async (userId, bookId) => {
   const authHeader = authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {}
-  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.106:8080'
+  const baseURL = import.meta.env.VITE_API_BASE_URL || 'https://119.91.203.83:8080'
   try {
     const res = await axios.get(`${baseURL}/api/word-study/latest-record/${userId}`, {
       params: bookId ? { bookId } : {},
@@ -574,22 +599,71 @@ const nextWord = () => {
 }
 
 const prevWord = () => {
-  wordStore.prevWord()
-  showAnswer.value = false
+  if (hasPrev.value) {
+    wordStore.prevWord()
+    showAnswer.value = false
+  }
+}
+
+const reloadCurrentRange = () => {
+  wordStore.shuffleCurrentWords()
+  success('当前范围单词已打乱')
 }
 
 const toggleAnswer = () => {
   showAnswer.value = !showAnswer.value
 }
 
-const playPronunciation = () => {
-  if (!currentWord.value) return
-  const text = currentWord.value.word
+// 发音相关，与学习页一致
+const stopPronunciation = () => {
+  pronunciationLoopEnabled = false
+  if (pronunciationTimer) {
+    clearTimeout(pronunciationTimer)
+    pronunciationTimer = null
+  }
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'en-US'
-    window.speechSynthesis.speak(utterance)
+  }
+  currentUtterance = null
+  isSpeaking.value = false
+}
+
+const speakOnce = (wordText) => {
+  if (!('speechSynthesis' in window)) {
+    error('您的浏览器不支持语音播放')
+    return
+  }
+  const utterance = new SpeechSynthesisUtterance(wordText)
+  utterance.lang = 'en-US'
+  utterance.rate = 0.8
+  currentUtterance = utterance
+  utterance.onend = () => {
+    if (pronunciationLoopEnabled && currentWord.value && currentWord.value.word === wordText) {
+      pronunciationTimer = setTimeout(() => {
+        speakOnce(wordText)
+      }, 500)
+    } else {
+      isSpeaking.value = false
+    }
+  }
+  window.speechSynthesis.cancel()
+  window.speechSynthesis.speak(utterance)
+  isSpeaking.value = true
+}
+
+const startPronunciationLoop = () => {
+  stopPronunciation()
+  if (!currentWord.value?.word) return
+  pronunciationLoopEnabled = true
+  speakOnce(currentWord.value.word)
+}
+
+const playPronunciation = () => {
+  if (!currentWord.value) return
+  if (isSpeaking.value) {
+    stopPronunciation()
+  } else {
+    startPronunciationLoop()
   }
 }
 
@@ -674,6 +748,31 @@ const formatDateTime = (value) => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
+const formatElapsedTime = (seconds) => {
+  const total = Math.max(0, seconds)
+  const hrs = Math.floor(total / 3600)
+  const mins = Math.floor((total % 3600) / 60)
+  const secs = total % 60
+  const pad = (num) => String(num).padStart(2, '0')
+  return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`
+}
+
+const startStayTimer = () => {
+  if (stayTimerId) return
+  stayTimerActive.value = true
+  stayTimerId = setInterval(() => {
+    stayElapsedSeconds.value += 1
+  }, 1000)
+}
+
+const stopStayTimer = () => {
+  if (stayTimerId) {
+    clearInterval(stayTimerId)
+    stayTimerId = null
+  }
+  stayTimerActive.value = false
+}
+
 // 键盘快捷键
 const handleKeydown = (e) => {
   if (showRangeModal.value) return
@@ -704,12 +803,21 @@ onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
   rangeForm.value = { ...wordStore.learningRange }
   initializeFromLatestRecord()
+  startStayTimer()
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
-  window.speechSynthesis.cancel()
+  stopPronunciation()
+  stopStayTimer()
 })
+
+// 监听当前单词变化，可以做一些重置操作
+watch(currentWord, () => {
+  // 单词切换时自动循环播放
+  startPronunciationLoop()
+})
+
 </script>
 
 <style scoped>

@@ -1,9 +1,17 @@
 server:
   port: 8080
+  forward-headers-strategy: framework
+  ssl:
+    # 通过环境变量控制是否开启 HTTPS；缺省关闭，部署时请设置 SERVER_SSL_ENABLED=true
+    enabled: ${SERVER_SSL_ENABLED:false}
+    key-store: ${SERVER_SSL_KEY_STORE:classpath:keystore/english-ssl.p12}
+    key-store-password: ${SERVER_SSL_KEY_STORE_PASSWORD:}
+    key-store-type: ${SERVER_SSL_KEY_STORE_TYPE:PKCS12}
+    # 可选：若使用自签名且需校验客户端证书，可再配置 trust-store
 
 spring:
   application:
-    name: EnglishAndWord
+    name: BreezeWise
   servlet:
     multipart:
       max-file-size: 30MB
@@ -12,8 +20,9 @@ spring:
       enabled: true
   datasource:
       driver-class-name: com.mysql.cj.jdbc.Driver
-      url: jdbc:mysql://localhost:3306/english_for_kiro?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
-      username: Austain
+      url: jdbc:mysql://119.91.203.83:3306/english_for_kiro?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+#      url: jdbc:mysql://192.168.43.106:3306/english_for_kiro?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+      username: austain
       password: 123456
 
 

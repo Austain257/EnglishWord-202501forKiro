@@ -31,4 +31,12 @@ public interface EnglishService {
     boolean sentenceNotGrasp(int id);
 
     boolean sentenceIsGrasp(int id);
+
+    /**
+     * 更新单词中文释义
+     * @param id 单词ID
+     * @param chinese 中文释义
+     * @return 是否更新成功
+     */
+    boolean updateChineseMeaning(Long id, String chinese);
 }
