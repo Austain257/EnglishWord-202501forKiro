@@ -43,6 +43,23 @@
           <span class="text-blue-600 font-bold">{{ wordStore.learningRange.start }}-{{ wordStore.learningRange.end }}</span>
         </div>
         
+        <button
+          @click="toggleAutoPronunciation"
+          class="flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-all active:scale-95"
+          :class="autoPronunciationEnabled ? 'bg-emerald-50 border-emerald-200 text-emerald-600 shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'"
+        >
+          <span class="hidden sm:inline">自动播音</span>
+          <span class="flex items-center gap-1">
+            <span class="inline-flex w-8 h-4 rounded-full transition-colors" :class="autoPronunciationEnabled ? 'bg-emerald-500/70' : 'bg-slate-300'">
+              <span
+                class="inline-block w-4 h-4 rounded-full bg-white shadow transition-transform duration-200"
+                :class="autoPronunciationEnabled ? 'translate-x-4' : ''"
+              ></span>
+            </span>
+            <span>{{ autoPronunciationEnabled ? '开启' : '关闭' }}</span>
+          </span>
+        </button>
+        
         <button 
           @click="showRangeModal = true"
           class="flex items-center gap-2 px-3 py-2 bg-white shadow-sm border border-slate-200/60 rounded-xl text-xs font-medium text-slate-600 hover:text-blue-600 hover:border-blue-200 transition-all active:scale-95"
@@ -367,6 +384,7 @@ const isEditingChinese = ref(false)
 const editChineseValue = ref('')
 const editChineseLoading = ref(false)
 const isSpeaking = ref(false)
+const autoPronunciationEnabled = ref(true)
 let pronunciationLoopEnabled = false
 let currentUtterance = null
 let pronunciationTimer = null
@@ -463,6 +481,17 @@ const playPronunciation = () => {
     stopPronunciation()
   } else {
     startPronunciationLoop()
+  }
+}
+
+const toggleAutoPronunciation = () => {
+  autoPronunciationEnabled.value = !autoPronunciationEnabled.value
+  if (autoPronunciationEnabled.value) {
+    if (currentWord.value?.word) {
+      startPronunciationLoop()
+    }
+  } else {
+    stopPronunciation()
   }
 }
 
@@ -785,8 +814,23 @@ onUnmounted(() => {
 
 // 监听当前单词变化，可以做一些重置操作
 watch(currentWord, () => {
-  // 单词切换时自动播放并循环
-  startPronunciationLoop()
+  if (!currentWord.value?.word) {
+    stopPronunciation()
+    return
+  }
+  if (autoPronunciationEnabled.value) {
+    startPronunciationLoop()
+  }
+})
+
+watch(autoPronunciationEnabled, (enabled) => {
+  if (enabled) {
+    if (currentWord.value?.word) {
+      startPronunciationLoop()
+    }
+  } else {
+    stopPronunciation()
+  }
 })
 </script>
 

@@ -50,6 +50,24 @@
           <span class="text-slate-400">/</span>
           <span>{{ totalWords }}</span>
         </div>
+        
+        <button
+          @click="toggleAutoPronunciation"
+          class="flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-all active:scale-95"
+          :class="autoPronunciationEnabled ? 'bg-emerald-50 border-emerald-200 text-emerald-600 shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'"
+        >
+          <span class="hidden sm:inline">自动播音</span>
+          <span class="flex items-center gap-1">
+            <span class="inline-flex w-8 h-4 rounded-full transition-colors" :class="autoPronunciationEnabled ? 'bg-emerald-500/70' : 'bg-slate-300'">
+              <span
+                class="inline-block w-4 h-4 rounded-full bg-white shadow transition-transform duration-200"
+                :class="autoPronunciationEnabled ? 'translate-x-4' : ''"
+              ></span>
+            </span>
+            <span>{{ autoPronunciationEnabled ? '开启' : '关闭' }}</span>
+          </span>
+        </button>
+
         <button
           @click="openRangeModal"
           class="flex items-center gap-2 px-3 py-2 bg-white shadow-sm border border-slate-200/60 rounded-xl text-xs font-medium text-slate-600 hover:text-amber-600 hover:border-amber-200 transition-all active:scale-95"
@@ -90,6 +108,36 @@
       >
         <div class="w-14 h-14 border-4 border-amber-100 border-t-amber-500 rounded-full animate-spin mb-4"></div>
         <p class="text-slate-500 text-sm font-medium animate-pulse">正在加载复习数据...</p>
+      </div>
+
+      <!-- Round guard -->
+      <div
+        v-else-if="roundGuardActive"
+        class="flex-1 flex flex-col items-center justify-center min-h-[360px] text-center px-4"
+      >
+        <div class="w-24 h-24 bg-white border border-amber-100 rounded-full flex items-center justify-center mb-6 text-amber-400 shadow-lg shadow-amber-100">
+          <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-900 mb-3">需要完成前置复习</h3>
+        <p class="text-slate-500 max-w-md leading-relaxed mb-6">
+          请先完成当前学习记录的第一、第二轮复习任务，再开启三轮及以上的巩固模式。
+        </p>
+        <div class="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+          <button
+            class="flex-1 px-6 py-3 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+            @click="goToReviewSelection"
+          >
+            返回复习选择
+          </button>
+          <button
+            class="flex-1 px-6 py-3 rounded-xl font-bold text-white bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/30 transition-colors"
+            @click="goBack"
+          >
+            稍后再来
+          </button>
+        </div>
       </div>
 
       <!-- Empty -->
@@ -273,35 +321,69 @@
           </div>
         </div>
 
-        <div
-          v-if="showThirdRoundAction"
-          class="mt-6 bg-white border border-emerald-100 rounded-2xl p-6 shadow-sm space-y-3"
-        >
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
+        <!-- 复习记录与轮次操作（移动到单词列表下方） -->
+        <div class="mt-6" v-if="showMultiRoundSection">
+          <div
+            v-if="studyRecords.length"
+            class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-5"
+          >
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div class="flex-1">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">复习轮次</p>
+              </div>
+              <div class="flex-1 w-full">
+                <button
+                  @click="markReviewRoundComplete"
+                  :disabled="markingReviewRound || !canMarkRound || allRoundsCompleted"
+                  class="w-full px-4 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-lime-500 shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span v-if="markingReviewRound">标记中...</span>
+                  <span v-else>{{ allRoundsCompleted ? '恭喜你，已完成该范围单词的所有练习' : `标记第 ${selectedRound} 轮已完成` }}</span>
+                </button>
+                <!-- <p v-if="allRoundsCompleted" class="mt-2 text-xs text-emerald-600 text-center">
+                  恭喜你，已完成该范围单词的所有练习
+                </p> -->
+              </div>
             </div>
-            <div>
-              <p class="text-sm font-semibold text-slate-500">第三轮·巩固复习</p>
-              <p class="text-base font-bold text-slate-900">
-                {{ thirdRoundCompleted ? '当前记录第三轮次复习已完成~' : '完成第三轮巩固复习后记得点击完成哦' }}
-              </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div
+                v-for="item in displayRoundStatus"
+                :key="item.key"
+                class="px-4 py-3 rounded-2xl border"
+                :class="item.completed ? 'border-emerald-100 bg-emerald-50' : 'border-slate-200 bg-slate-50'"
+              >
+                <p class="text-xs font-semibold text-slate-500 mb-1">{{ item.title }}</p>
+                <template v-if="item.detail?.length">
+                  <p
+                    v-for="sub in item.detail"
+                    :key="sub.label"
+                    class="text-sm font-semibold"
+                    :class="sub.completed ? 'text-emerald-600' : 'text-slate-500'"
+                  >
+                    {{ sub.label }}：{{ sub.completed ? formatDateTime(sub.completedTime) : '未完成' }}
+                  </p>
+                </template>
+                <p
+                  v-else
+                  class="text-sm font-semibold"
+                  :class="item.completed ? 'text-emerald-600' : 'text-slate-500'"
+                >
+                  {{ item.completed ? formatDateTime(item.completedTime) : '未完成' }}
+                </p>
+              </div>
             </div>
           </div>
-          <button
-            class="w-full px-4 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-lime-500 shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-            :disabled="thirdRoundCompleted || markingReviewRound"
-            @click="markThirdRoundComplete"
+          <div
+            v-else
+            class="px-4 py-3 rounded-2xl border border-dashed border-amber-200 bg-amber-50 text-sm text-amber-700"
           >
-            <span v-if="markingReviewRound">标记中...</span>
-            <span v-else-if="thirdRoundCompleted">当前记录第三轮次复习已完成~</span>
-            <span v-else>标记第三轮次复习完成</span>
-          </button>
-          <p class="text-xs text-slate-500">
-            * 第一、二轮必须完成后才能开启第三轮。每条记录的第三轮只能标记一次。
-          </p>
+            <p>
+              暂未找到关联的学习记录。若来自学习清单，请确保清单的
+              <span class="font-semibold">record_ids</span>
+              已正确填写。
+            </p>
+          </div>
         </div>
       </div>
     </main>
@@ -405,32 +487,6 @@
     </div>
 
     <div
-      v-if="prerequisiteBlocked"
-      class="fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-6"
-    >
-      <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
-      <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5 text-center">
-        <div class="w-16 h-16 mx-auto rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
-          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 9a9 9 0 100 18 9 9 0 000-18z" />
-          </svg>
-        </div>
-        <div>
-          <h3 class="text-xl font-bold text-slate-900 mb-2">还差一点点~</h3>
-          <p class="text-slate-600 leading-relaxed">
-            {{ prerequisiteMessage || '请先完成第一、二轮次的复习，再来开启我吧~' }}
-          </p>
-        </div>
-        <button
-          class="w-full px-5 py-3 rounded-2xl font-semibold text-white bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/30 transition-colors"
-          @click="goBack"
-        >
-          返回学习清单
-        </button>
-      </div>
-    </div>
-
-    <div
       v-if="showChecklistConfirm"
       class="fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-6"
     >
@@ -470,6 +526,76 @@
         </div>
       </div>
     </div>
+
+    <div v-if="showRoundGuardDialog" class="fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-6">
+      <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+      <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">暂无法开启其他轮次</h3>
+            <p class="text-slate-600 leading-relaxed">
+              {{ roundGuardMessage }}
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            class="flex-1 px-5 py-3 rounded-2xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+            @click="goBack"
+          >
+            返回上一页
+          </button>
+          <button
+            class="flex-1 px-5 py-3 rounded-2xl font-bold text-white bg-amber-500 hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/30"
+            @click="goToReviewSelection"
+          >
+            去完成前两轮
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="showThirdStandaloneSection"
+      class="mt-0 mx-4 sm:mx-6 lg:mx-8 pb-10"
+    >
+      <div class="max-w-5xl mx-auto">
+        <div class="bg-white border border-emerald-100 rounded-3xl shadow-lg shadow-emerald-100/50 p-6 sm:p-8 space-y-4">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-widest text-emerald-500">第三轮·巩固复习</p>
+              <h3 class="text-lg sm:text-xl font-bold text-slate-900 mt-1">
+                {{ thirdRoundCompleted ? '当前记录第三轮次复习已完成~' : '幸苦一天了，今天任务即将结束，只做自己想做的' }}
+              </h3>
+              <!-- <p class="text-sm text-slate-500 mt-1">
+                第一、二轮完成后才能开启第三轮。每条记录的第三轮复习仅能标记一次。
+              </p> -->
+            </div>
+          </div>
+          <button
+            @click="markThirdRoundOnly"
+            :disabled="thirdButtonDisabled"
+            class="w-full px-6 py-4 rounded-2xl font-semibold text-white text-base bg-gradient-to-r from-emerald-400 to-lime-500 shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span v-if="markingReviewRound">标记中...</span>
+            <span v-else>{{ thirdButtonText }}</span>
+          </button>
+          <p v-if="!thirdRoundCompleted" class="text-xs text-slate-400 text-center">
+            * 第三轮标记后不可取消，但仍旧可以学习。
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -494,10 +620,6 @@ const studyTracker = useStudyTrackerStore()
 const STUDY_SCENE = 'word_review_other'
 
 const showRangeModal = ref(false)
-const prerequisiteBlocked = ref(false)
-const prerequisiteMessage = ref('')
-const thirdRoundCompleted = ref(false)
-const showThirdRoundAction = ref(false)
 const reviewParams = ref({
   userId: null,
   bookId: null,
@@ -530,7 +652,11 @@ const ROUND_TOTAL = 9
 const showChecklistConfirm = ref(false)
 const generatingChecklist = ref(false)
 const selectionContext = ref(null)
+const entrySource = ref('')
 const hasRecordIds = computed(() => Boolean(reviewParams.value.recordIds && String(reviewParams.value.recordIds).trim()))
+const showRoundSection = computed(() => hasRecordIds.value && studyRecords.value.length > 0)
+const showRoundGuardDialog = ref(false)
+const roundGuardMessage = '请先完成第一、二轮次的复习，再来开启我吧~'
 
 const totalWords = computed(() => words.value.length)
 const currentWord = computed(() => words.value[currentIndex.value] || null)
@@ -538,6 +664,7 @@ const hasNext = computed(() => currentIndex.value < totalWords.value - 1)
 const hasPrev = computed(() => currentIndex.value > 0)
 const progressPercent = computed(() => (totalWords.value ? Math.round(((currentIndex.value + 1) / totalWords.value) * 100) : 0))
 const isSpeaking = ref(false)
+const autoPronunciationEnabled = ref(true)
 let pronunciationLoopEnabled = false
 let pronunciationTimer = null
 let currentUtterance = null
@@ -569,6 +696,35 @@ const roundStatus = computed(() => {
     }
   })
 })
+const firstTwoRoundsCompleted = computed(() => {
+  const record = selectedRecord.value
+  if (!record) return false
+  return Boolean(record.round1ReviewTime && record.round2ReviewTime)
+})
+
+const thirdRoundCompleted = computed(() => Boolean(selectedRecord.value?.round3ReviewTime))
+
+const canUseThirdRound = computed(() => firstTwoRoundsCompleted.value && !thirdRoundCompleted.value)
+
+const roundGuardActive = computed(() => showRoundSection.value && !firstTwoRoundsCompleted.value)
+
+const thirdButtonText = computed(() =>
+  thirdRoundCompleted.value ? '当前记录第三轮次复习已完成~' : '标记第三轮复习完成'
+)
+
+const thirdButtonDisabled = computed(() => markingReviewRound.value || !canUseThirdRound.value)
+
+const allRoundsCompleted = computed(() => {
+  if (!selectedRecord.value) return false
+  const lastField = `round${ROUND_TOTAL}ReviewTime`
+  return Boolean(selectedRecord.value[lastField])
+})
+
+const isSelectionEntry = computed(() => entrySource.value === 'selection')
+const isChecklistEntry = computed(() => entrySource.value === 'checklist')
+const showMultiRoundSection = computed(() => showRoundSection.value && !isSelectionEntry.value)
+const showThirdStandaloneSection = computed(() => showRoundSection.value && !isChecklistEntry.value)
+
 const displayRoundStatus = computed(() => {
   const status = roundStatus.value
   if (!status.length) return []
@@ -693,35 +849,11 @@ const validateParamsRange = (params) => {
   return params.startId <= params.endId
 }
 
-const evaluatePrerequisites = () => {
-  const record = selectedRecord.value
-  if (!record) {
-    prerequisiteBlocked.value = false
-    showThirdRoundAction.value = false
-    thirdRoundCompleted.value = false
-    return
-  }
-
-  const firstRoundDone = Boolean(record.round1ReviewTime)
-  const secondRoundDone = Boolean(record.round2ReviewTime)
-  thirdRoundCompleted.value = Boolean(record.round3ReviewTime)
-  showThirdRoundAction.value = firstRoundDone && secondRoundDone
-
-  if (!firstRoundDone || !secondRoundDone) {
-    prerequisiteBlocked.value = true
-    words.value = []
-    queryError.value = ''
-  } else {
-    prerequisiteBlocked.value = false
-  }
-}
-
 const loadStudyRecords = async () => {
   if (!reviewParams.value.userId || !hasRecordIds.value) {
     studyRecords.value = []
     selectedRecordId.value = null
     latestRecord.value = null
-    evaluatePrerequisites()
     return
   }
 
@@ -750,14 +882,10 @@ const loadStudyRecords = async () => {
   } finally {
     latestRecord.value = selectedRecord.value || null
     updateSuggestedRound()
-    evaluatePrerequisites()
   }
 }
 
 const loadWords = async () => {
-  if (prerequisiteBlocked.value) {
-    return
-  }
   if (!validateParamsRange(reviewParams.value)) {
     queryError.value = '复习参数不完整或范围不正确'
     return
@@ -795,6 +923,11 @@ const loadWords = async () => {
 const initializeFromRoute = async () => {
   initializing.value = true
   const params = extractParamsFromRoute()
+  if (params.source) {
+    entrySource.value = params.source
+  } else if (!entrySource.value) {
+    entrySource.value = ''
+  }
 
   const isSelectionSource = params.source === 'selection'
   if (isSelectionSource) {
@@ -843,11 +976,7 @@ const initializeFromRoute = async () => {
   await ensureBooksReady()
   await ensureTargetBookSelected(reviewParams.value.bookId)
   await loadStudyRecords()
-  if (!prerequisiteBlocked.value) {
-    await loadWords()
-  } else {
-    initializing.value = false
-  }
+  await loadWords()
 }
 
 const updateSuggestedRound = () => {
@@ -962,6 +1091,17 @@ const playPronunciation = () => {
   }
 }
 
+const toggleAutoPronunciation = () => {
+  autoPronunciationEnabled.value = !autoPronunciationEnabled.value
+  if (autoPronunciationEnabled.value) {
+    if (currentWord.value?.word) {
+      startPronunciationLoop()
+    }
+  } else {
+    stopPronunciation()
+  }
+}
+
 const markAsGrasped = async () => {
   if (!currentWord.value?.id) return
   try {
@@ -1005,10 +1145,9 @@ const canMarkRound = computed(() => {
   return !option.disabled
 })
 
-const markReviewRoundComplete = async (roundOverride = null) => {
-  const targetRound = roundOverride ?? selectedRound.value
-  if (!studyRecords.value.length) {
-    error('当前无关联记录，无法标记复习轮次')
+const submitRoundCompletion = async (round) => {
+  if (!selectedRecord.value) {
+    error('未找到关联的学习记录')
     return
   }
   if (!authStore.user?.id) {
@@ -1016,25 +1155,24 @@ const markReviewRoundComplete = async (roundOverride = null) => {
     router.push('/login')
     return
   }
-  const selectedOption = roundOptions.value.find((opt) => opt.value === targetRound)
-  if (selectedOption?.disabled) {
-    error('请先完成上一轮复习')
+  const option = roundOptions.value.find((opt) => opt.value === round)
+  if (!option) {
+    error('请选择有效的复习轮次')
     return
   }
-  const sessionIds = studyRecords.value.map((r) => r.id).filter(Boolean)
-  if (!sessionIds.length) {
-    error('当前没有可标记的学习记录')
+  if (option.disabled) {
+    error('请先完成上一轮复习')
     return
   }
   try {
     markingReviewRound.value = true
     await wordStudyStore.markReviewComplete({
       userId: reviewParams.value.userId || authStore.user.id,
-      sessionIds,
+      sessionIds: [selectedRecord.value.id],
       recordIdsText: reviewParams.value.recordIds || '',
-      reviewRound: targetRound
+      reviewRound: round
     })
-    success(`第${targetRound}轮复习已完成`)
+    success(`第${round}轮复习已完成`)
     await loadStudyRecords()
   } catch (err) {
     console.error('标记复习完成失败：', err)
@@ -1044,12 +1182,20 @@ const markReviewRoundComplete = async (roundOverride = null) => {
   }
 }
 
-const markThirdRoundComplete = async () => {
+const markReviewRoundComplete = async () => {
+  await submitRoundCompletion(selectedRound.value)
+}
+
+const markThirdRoundOnly = async () => {
   if (thirdRoundCompleted.value) {
     error('当前记录第三轮次复习已完成~')
     return
   }
-  await markReviewRoundComplete(3)
+  if (!canUseThirdRound.value) {
+    error('请先完成第一、二轮次的复习')
+    return
+  }
+  await submitRoundCompletion(3)
 }
 
 const maybeStartStudySession = async () => {
@@ -1093,6 +1239,11 @@ const goBack = async () => {
   } else {
     router.push('/')
   }
+}
+
+const goToReviewSelection = async () => {
+  await stopStudySession('goToSelection')
+  router.push({ name: 'WordReviewSelection' })
 }
 
 const confirmUseDefaultRange = async () => {
@@ -1282,6 +1433,14 @@ watch(
 )
 
 watch(
+  () => roundGuardActive.value,
+  (value) => {
+    showRoundGuardDialog.value = value
+  },
+  { immediate: true }
+)
+
+watch(
   () => route.fullPath,
   () => {
     initializeFromRoute()
@@ -1305,7 +1464,19 @@ watch(currentWord, () => {
     stopPronunciation()
     return
   }
-  startPronunciationLoop()
+  if (autoPronunciationEnabled.value) {
+    startPronunciationLoop()
+  }
+})
+
+watch(autoPronunciationEnabled, (enabled) => {
+  if (enabled) {
+    if (currentWord.value?.word) {
+      startPronunciationLoop()
+    }
+  } else {
+    stopPronunciation()
+  }
 })
 </script>
 

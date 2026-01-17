@@ -144,7 +144,8 @@
                 :key="item.id"
                 :class="[
                   'relative rounded-2xl border transition-all duration-300 group bg-slate-50/80 hover:bg-white hover:-translate-y-1',
-                  selectedItems.includes(item.id) ? 'border-blue-400 shadow-lg shadow-blue-500/20' : 'border-slate-200'
+                  selectedItems.includes(item.id) ? 'border-blue-400 shadow-lg shadow-blue-500/20' : 'border-slate-200',
+                  isChecklistItemLocked(item) ? 'opacity-70' : ''
                 ]"
               >
                 <div class="p-5">
@@ -153,13 +154,19 @@
                       <input
                         type="checkbox"
                         :checked="selectedItems.includes(item.id)"
-                        class="w-5 h-5 text-blue-600 rounded-full border-2 border-slate-300 focus:ring-blue-500"
+                        class="w-5 h-5 text-blue-600 rounded-full border-2 border-slate-300 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                        :disabled="isChecklistItemLocked(item)"
+                        :title="isChecklistItemLocked(item) ? '该清单对应轮次已完成' : '选择该清单'"
                         @click.stop
                         @change="toggleSelection(item.id)"
                       />
                     </div>
                     <div
-                      class="flex-1 space-y-4 cursor-pointer"
+                      :class="[
+                        'flex-1 space-y-4 transition-opacity',
+                        isChecklistItemLocked(item) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+                      ]"
+                      :aria-disabled="isChecklistItemLocked(item)"
                       @click="handleCardClick(item)"
                     >
                       <div class="flex flex-col gap-3">
@@ -525,7 +532,8 @@ const goToWordReview = async (item) => {
         bookId: item.bookId,
         startId: item.startId,
         endId: item.endId,
-        recordIds: item.recordIds || ''
+        recordIds: item.recordIds || '',
+        source: 'checklist'
       }
     })
   } catch (error) {
@@ -757,6 +765,18 @@ const getTargetRoundNumber = (item) => {
   const label = getReviewRound(item) || ''
   const match = label.match(/第(\d+)轮/)
   return match ? Number(match[1]) : null
+}
+
+const isChecklistItemLocked = (item) => {
+  if (!item) return false
+  const targetRound = getTargetRoundNumber(item)
+  if (!targetRound) return Boolean(item.alreadyReviewed)
+  const fieldCamel = `round${targetRound}ReviewTime`
+  const fieldSnake = `round_${targetRound}_review_time`
+  if (item[fieldCamel] || item[fieldSnake]) {
+    return true
+  }
+  return Boolean(item.alreadyReviewed)
 }
 
 const isRoundCompleted = (record, round) => {
